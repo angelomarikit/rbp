@@ -41,6 +41,7 @@ export type CartLine = {
   sizeLabel?: string
   color?: string
   options?: Record<string, string>
+  sizes?: string[]
 }
 
 export type ShippingMethod = 'standard' | 'express'

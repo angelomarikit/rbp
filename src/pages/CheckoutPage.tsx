@@ -20,7 +20,7 @@ import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/pa
 
 function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
   const selected: Record<string, string> = { ...(line.options ?? {}) }
-  const parts = (line.sizeLabel ?? '').split(' / ').map((part) => part.trim())
+  const parts = (line.sizeLabel ?? '').split(/[,/]/).map((part) => part.trim())
   for (const group of groups) {
     if (selected[group.key] && group.values.includes(selected[group.key])) continue
     if (group.key === 'color' && line.color && group.values.includes(line.color)) selected.color = line.color
@@ -28,6 +28,21 @@ function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
     else selected[group.key] = group.values.find((value) => parts.includes(value)) || group.values[0]
   }
   return selected
+}
+
+function sizeGroupOf(groups: ChoiceGroup[]) {
+  return groups.find((group) => group.key === 'length') ?? groups.find((group) => group.key === 'size')
+}
+
+function checkedSizes(line: CartLine, group: ChoiceGroup) {
+  const saved = (line.sizes ?? []).filter((size) => group.values.includes(size))
+  if (saved.length) return saved
+  const parts = (line.sizeLabel ?? '').split(/[,/]/).map((part) => part.trim())
+  const found = group.values.filter((value) => parts.includes(value))
+  if (found.length) return found
+  const single = line.options?.[group.key]
+  if (single && group.values.includes(single)) return [single]
+  return [group.values[0]]
 }
 
 function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: string, patch: Partial<CartLine>) => void }) {
@@ -57,26 +72,69 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
   }
 
   const selected = chosenOptions(line, groups)
+  const sizeGroup = sizeGroupOf(groups)
+  const sizes = sizeGroup ? checkedSizes(line, sizeGroup) : []
+  const apply = (nextSelected: Record<string, string>, nextSizes: string[], quantity?: number) => {
+    const described = describeSelection(nextSelected, rows)
+    const ordered = sizeGroup ? sizeGroup.values.filter((value) => nextSizes.includes(value)) : []
+    const sizeText = ordered.join(', ')
+    const sizeLabel = [sizeText, nextSelected.gauge].filter(Boolean).join(' / ') || described.sizeLabel
+    const variantKey = [
+      sizeGroup ? `${sizeGroup.key}:${ordered.join('+')}` : '',
+      ...Object.entries(nextSelected).filter(([key]) => key !== sizeGroup?.key).map(([key, value]) => `${key}:${value}`),
+    ].filter(Boolean).join('|')
+    onChange(line.lineId, {
+      options: { ...described.options, ...(sizeGroup ? { [sizeGroup.key]: ordered[0] ?? '' } : {}) },
+      sizes: ordered,
+      ...(quantity === undefined ? {} : { quantity }),
+      variantKey,
+      material: described.material || line.material,
+      sizeLabel,
+      color: described.color,
+      priceCents: described.priceCents ?? line.priceCents,
+      variantLabel: sizeLabel,
+    })
+  }
+  const chooseSizes = (next: string[]) => {
+    if (!sizeGroup) return
+    const list = next.length ? next : [sizeGroup.values[0]]
+    apply({ ...selected, [sizeGroup.key]: list[0] }, list, list.length)
+  }
   return (
     <div className="mt-1 space-y-1.5">
-      {groups.map((group) => (
+      {sizeGroup && (
+        <fieldset className="text-[11px] text-white/55">
+          <legend>{sizeGroup.name}</legend>
+          <label className="mt-1 flex items-center gap-1.5 text-[12px] text-white">
+            <input
+              type="checkbox"
+              className="accent-[#FF7900]"
+              checked={sizes.length === sizeGroup.values.length}
+              onChange={() => chooseSizes(sizes.length === sizeGroup.values.length ? [sizes[0] ?? sizeGroup.values[0]] : [...sizeGroup.values])}
+            />
+            All sizes
+          </label>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+            {sizeGroup.values.map((value) => (
+              <label key={value} className="flex items-center gap-1.5 text-[12px] text-white">
+                <input
+                  type="checkbox"
+                  className="accent-[#FF7900]"
+                  checked={sizes.includes(value)}
+                  onChange={() => chooseSizes(sizes.includes(value) ? sizes.filter((size) => size !== value) : [...sizeGroup.values])}
+                />
+                {value}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {groups.filter((group) => group.key !== sizeGroup?.key).map((group) => (
         <label key={group.key} className="block text-[11px] text-white/55">
           {group.name}
           <select
             value={selected[group.key] ?? group.values[0]}
-            onChange={(event) => {
-              const next = { ...selected, [group.key]: event.target.value }
-              const described = describeSelection(next, rows)
-              onChange(line.lineId, {
-                options: described.options,
-                variantKey: described.key,
-                material: described.material || line.material,
-                sizeLabel: described.sizeLabel,
-                color: described.color,
-                priceCents: described.priceCents ?? line.priceCents,
-                variantLabel: described.sizeLabel,
-              })
-            }}
+            onChange={(event) => apply({ ...selected, [group.key]: event.target.value }, sizes)}
             className="mt-0.5 w-full rounded border border-white/20 bg-black px-1.5 py-1 text-[12px] text-white"
           >
             {group.values.map((value) => (
