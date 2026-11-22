@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { formatPhp } from '../../lib/format.ts'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { Card, MediaField, Notice, PageTitle, PrimaryButton, QuietButton, TextArea, TextField, fieldClass } from './ui.tsx'
 
 type ProductRow = { id: string; name: string; price_cents: number; compare_at_price_cents: number | null; inventory_qty: number | null; status: string; sku: string | null }
@@ -24,20 +25,33 @@ function toCents(value: string) {
   return Math.round(number * 100)
 }
 
+const savedWait = 'Please wait a few seconds for it to appear on All products.'
+
+function productSlug(name: string) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'product'
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`
+}
+
 export function ProductsAdmin() {
+  const location = useLocation()
+  const justSaved = Boolean((location.state as { justSaved?: boolean } | null)?.justSaved)
   const [rows, setRows] = useState<ProductRow[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [ok, setOk] = useState<string | null>(null)
+  const [ok, setOk] = useState<string | null>(justSaved ? savedWait : null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   const load = async () => {
     if (!supabase) return
-    const { data, error: queryError } = await supabase.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku').order('name')
+    const { data, error: queryError } = await supabase.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku, created_at').order('created_at', { ascending: false })
     if (queryError) setError(queryError.message)
     else setRows((data ?? []) as ProductRow[])
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+    const timer = window.setTimeout(() => { void load() }, 2500)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const removeProduct = async (row: ProductRow) => {
     setError(null)
@@ -53,7 +67,7 @@ export function ProductsAdmin() {
 
   return (
     <div>
-      <PageTitle title="Products" subtitle="The current catalog is already stored. Edit price, photos, and variations here. The address is created from the name, so there is no slug field." action={<Link to="/admin/products/new" className="rounded-lg bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black">Add product</Link>} />
+      <PageTitle title="Products" subtitle="Newest products are at the top. After you save one, please wait a few seconds for it to appear here." action={<Link to="/admin/products/new" className="rounded-lg bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black">Add product</Link>} />
       <Notice error={error} ok={ok} />
       <Card>
         <table className="w-full text-left text-sm">
@@ -111,6 +125,14 @@ export function ProductEditor() {
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const alive = useRef(true)
+
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!supabase) return
@@ -188,12 +210,11 @@ export function ProductEditor() {
     setError(null)
     setOk(null)
     const collection = collections.find((item) => item.id === collectionIds[0])
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: name.trim(),
       description: description || null,
       price_cents: priceCents,
       compare_at_price_cents: toCents(compare),
-      sku: sku.trim() || null,
       inventory_qty: inventory.trim() ? Number(inventory) : null,
       status,
       published: status === 'active',
@@ -201,29 +222,32 @@ export function ProductEditor() {
       category: collection?.name ?? 'General',
       image_path: images[0] || 'products/product-01.jpg',
     }
+    if (sku.trim()) payload.sku = sku.trim()
+    else if (isNew) payload.sku = `RBP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+    if (isNew) payload.slug = productSlug(name.trim())
     const result = isNew
       ? await supabase.from('products').insert(payload).select('id').single()
       : await supabase.from('products').update(payload).eq('id', productId).select('id').single()
     if (result.error || !result.data) {
       setSaving(false)
-      setError(result.error?.message ?? 'Could not save the product.')
+      setError(friendlyError(result.error, 'The product could not be saved. Check the name and price, then try again.'))
       return
     }
     const id = result.data.id as string
-    await supabase.from('product_collections').delete().eq('product_id', id)
-    if (collectionIds.length) {
-      await supabase.from('product_collections').insert(collectionIds.map((collectionId, index) => ({ product_id: id, collection_id: collectionId, sort_order: index })))
-    }
-    await supabase.from('product_images').delete().eq('product_id', id)
-    if (images.length) {
-      await supabase.from('product_images').insert(images.map((path, index) => ({ product_id: id, storage_path: path, sort_order: index })))
-    }
-    await supabase.from('product_variants').delete().eq('product_id', id)
-    if (variants.length) {
-      await supabase.from('product_variants').insert(variants.map((variant, index) => ({
+    const links = await supabase.from('product_collections').delete().eq('product_id', id)
+    const pictures = await supabase.from('product_images').delete().eq('product_id', id)
+    const versions = await supabase.from('product_variants').delete().eq('product_id', id)
+    const linkInsert = collectionIds.length
+      ? await supabase.from('product_collections').insert(collectionIds.map((collectionId, index) => ({ product_id: id, collection_id: collectionId, sort_order: index })))
+      : null
+    const pictureInsert = images.length
+      ? await supabase.from('product_images').insert(images.map((path, index) => ({ product_id: id, storage_path: path, sort_order: index })))
+      : null
+    const versionInsert = variants.length
+      ? await supabase.from('product_variants').insert(variants.map((variant, index) => ({
         product_id: id,
         label: variant.label || Object.values(variant.options).filter(Boolean).join(' / ') || `Variant ${index + 1}`,
-        variant_key: Object.values(variant.options).filter(Boolean).join('-').toLowerCase().replace(/[^a-z0-9]+/g, '-') || `variant-${index + 1}`,
+        variant_key: `${Object.values(variant.options).filter(Boolean).join('-').toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'variant'}-${index + 1}`,
         sku: variant.sku || null,
         price_cents: toCents(variant.price),
         inventory_qty: variant.inventory.trim() ? Number(variant.inventory) : null,
@@ -231,10 +255,18 @@ export function ProductEditor() {
         sort_order: index,
         status: 'active',
       })))
-    }
+      : null
+    const extraError = links.error || pictures.error || versions.error || linkInsert?.error || pictureInsert?.error || versionInsert?.error
     setSaving(false)
-    setOk('Product saved.')
-    if (isNew) navigate(`/admin/products/${id}`, { replace: true })
+    if (extraError) {
+      setError(friendlyError(extraError, 'The product was saved, but a photo or option could not be stored.'))
+    }
+    setOk(savedWait)
+    if (isNew) {
+      window.setTimeout(() => {
+        if (alive.current) navigate('/admin/products', { state: { justSaved: true } })
+      }, 2500)
+    }
   }
 
   const remove = async () => {
@@ -257,8 +289,9 @@ export function ProductEditor() {
         <div>
           <Link to="/admin/products" className="text-sm text-[#ffb067]">All products</Link>
           <h1 className="mt-1 text-2xl font-semibold text-white">{isNew ? 'New product' : name || 'Edit product'}</h1>
+          <p className="mt-1 max-w-md text-sm text-[#9a9a9a]">After saving, please wait a few seconds for it to appear on All products.</p>
         </div>
-        <PrimaryButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</PrimaryButton>
+        <PrimaryButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save product'}</PrimaryButton>
       </div>
       <nav className="mb-5 flex flex-wrap gap-2">
         {[
@@ -410,7 +443,7 @@ export function ProductEditor() {
       </div>
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#2a2a2a] bg-[#111]/95 px-4 py-3 backdrop-blur sm:px-8">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-          <p className="text-sm text-[#9a9a9a]">{ok || 'Save when the name and price look right.'}</p>
+          <p className="text-sm text-[#9a9a9a]">{ok || 'After saving, please wait a few seconds for it to appear on All products.'}</p>
           <PrimaryButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save product'}</PrimaryButton>
         </div>
       </div>

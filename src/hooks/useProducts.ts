@@ -31,7 +31,8 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('name')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
       if (!cancelled && !error && data?.length) {
         setProducts(data.map((row) => rowToProduct(row as Record<string, unknown>)))
       }
