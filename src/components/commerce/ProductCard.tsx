@@ -33,13 +33,13 @@ export function ProductCard({ product }: { product: Product }) {
         </Link>
         <p className="mt-1 text-[12px] text-white/50">{product.material}</p>
         <p className="mt-3 text-[22px] font-bold leading-none text-rbp-accent">{formatPhp(product.priceCents)}</p>
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 flex flex-col gap-2">
           <button
             type="button"
             onClick={() => addProduct(product)}
-            className="flex h-10 items-center justify-center gap-1 rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] text-[12px] font-semibold text-black"
+            className="flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] px-3 text-[13px] font-semibold leading-none tracking-normal text-black"
           >
-            <IconCart size={14} />
+            <IconCart size={15} />
             Add to Cart
           </button>
           <button
@@ -48,7 +48,7 @@ export function ProductCard({ product }: { product: Product }) {
               addProduct(product)
               navigate('/checkout')
             }}
-            className="flex h-10 items-center justify-center rounded-md border border-rbp-accent text-[12px] font-semibold text-rbp-accent hover:bg-rbp-accent hover:text-black"
+            className="flex h-10 w-full items-center justify-center whitespace-nowrap rounded-md border border-rbp-accent px-3 text-[13px] font-semibold leading-none tracking-normal text-rbp-accent hover:bg-rbp-accent hover:text-black"
           >
             Buy Now
           </button>
