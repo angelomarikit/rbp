@@ -223,7 +223,7 @@ export function ProductDetailPage() {
               <span className="text-white/70">({product.reviewCount ?? 28} Reviews)</span>
             </div>
             <p className="mt-4 text-[2.4rem] font-bold leading-none text-white">{formatPhp(product.priceCents)}</p>
-            <p className="mt-5 text-[15px] leading-relaxed text-white/80">{description}</p>
+            <p className="font-secondary mt-5 text-[15px] leading-relaxed text-white/80">{description}</p>
 
             <dl className="mt-6 grid gap-3 sm:grid-cols-2">
               {specRows.map(([label, value]) => (
@@ -322,7 +322,7 @@ export function ProductDetailPage() {
             ))}
           </div>
           <div className="mt-8 max-w-3xl text-[15px] leading-relaxed text-white/85">
-            {activeTab === 'Description' && <p>{description}</p>}
+            {activeTab === 'Description' && <p className="font-secondary">{description}</p>}
             {activeTab === 'Specifications' && (
               <ul className="space-y-3">
                 {specRows.map(([label, value]) => (
@@ -340,7 +340,7 @@ export function ProductDetailPage() {
                   ['Exactly as shown, and the gem catches the light.', 'Mark R.'],
                 ].map(([quote, name]) => (
                   <article key={name} className="rounded-rbp border border-white/10 px-4 py-4">
-                    <p>&ldquo;{quote}&rdquo;</p>
+                    <p className="font-secondary">&ldquo;{quote}&rdquo;</p>
                     <p className="mt-3 tracking-widest text-rbp-accent">★★★★★</p>
                     <p className="mt-1 text-[13px] text-white/55">– {name}</p>
                   </article>
@@ -348,7 +348,7 @@ export function ProductDetailPage() {
               </div>
             )}
             {activeTab.startsWith('Shipping') && (
-              <p>Secure shipping across the Philippines. Unopened jewelry can be returned within 7 days.</p>
+              <p className="font-secondary">Secure shipping across the Philippines. Unopened jewelry can be returned within 7 days.</p>
             )}
           </div>
         </div>

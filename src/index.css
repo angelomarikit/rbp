@@ -71,3 +71,7 @@ select {
 .font-display {
   font-family: var(--rbp-font-display);
 }
+
+.font-secondary {
+  font-family: var(--rbp-font-secondary, var(--rbp-font-body));
+}

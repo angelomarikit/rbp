@@ -103,7 +103,7 @@ export function HomePage() {
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/20" />
         <div className="relative z-10 flex min-h-[70vh] flex-col justify-center px-6 py-16 sm:px-12 lg:min-h-[78vh] lg:max-w-[720px] lg:px-20">
-          <p className="mb-8 text-[12px] font-medium uppercase tracking-[0.32em] text-rbp-cream">{hero.subtitle}</p>
+          <p className="font-secondary mb-8 text-[12px] font-medium uppercase tracking-[0.32em] text-rbp-cream">{hero.subtitle}</p>
           <GothicHeading as="h1" className="text-[3.1rem] leading-[0.78] sm:text-[4.2rem] xl:text-[5rem]">
             {designedTitle ? (
               <>
@@ -119,7 +119,7 @@ export function HomePage() {
               <span className="block text-rbp-accent">{hero.title}</span>
             )}
           </GothicHeading>
-          <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/90">{hero.body}</p>
+          <p className="font-secondary mt-6 max-w-md text-[15px] leading-relaxed text-white/90">{hero.body}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <OrangeLink to={hero.buttons[0].to} className="gap-2 px-5 py-2.5 font-semibold">
               <IconCalendar size={16} /> {hero.buttons[0].label}
@@ -185,7 +185,7 @@ export function HomePage() {
       <footer className="relative overflow-hidden px-5 py-20 text-center">
         <Ornament side="left" />
         <Ornament side="right" />
-        <p className="text-[13px] font-medium uppercase tracking-[0.35em] text-rbp-cream">
+        <p className="font-secondary text-[13px] font-medium uppercase tracking-[0.35em] text-rbp-cream">
           Piercing <span className="text-rbp-accent">•</span> Jewelry <span className="text-rbp-accent">•</span> Events{' '}
           <span className="text-rbp-accent">•</span> Community
         </p>

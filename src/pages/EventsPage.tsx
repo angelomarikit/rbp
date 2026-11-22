@@ -90,12 +90,12 @@ export function EventsPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/10" />
         <div className="relative z-10 flex min-h-[420px] max-w-2xl flex-col justify-center px-6 py-16 lg:min-h-[520px] lg:px-16 lg:py-20">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.28em] text-white/70">Events &</p>
+          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.28em] text-white/70">Events &</p>
           <GothicHeading as="h1" className="mt-3 text-[3.6rem] leading-[0.85] text-rbp-accent sm:text-[4.8rem]">
             Client Showcase
           </GothicHeading>
           <div className="mt-5 h-[3px] w-48 bg-gradient-to-r from-rbp-accent to-transparent" />
-          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-white/80">
+          <p className="font-secondary mt-6 max-w-md text-[16px] leading-relaxed text-white/80">
             Take a closer look at our events, piercing work, and the community that continues to support the RBP
             movement.
           </p>
@@ -164,7 +164,7 @@ export function EventsPage() {
                   <p className="mt-1 flex items-center gap-2 text-[13px] text-white/70">
                     <IconPin size={14} /> {u.location}
                   </p>
-                  <p className="mt-3 text-[13px] leading-relaxed text-white/55">{u.summary}</p>
+                  <p className="font-secondary mt-3 text-[13px] leading-relaxed text-white/55">{u.summary}</p>
                 </div>
               </Link>
             ))}
@@ -174,7 +174,7 @@ export function EventsPage() {
 
       <section id="showcase" className="border-t border-rbp-border/60 px-6 py-16 sm:px-8 lg:px-12 lg:py-24">
         <GothicHeading className="text-center text-[2.8rem] sm:text-[3.4rem]">Client Showcase</GothicHeading>
-        <p className="mb-10 mt-4 text-center text-[12px] uppercase tracking-[0.28em] text-white/55">
+        <p className="font-secondary mb-10 mt-4 text-center text-[12px] uppercase tracking-[0.28em] text-white/55">
           Real Clients · Real Piercings · Real Results
         </p>
         <div className="relative flex items-center gap-4">
@@ -208,7 +208,7 @@ export function EventsPage() {
           {quotes.map((t) => (
             <article key={t.name} className="rounded-rbp border border-rbp-border bg-black px-6 py-7 text-[15px] leading-relaxed">
               {t.image && <img src={t.image} alt="" className="mb-4 h-16 w-16 rounded-full object-cover" />}
-              <p className="text-white/90">&ldquo;{t.quote}&rdquo;</p>
+              <p className="font-secondary text-white/90">&ldquo;{t.quote}&rdquo;</p>
               <p className="mt-5 tracking-widest text-rbp-accent">★★★★★</p>
               <p className="mt-2 text-[13px] text-white/60">– {t.name}</p>
             </article>
@@ -218,7 +218,7 @@ export function EventsPage() {
           <p className="flex items-center justify-center gap-2 font-display text-[2rem] leading-none text-rbp-accent">
             <IconCalendarLight size={22} /> Book Your Piercing Now
           </p>
-          <p className="mt-4 text-[14px] text-white/75">Consultation · Proper Guidance · Aftercare Support</p>
+          <p className="font-secondary mt-4 text-[14px] text-white/75">Consultation · Proper Guidance · Aftercare Support</p>
           <OrangeLink to="/book" className="mt-6 font-semibold">
             Book an Appointment →
           </OrangeLink>

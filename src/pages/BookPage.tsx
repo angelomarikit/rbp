@@ -60,11 +60,11 @@ export function BookPage() {
     return (
       <div className="flex w-full justify-center bg-black px-5 py-20">
         <div className={`w-full max-w-xl px-8 py-12 text-center ${rbpPanel}`}>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.28em] text-rbp-cream">Piercing Services</p>
+          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.28em] text-rbp-cream">Piercing Services</p>
           <GothicHeading as="h1" className="mt-3 text-[3rem] leading-[0.9]">
             Request Received
           </GothicHeading>
-          <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/80">
+          <p className="font-secondary mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/80">
             Reference <span className="text-rbp-accent">{successId}</span>. Our team will contact you to confirm your
             appointment, aftercare guidance, and studio policies.
           </p>
@@ -80,11 +80,11 @@ export function BookPage() {
     <div className="w-full bg-black px-5 py-14 sm:px-8 lg:py-20">
       {submitting ? <LoadingScreen label="Sending your request" full /> : null}
       <div className="mx-auto max-w-3xl text-center">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Piercing Services</p>
+        <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Piercing Services</p>
         <GothicHeading as="h1" className="mt-3 text-[3.6rem] leading-[0.85] sm:text-[4.6rem]">
           Book a Piercing
         </GothicHeading>
-        <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-white/80">
+        <p className="font-secondary mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-white/80">
           Request an appointment for professional piercing services. This is not jewelry checkout — for jewelry
           purchases, visit <Link to="/collections" className="text-rbp-accent">Collections</Link>.
         </p>

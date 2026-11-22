@@ -213,7 +213,7 @@ export function SettingsAdmin() {
   const [affiliation, setAffiliation] = useState<AffiliationContent>(defaultAffiliation)
   const [paymentQrs, setPaymentQrs] = useState<PaymentQrs>(emptyPaymentQrs)
   const [font, setFont] = useState<SiteFontSet | null>(null)
-  const [fontBusy, setFontBusy] = useState(false)
+  const [fontBusy, setFontBusy] = useState<'primary' | 'secondary' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
@@ -241,6 +241,68 @@ export function SettingsAdmin() {
       if (savedFont.data) setFont(siteFontFromExtra(savedFont.data.title, savedFont.data.extra))
     })
   }, [])
+
+  const persistFont = async (next: SiteFontSet | null) => {
+    if (!supabase) return
+    if (!next?.primary && !next?.secondary) {
+      const { error: deleteError } = await supabase.from('content_sections').delete().eq('page', 'site').eq('section_key', 'font')
+      if (deleteError) throw deleteError
+      setFont(null)
+      applySiteFont(null)
+      return
+    }
+    const title = [next.primary?.family, next.secondary?.family].filter(Boolean).join(' / ')
+    const { error: saveError } = await supabase.from('content_sections').upsert({
+      page: 'site',
+      section_key: 'font',
+      title,
+      extra: {
+        primary: next.primary ? { family: next.primary.family, files: next.primary.files } : null,
+        secondary: next.secondary ? { family: next.secondary.family, files: next.secondary.files } : null,
+      },
+      visible: true,
+      sort_order: 3,
+    }, { onConflict: 'page,section_key' })
+    if (saveError) throw saveError
+    setFont(next)
+    applySiteFont(next)
+  }
+
+  const saveSiteFont = async (role: 'primary' | 'secondary', file: File) => {
+    setFontBusy(role)
+    setError(null)
+    setOk(null)
+    try {
+      const nextFont = await fontFromZip(file, role)
+      const next: SiteFontSet = {
+        primary: role === 'primary' ? nextFont : font?.primary ?? null,
+        secondary: role === 'secondary' ? nextFont : font?.secondary ?? null,
+      }
+      await persistFont(next)
+      setOk(role === 'primary'
+        ? `${nextFont.family} is now the title font.`
+        : `${nextFont.family} is now the font for subtitles and descriptions.`)
+    } catch (err) {
+      setError(friendlyError(err, 'That font zip could not be used. Try another zip of TTF, OTF, or WOFF files.'))
+    } finally {
+      setFontBusy(null)
+    }
+  }
+
+  const clearSiteFont = async (role: 'primary' | 'secondary') => {
+    setError(null)
+    setOk(null)
+    try {
+      const next: SiteFontSet = {
+        primary: role === 'primary' ? null : font?.primary ?? null,
+        secondary: role === 'secondary' ? null : font?.secondary ?? null,
+      }
+      await persistFont(next.primary || next.secondary ? next : null)
+      setOk(role === 'primary' ? 'Titles are back on the original font.' : 'Subtitles and descriptions are back on the original font.')
+    } catch (err) {
+      setError(friendlyError(err, 'The original font could not be restored.'))
+    }
+  }
 
   return (
     <form
@@ -407,79 +469,58 @@ export function SettingsAdmin() {
       <Card id="font" className="scroll-mt-4 space-y-4">
         <div>
           <h2 className="text-base font-semibold">Website font</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Add a zip when you want a different font. The first font in the zip is used for headings. The second font is used for the rest of the text. A zip with only one font is used for both.</p>
+          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Add a zip for titles, and a separate zip for subtitles and descriptions. Other text stays on the original font.</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-[#2a2a2a] bg-[#101010] p-4">
-            <p className="text-sm text-white">First font: {font?.primary.family ?? 'The original font'}</p>
+            <p className="text-sm text-white">First font: {font?.primary?.family ?? 'The original font'}</p>
+            <p className="mt-1 text-xs text-[#8d8d8d]">Titles only.</p>
             <p className="mt-3 text-3xl text-[#ffb067]" style={{ fontFamily: 'var(--rbp-font-display)' }}>Romell Body Piercing</p>
+            <label className="mt-4 inline-flex cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
+              {fontBusy === 'primary' ? 'Adding font…' : 'Add a title font zip'}
+              <input
+                className="hidden"
+                type="file"
+                accept=".zip,application/zip"
+                disabled={fontBusy !== null}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (file) void saveSiteFont('primary', file)
+                }}
+              />
+            </label>
+            {font?.primary ? (
+              <button type="button" className="mt-3 block text-sm text-[#ffb089]" onClick={() => void clearSiteFont('primary')}>
+                Use the original title font
+              </button>
+            ) : null}
           </div>
           <div className="rounded-xl border border-[#2a2a2a] bg-[#101010] p-4">
-            <p className="text-sm text-white">Secondary font: {font?.secondary.family ?? 'The original font'}</p>
-            <p className="mt-3 text-base text-[#f3f3f3]" style={{ fontFamily: 'var(--rbp-font-body)' }}>Expert piercing services and premium body jewelry.</p>
+            <p className="text-sm text-white">Secondary font: {font?.secondary?.family ?? 'The original font'}</p>
+            <p className="mt-1 text-xs text-[#8d8d8d]">Subtitles and descriptions. Not titles.</p>
+            <p className="font-secondary mt-3 text-base text-[#f3f3f3]">Expert piercing services and premium body jewelry.</p>
+            <label className="mt-4 inline-flex cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
+              {fontBusy === 'secondary' ? 'Adding font…' : 'Add a secondary font zip'}
+              <input
+                className="hidden"
+                type="file"
+                accept=".zip,application/zip"
+                disabled={fontBusy !== null}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (file) void saveSiteFont('secondary', file)
+                }}
+              />
+            </label>
+            {font?.secondary ? (
+              <button type="button" className="mt-3 block text-sm text-[#ffb089]" onClick={() => void clearSiteFont('secondary')}>
+                Use the original text font
+              </button>
+            ) : null}
           </div>
         </div>
-        <label className="inline-flex cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
-          {fontBusy ? 'Adding font…' : 'Add a font zip'}
-          <input
-            className="hidden"
-            type="file"
-            accept=".zip,application/zip"
-            disabled={fontBusy}
-            onChange={async (event) => {
-              const file = event.target.files?.[0]
-              event.target.value = ''
-              if (!file || !supabase) return
-              setFontBusy(true)
-              setError(null)
-              setOk(null)
-              try {
-                const next = await fontFromZip(file)
-                const same = next.primary.family === next.secondary.family
-                const { error: saveError } = await supabase.from('content_sections').upsert({
-                  page: 'site',
-                  section_key: 'font',
-                  title: same ? next.primary.family : `${next.primary.family} / ${next.secondary.family}`,
-                  extra: {
-                    primary: { family: next.primary.family, files: next.primary.files },
-                    secondary: { family: next.secondary.family, files: next.secondary.files },
-                  },
-                  visible: true,
-                  sort_order: 3,
-                }, { onConflict: 'page,section_key' })
-                if (saveError) throw saveError
-                setFont(next)
-                applySiteFont(next)
-                setOk(same
-                  ? `${next.primary.family} is now the first and secondary font.`
-                  : `${next.primary.family} is the first font and ${next.secondary.family} is the secondary font.`)
-              } catch (err) {
-                setError(friendlyError(err, 'That font zip could not be used. Try another zip of TTF, OTF, or WOFF files.'))
-              } finally {
-                setFontBusy(false)
-              }
-            }}
-          />
-        </label>
-        {font ? (
-          <button
-            type="button"
-            className="block text-sm text-[#ffb089]"
-            onClick={async () => {
-              if (!supabase) return
-              setError(null)
-              const { error: deleteError } = await supabase.from('content_sections').delete().eq('page', 'site').eq('section_key', 'font')
-              if (deleteError) setError(friendlyError(deleteError, 'The original font could not be restored.'))
-              else {
-                setFont(null)
-                applySiteFont(null)
-                setOk('The original font is back.')
-              }
-            }}
-          >
-            Use the original font
-          </button>
-        ) : null}
         {fontBusy ? <LoadingScreen label="Adding the font" full /> : null}
       </Card>
       <Card id="payment" className="scroll-mt-4 space-y-4">

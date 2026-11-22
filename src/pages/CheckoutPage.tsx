@@ -83,7 +83,7 @@ export function CheckoutPage() {
           <GothicHeading as="h1" className="text-[2.6rem] leading-none text-rbp-accent sm:text-[3.4rem]">
             Shopping Cart & Checkout
           </GothicHeading>
-          <p className="mt-3 text-[12px] font-medium uppercase tracking-[0.22em] text-white/75">
+          <p className="font-secondary mt-3 text-[12px] font-medium uppercase tracking-[0.22em] text-white/75">
             Review your items and complete your order
           </p>
         </div>

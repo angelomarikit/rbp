@@ -20,7 +20,7 @@ export function GalleryPage() {
         {items.map((item) => (
           <figure key={item.id}>
             <img src={publicMediaUrl(item.storage_path)} alt={item.caption ?? ''} className="aspect-square w-full rounded-rbp border border-rbp-border object-cover" />
-            {item.caption && <figcaption className="mt-2 text-center text-xs text-white/70">{item.caption}</figcaption>}
+            {item.caption && <figcaption className="font-secondary mt-2 text-center text-xs text-white/70">{item.caption}</figcaption>}
           </figure>
         ))}
       </div>
@@ -51,7 +51,7 @@ export function AboutPage() {
       <GothicHeading as="h1" className="text-[3rem]">{title}</GothicHeading>
       {image && <img src={publicMediaUrl(image)} alt="" className="mt-6 aspect-[4/5] w-full rounded-rbp border border-rbp-border object-cover" />}
       {video && <video src={publicMediaUrl(video)} className="mt-6 w-full rounded-rbp" controls />}
-      <p className="mt-6 whitespace-pre-line text-[15px] leading-relaxed text-white/80">{body}</p>
+      <p className="font-secondary mt-6 whitespace-pre-line text-[15px] leading-relaxed text-white/80">{body}</p>
     </div>
   )
 }
@@ -85,7 +85,7 @@ export function ContactPage() {
   return (
     <div className="mx-auto max-w-xl bg-black px-5 py-14 text-center">
       <GothicHeading as="h1" className="text-[3rem]">{title}</GothicHeading>
-      <p className="mt-4 text-[15px] text-white/80">{body}</p>
+      <p className="font-secondary mt-4 text-[15px] text-white/80">{body}</p>
       <div className="mt-6 space-y-1 text-sm text-rbp-cream">
         {details.phone && <p>{details.phone}</p>}
         {details.email && <p>{details.email}</p>}

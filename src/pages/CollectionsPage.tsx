@@ -134,11 +134,11 @@ export function CollectionsPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
         <div className="relative z-10 flex min-h-[380px] max-w-3xl flex-col justify-center px-6 py-16 sm:px-12 lg:min-h-[460px] lg:px-16">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Shop Our</p>
+          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Shop Our</p>
           <GothicHeading as="h1" className="mt-2 text-[4.2rem] leading-[0.85] text-rbp-accent sm:text-[5.4rem]">
             Collections
           </GothicHeading>
-          <p className="mt-5 max-w-md text-[16px] leading-relaxed text-white/90">
+          <p className="font-secondary mt-5 max-w-md text-[16px] leading-relaxed text-white/90">
             Premium body jewelry for every style, placement, and piercing.
           </p>
           <div className="mt-6 h-[3px] w-56 bg-gradient-to-r from-rbp-accent to-transparent" />

@@ -17,26 +17,25 @@ export type SiteFont = {
 }
 
 export type SiteFontSet = {
-  primary: SiteFont
-  secondary: SiteFont
+  primary: SiteFont | null
+  secondary: SiteFont | null
 }
 
 export function siteFontFromExtra(title: string | null | undefined, extra: unknown): SiteFontSet | null {
   if (!extra || typeof extra !== 'object') return null
   const row = extra as { files?: unknown; primary?: unknown; secondary?: unknown }
-  const primary = fontFromStored(row.primary)
-  const secondary = fontFromStored(row.secondary)
-  if (primary || secondary) {
-    const first = primary ?? secondary
-    if (!first) return null
-    return { primary: first, secondary: secondary ?? first }
+  if ('primary' in row || 'secondary' in row) {
+    const primary = fontFromStored(row.primary)
+    const secondary = fontFromStored(row.secondary)
+    if (!primary && !secondary) return null
+    return { primary, secondary }
   }
   const legacy = fontFromStored({ family: title, files: row.files })
   if (!legacy) return null
-  return { primary: legacy, secondary: legacy }
+  return { primary: legacy, secondary: null }
 }
 
-export async function fontFromZip(file: File): Promise<SiteFontSet> {
+export async function fontFromZip(file: File, role: 'primary' | 'secondary' = 'primary'): Promise<SiteFont> {
   if (!file.name.toLowerCase().endsWith('.zip')) throw new Error('Add a .zip file.')
   if (file.size > 8_000_000) throw new Error('That zip is too large. Keep it under 8 MB.')
   const entries = await unzip(await file.arrayBuffer())
@@ -61,30 +60,29 @@ export async function fontFromZip(file: File): Promise<SiteFontSet> {
       data: toBase64(entry.data),
     })
   }
-  const primary = toFont(order[0] ?? 'Custom font', groups)
-  const secondary = order[1] ? toFont(order[1], groups) : primary
-  return { primary, secondary }
+  const index = role === 'secondary' && order.length > 1 ? 1 : 0
+  return toFont(order[index] ?? 'Custom font', groups)
 }
 
 export function applySiteFont(fonts: SiteFontSet | null) {
   document.getElementById('site-font')?.remove()
   const root = document.documentElement
-  if (!fonts) {
-    root.style.removeProperty('--rbp-font-display')
-    root.style.removeProperty('--rbp-font-body')
-    return
-  }
-  const shared = sameFiles(fonts.primary, fonts.secondary)
-  const bodyFamily = shared ? DISPLAY_FAMILY : BODY_FAMILY
+  root.style.removeProperty('--rbp-font-body')
+  const primary = fonts?.primary ?? null
+  const secondary = fonts?.secondary ?? null
+  if (primary) root.style.setProperty('--rbp-font-display', `'${DISPLAY_FAMILY}', sans-serif`)
+  else root.style.removeProperty('--rbp-font-display')
+  if (secondary) root.style.setProperty('--rbp-font-secondary', `'${BODY_FAMILY}', sans-serif`)
+  else root.style.removeProperty('--rbp-font-secondary')
+  const css = [
+    primary ? faceRules(DISPLAY_FAMILY, primary) : '',
+    secondary ? faceRules(BODY_FAMILY, secondary) : '',
+  ].filter(Boolean).join('\n')
+  if (!css) return
   const style = document.createElement('style')
   style.id = 'site-font'
-  style.textContent = [
-    faceRules(DISPLAY_FAMILY, fonts.primary),
-    shared ? '' : faceRules(bodyFamily, fonts.secondary),
-  ].filter(Boolean).join('\n')
+  style.textContent = css
   document.head.appendChild(style)
-  root.style.setProperty('--rbp-font-display', `'${DISPLAY_FAMILY}', sans-serif`)
-  root.style.setProperty('--rbp-font-body', `'${bodyFamily}', sans-serif`)
 }
 
 function fontFromStored(value: unknown): SiteFont | null {
@@ -112,11 +110,6 @@ function parseFiles(value: unknown): SiteFontFile[] {
 
 function toFont(family: string, groups: Map<string, SiteFontFile[]>): SiteFont {
   return { family, files: groups.get(family) ?? [] }
-}
-
-function sameFiles(primary: SiteFont, secondary: SiteFont) {
-  return primary.files.length === secondary.files.length
-    && primary.files.every((file, index) => file.data === secondary.files[index]?.data)
 }
 
 function faceRules(cssFamily: string, font: SiteFont) {

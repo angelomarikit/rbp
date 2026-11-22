@@ -34,9 +34,9 @@ export function MemberStrip() {
   return (
     <section className="w-full border-t border-rbp-border/70 bg-black py-10" aria-label={content.eyebrow || 'Professional affiliation'}>
       <div className="mb-8 px-4 text-center">
-        {content.eyebrow && <p className="text-[13px] font-semibold uppercase tracking-[0.28em] text-rbp-accent">{content.eyebrow}</p>}
+        {content.eyebrow && <p className="font-secondary text-[13px] font-semibold uppercase tracking-[0.28em] text-rbp-accent">{content.eyebrow}</p>}
         {content.title && <p className="mt-3 text-[22px] font-bold text-white sm:text-[28px]">{content.title}</p>}
-        {content.tagline && <p className="mt-2 text-[14px] text-white/70">{content.tagline}</p>}
+        {content.tagline && <p className="font-secondary mt-2 text-[14px] text-white/70">{content.tagline}</p>}
       </div>
       {content.logos.length > 0 && (
         <div className="overflow-hidden">

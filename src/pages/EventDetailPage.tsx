@@ -40,7 +40,7 @@ export function EventDetailPage() {
           <span className="text-rbp-accent">{event.title}</span>
         </nav>
 
-        <p className="mt-8 text-[12px] font-semibold uppercase tracking-[0.28em] text-rbp-cream">Event</p>
+        <p className="font-secondary mt-8 text-[12px] font-semibold uppercase tracking-[0.28em] text-rbp-cream">Event</p>
         <GothicHeading as="h1" className="mt-3 text-[3.2rem] leading-[0.88] sm:text-[4.2rem]">
           {event.title}
         </GothicHeading>
@@ -59,7 +59,7 @@ export function EventDetailPage() {
           className="mt-8 h-[280px] w-full rounded-rbp border border-rbp-border object-cover sm:h-[420px]"
         />
 
-        <div className="mt-10 space-y-5 text-[17px] leading-relaxed text-white/85">
+        <div className="font-secondary mt-10 space-y-5 text-[17px] leading-relaxed text-white/85">
           {event.body.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
@@ -69,7 +69,7 @@ export function EventDetailPage() {
           <p className="flex items-center justify-center gap-2 font-display text-[2rem] leading-none text-rbp-accent">
             <IconCalendar size={22} /> Going to this event?
           </p>
-          <p className="mx-auto mt-4 max-w-md text-[14px] text-white/75">
+          <p className="font-secondary mx-auto mt-4 max-w-md text-[14px] text-white/75">
             Request a studio appointment and mention {event.title}. The team will confirm the time with you.
           </p>
           <OrangeLink to="/book" className="mt-6 font-semibold">
