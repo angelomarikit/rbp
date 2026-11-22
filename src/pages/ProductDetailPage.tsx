@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ProductCard } from '../components/commerce/ProductCard.tsx'
+import { usePageSeo } from '../components/Seo.tsx'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { LoadingScreen } from '../components/ui/LoadingScreen.tsx'
@@ -44,6 +45,13 @@ export function ProductDetailPage() {
   const [gemKey, setGemKey] = useState('')
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Description')
   const [hero, setHero] = useState(0)
+  usePageSeo(
+    product
+      ? { title: product.name, description: product.description, image: product.imagePath ? publicMediaUrl(product.imagePath) : '' }
+      : ready
+        ? { title: 'Product not found', noindex: true }
+        : null,
+  )
 
   useEffect(() => {
     let cancelled = false

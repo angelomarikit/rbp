@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { usePageSeo } from '../components/Seo.tsx'
 import { OrangeLink } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCalendar, IconCalendarLight, IconPin } from '../components/ui/Icons.tsx'
@@ -41,6 +42,13 @@ export function EventDetailPage() {
   const [event, setEvent] = useState<EventView | null>(() => fromLocal(slug))
   const [more, setMore] = useState<EventView[]>([])
   const [ready, setReady] = useState(false)
+  usePageSeo(
+    event
+      ? { title: event.title, description: event.body[0], image: event.image ? publicMediaUrl(event.image) : '' }
+      : ready
+        ? { title: 'Event not found', noindex: true }
+        : null,
+  )
 
   useEffect(() => {
     const local = fromLocal(slug)

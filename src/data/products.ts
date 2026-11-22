@@ -4,11 +4,15 @@ export const FEATURED_PRODUCT_SLUG = 'crystal-navel-barbell'
 
 export const GEM_VARIANTS: GemVariant[] = [
   { key: 'clear', label: 'Clear', color: '#e8e8e8' },
-  { key: 'pink', label: 'Pink', color: '#e87ab8' },
-  { key: 'purple', label: 'Purple', color: '#9b6fd4' },
-  { key: 'blue', label: 'Blue', color: '#5a9fd4' },
-  { key: 'red', label: 'Red', color: '#c44545' },
+  { key: 'rose-gold', label: 'Rose Gold', color: '#b76e79' },
+  { key: 'gold', label: 'Gold', color: '#d4af37' },
   { key: 'black', label: 'Black', color: '#2a2a2a' },
+  { key: 'multicolor', label: 'Multicolor', color: '#e85d9c' },
+  { key: 'green', label: 'Green', color: '#3d9a5f' },
+  { key: 'blue', label: 'Blue', color: '#5a9fd4' },
+  { key: 'pink', label: 'Pink', color: '#e87ab8' },
+  { key: 'red', label: 'Red', color: '#c44545' },
+  { key: 'purple', label: 'Purple', color: '#9b6fd4' },
 ]
 
 export const PRODUCTS: Product[] = [

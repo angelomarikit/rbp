@@ -1,1 +1,3 @@
-/*    /index.html   200
+/robots.txt    /.netlify/functions/crawl?file=robots    200
+/sitemap.xml   /.netlify/functions/crawl?file=sitemap   200
+/*             /index.html                              200

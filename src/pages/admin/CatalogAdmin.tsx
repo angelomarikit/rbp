@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { GEM_VARIANTS } from '../../data/products.ts'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { formatPhp } from '../../lib/format.ts'
@@ -151,10 +152,33 @@ export function ProductEditor() {
       }
       setCollections((collectionResult.data ?? []) as Collection[])
       const values = (valueResult.data ?? []) as OptionValue[]
-      setOptions(((optionResult.data ?? []) as { id: string; key: string; name: string }[]).map((option) => ({
+      let nextOptions = ((optionResult.data ?? []) as { id: string; key: string; name: string }[]).map((option) => ({
         ...option,
         values: values.filter((value) => value.option_id === option.id),
-      })))
+      }))
+      const color = nextOptions.find((option) => option.key === 'color')
+      if (color) {
+        const known = new Set(GEM_VARIANTS.map((item) => item.label.toLowerCase()))
+        const extras = color.values.filter((value) => !known.has(value.value.toLowerCase()))
+        nextOptions = nextOptions.map((option) => option.id === color.id ? {
+          ...option,
+          values: [
+            ...GEM_VARIANTS.map((item) => color.values.find((value) => value.value.toLowerCase() === item.label.toLowerCase()) ?? { id: `color-${item.key}`, option_id: color.id, value: item.label }),
+            ...extras,
+          ],
+        } : option)
+        const saved = await supabase.from('variation_option_values').upsert(
+          [...GEM_VARIANTS.map((item, index) => ({ option_id: color.id, value: item.label, sort_order: index + 1 })), ...extras.map((value, index) => ({ option_id: color.id, value: value.value, sort_order: GEM_VARIANTS.length + index + 1 }))],
+          { onConflict: 'option_id,value' },
+        )
+        if (!saved.error) {
+          const refreshed = await supabase.from('variation_option_values').select('id, option_id, value').eq('option_id', color.id).order('sort_order')
+          if (!refreshed.error && refreshed.data) {
+            nextOptions = nextOptions.map((option) => option.id === color.id ? { ...option, values: refreshed.data as OptionValue[] } : option)
+          }
+        }
+      }
+      setOptions(nextOptions)
       if (isNew) return
       const [product, pics, links, vars] = await Promise.all([
         supabase.from('products').select('name, description, price_cents, compare_at_price_cents, sku, inventory_qty, status, material, image_path').eq('id', productId).maybeSingle(),

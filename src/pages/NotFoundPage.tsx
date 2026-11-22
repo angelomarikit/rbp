@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
+import { usePageSeo } from '../components/Seo.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 
 export function NotFoundPage() {
+  usePageSeo({ title: 'Page not found', noindex: true })
   return (
     <div className="flex w-full flex-col items-center bg-black px-6 py-24 text-center">
       <img src="/assets/rbp/branding/rbp-logo-nav.png" alt="" className="h-20 w-20 object-contain" />

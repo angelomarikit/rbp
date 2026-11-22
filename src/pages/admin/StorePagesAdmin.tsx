@@ -394,7 +394,7 @@ export function SettingsAdmin() {
           <Card id="search" className="scroll-mt-4 space-y-4">
             <div>
               <h2 className="text-base font-semibold">What Google shows</h2>
-              <p className="mt-1 text-sm text-[#9a9a9a]">This is the title and the short paragraph in search results and in the browser tab.</p>
+              <p className="mt-1 text-sm text-[#9a9a9a]">This is the title and the short paragraph in search results and in the browser tab. Saving writes them to the database, and the public site uses them. Admin, account, checkout, and sign-in pages stay hidden from Google.</p>
             </div>
             <TextField label="Page name" hint="Example: Romell Body Piercing" value={form.seo_title} onChange={(event) => setForm({ ...form, seo_title: event.target.value })} />
             <TextArea label="Short description" hint="One or two sentences about the studio." value={form.seo_description} onChange={(event) => setForm({ ...form, seo_description: event.target.value })} />
