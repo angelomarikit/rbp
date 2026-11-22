@@ -1,0 +1,119 @@
+import { useState, type ReactNode } from 'react'
+import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
+
+export const fieldClass =
+  'mt-1.5 w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-[#f5f5f5] outline-none focus:border-[#FF7900]'
+
+export function PageTitle({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h1 className="text-xl font-semibold tracking-normal text-white">{title}</h1>
+        {subtitle && <p className="mt-1 max-w-2xl text-sm text-[#a3a3a3]">{subtitle}</p>}
+      </div>
+      {action}
+    </div>
+  )
+}
+
+export function Card({ children, className = '', id }: { children: ReactNode; className?: string; id?: string }) {
+  return <section id={id} className={`rounded-xl border border-[#2a2a2a] bg-[#161616] p-5 ${className}`}>{children}</section>
+}
+
+export function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...props} className={`rounded-lg bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black disabled:opacity-50 ${props.className ?? ''}`}>
+      {children}
+    </button>
+  )
+}
+
+export function QuietButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...props} className={`rounded-lg border border-[#3a3a3a] px-3 py-2 text-sm text-[#f5f5f5] disabled:opacity-50 ${props.className ?? ''}`}>
+      {children}
+    </button>
+  )
+}
+
+export function TextField({ label, hint, ...props }: { label: string; hint?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <label className="block text-sm font-medium text-[#f0f0f0]">
+      {label}
+      {hint && <span className="mt-0.5 block text-xs font-normal text-[#8d8d8d]">{hint}</span>}
+      <input {...props} className={fieldClass} />
+    </label>
+  )
+}
+
+export function TextArea({ label, hint, ...props }: { label: string; hint?: string } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <label className="block text-sm font-medium text-[#f0f0f0]">
+      {label}
+      {hint && <span className="mt-0.5 block text-xs font-normal text-[#8d8d8d]">{hint}</span>}
+      <textarea {...props} className={`${fieldClass} min-h-28`} />
+    </label>
+  )
+}
+
+export function Notice({ error, ok }: { error?: string | null; ok?: string | null }) {
+  if (error) return <p className="mb-3 text-sm text-[#ffb089]">{error}</p>
+  if (ok) return <p className="mb-3 text-sm text-[#ffb067]">{ok}</p>
+  return null
+}
+
+export function MediaField({
+  label,
+  hint,
+  folder,
+  accept,
+  value,
+  onChange,
+  previewClassName = 'mt-3 h-32 w-full rounded-lg object-cover',
+}: {
+  label: string
+  hint: string
+  folder: string
+  accept: string
+  value: string
+  onChange: (path: string) => void
+  previewClassName?: string
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const preview = publicMediaUrl(value)
+  const video = value.endsWith('.mp4') || accept.includes('video')
+
+  return (
+    <div>
+      <p className="text-sm text-[#d4d4d4]">{label}</p>
+      <p className="mt-1 text-xs text-[#8a8a8a]">{hint}</p>
+      {preview && (video && value.endsWith('.mp4') ? (
+        <video src={preview} className={previewClassName} muted />
+      ) : (
+        <img src={preview} alt="" className={previewClassName} />
+      ))}
+      <input
+        type="file"
+        accept={accept}
+        className="mt-3 block text-sm text-[#cfcfcf]"
+        onChange={async (event) => {
+          const file = event.target.files?.[0]
+          event.target.value = ''
+          if (!file) return
+          setBusy(true)
+          setError(null)
+          try {
+            onChange(await uploadMedia(file, folder))
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Upload failed')
+          } finally {
+            setBusy(false)
+          }
+        }}
+      />
+      {busy && <p className="mt-2 text-xs text-[#ffb067]">Uploading…</p>}
+      {error && <p className="mt-2 text-xs text-[#ffb089]">{error}</p>}
+    </div>
+  )
+}

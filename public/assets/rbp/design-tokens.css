@@ -1,0 +1,13 @@
+/* Brand typography and color */
+:root {
+  --rbp-bg: #000000;
+  --rbp-surface: #0d0d0d;
+  --rbp-accent: #ff7900;
+  --rbp-cream: #f5e6d3;
+  --rbp-accent-bright: #ff9a1a;
+  --rbp-border: #c56a00;
+  --rbp-text: #ffffff;
+  --rbp-muted: #f5e6d3;
+  --rbp-font-display: 'Cloister Black', 'Old English Text MT', 'UnifrakturMaguntia', serif;
+  --rbp-font-body: 'Inter', Arial, sans-serif;
+}

@@ -1,0 +1,555 @@
+[
+  {
+    "file": "branding/rbp-logo-original.png",
+    "source": "image(20261122-054103).png",
+    "type": "original uploaded logo"
+  },
+  {
+    "file": "branding/rbp-logo-alternate.png",
+    "source": "png_style_circular_logo_on_transparent_checkerboa.png",
+    "type": "alternate logo graphic; verify against original"
+  },
+  {
+    "file": "branding/body-piercers-association-logo.png",
+    "source": "image(20261122-054905).png",
+    "type": "uploaded association logo"
+  },
+  {
+    "file": "romell/romell-piercing-client-action-original.png",
+    "source": "image(20261122-060255).png",
+    "type": "original uploaded documentary photo"
+  },
+  {
+    "file": "romell/romell-portrait-original.png",
+    "source": "image(20261122-060325).png",
+    "type": "original uploaded portrait"
+  },
+  {
+    "file": "romell/romell-seminar-poster-original.png",
+    "source": "image(20261122-060310).png",
+    "type": "uploaded promotional poster with text"
+  },
+  {
+    "file": "references/arzey-logo-reference.png",
+    "source": "image(20261122-054916).png",
+    "type": "different brand: reference only, DO NOT use as RBP logo"
+  },
+  {
+    "file": "references/piercing-placement-guide.png",
+    "source": "image(20261122-054730).png",
+    "type": "uploaded placement guide"
+  },
+  {
+    "file": "references/piercing-price-list-poster.png",
+    "source": "image(20261122-054748).png",
+    "type": "uploaded price list; verify pricing"
+  },
+  {
+    "file": "references/dole-logo-reference.png",
+    "source": "image(20261122-054909).png",
+    "type": "third party logo; do not imply endorsement"
+  },
+  {
+    "file": "catalogs/titanium-jewelry-sheet-2.png",
+    "source": "image(20261122-054706).png",
+    "type": "uploaded product catalog composite"
+  },
+  {
+    "file": "catalogs/titanium-jewelry-sheet-4.png",
+    "source": "image(20261122-054649).png",
+    "type": "uploaded product catalog composite"
+  },
+  {
+    "file": "catalogs/titanium-jewelry-sheet-36.png",
+    "source": "image(20261122-054656).png",
+    "type": "uploaded product catalog composite"
+  },
+  {
+    "file": "catalogs/titanium-jewelry-sheet-41.png",
+    "source": "image(20261122-054700).png",
+    "type": "uploaded product catalog composite"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-6.png",
+    "source": "image(20261122-054519).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-25.png",
+    "source": "image(20261122-054335-1).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-34.png",
+    "source": "image(20261122-054501).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-35.png",
+    "source": "image(20261122-054354).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-38.png",
+    "source": "image(20261122-054345).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-39.png",
+    "source": "image(20261122-054335).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-42.png",
+    "source": "image(20261122-054509).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-43.png",
+    "source": "image(20261122-054341).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-44.png",
+    "source": "image(20261122-054323).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/jewelry-reference-sheet-45.png",
+    "source": "image(20261122-054350).png",
+    "type": "uploaded jewelry composite or screenshot; verify details"
+  },
+  {
+    "file": "catalogs/steel-jewelry-price-reference-21.png",
+    "source": "image(20261122-054816).png",
+    "type": "uploaded pricing card screenshot; verify pricing"
+  },
+  {
+    "file": "catalogs/steel-jewelry-price-reference-27.png",
+    "source": "image(20261122-054823).png",
+    "type": "uploaded pricing card screenshot; verify pricing"
+  },
+  {
+    "file": "catalogs/steel-jewelry-price-reference-32.png",
+    "source": "image(20261122-054806).png",
+    "type": "uploaded pricing card screenshot; verify pricing"
+  },
+  {
+    "file": "banners/homepage-hero-pierced-ear.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      610,
+      65,
+      1015,
+      422
+    ],
+    "type": "AI-generated mockup crop; ear photo, some design artifacts possible"
+  },
+  {
+    "file": "banners/homepage-studio-sign.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      1185,
+      65,
+      1535,
+      422
+    ],
+    "type": "AI-generated mockup crop; studio background"
+  },
+  {
+    "file": "showcase/client-nostril-septum.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      40,
+      700,
+      191,
+      891
+    ],
+    "type": "AI-generated mockup crop; piercing showcase"
+  },
+  {
+    "file": "showcase/client-ear-multiple-piercings.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      200,
+      700,
+      343,
+      891
+    ],
+    "type": "AI-generated mockup crop; piercing showcase"
+  },
+  {
+    "file": "showcase/client-eyebrow.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      349,
+      700,
+      490,
+      891
+    ],
+    "type": "AI-generated mockup crop; piercing showcase"
+  },
+  {
+    "file": "showcase/client-lip.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      498,
+      700,
+      622,
+      891
+    ],
+    "type": "AI-generated mockup crop; piercing showcase"
+  },
+  {
+    "file": "showcase/client-ear-tunnel.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      626,
+      700,
+      766,
+      891
+    ],
+    "type": "AI-generated mockup crop; piercing showcase"
+  },
+  {
+    "file": "events/expo-booth-homepage.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      817,
+      701,
+      1304,
+      834
+    ],
+    "type": "AI-generated mockup crop; expo scene, partial overlaid graphics possible"
+  },
+  {
+    "file": "events/event-awards-homepage.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      1318,
+      701,
+      1495,
+      781
+    ],
+    "type": "AI-generated mockup crop; trophy scene"
+  },
+  {
+    "file": "events/event-group-homepage.jpg",
+    "source": "Romell Body Piercing Homepage Mockup-1.png",
+    "source_crop": [
+      1318,
+      800,
+      1495,
+      892
+    ],
+    "type": "AI-generated mockup crop; group photo"
+  },
+  {
+    "file": "products/product-01.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      281,
+      474,
+      472,
+      627
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-02.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      501,
+      474,
+      692,
+      627
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-03.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      721,
+      474,
+      912,
+      627
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-04.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      941,
+      474,
+      1132,
+      627
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-05.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      1161,
+      474,
+      1352,
+      627
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-06.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      1381,
+      474,
+      1534,
+      627
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-07.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      281,
+      750,
+      472,
+      903
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-08.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      501,
+      750,
+      692,
+      903
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-09.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      721,
+      750,
+      912,
+      903
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-10.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      941,
+      750,
+      1132,
+      903
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-11.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      1161,
+      750,
+      1352,
+      903
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/product-12.jpg",
+    "source": "Romell Body Piercing Collections-2.png",
+    "source_crop": [
+      1381,
+      750,
+      1534,
+      903
+    ],
+    "type": "AI-generated mockup product image crop; not original product photography"
+  },
+  {
+    "file": "products/navel-barbell-hero.jpg",
+    "source": "Crystal Navel Barbell Shop Page-3.png",
+    "source_crop": [
+      182,
+      232,
+      825,
+      782
+    ],
+    "type": "AI-generated mockup crop; product hero"
+  },
+  {
+    "file": "products/navel-barbell-gallery-1.jpg",
+    "source": "Crystal Navel Barbell Shop Page-3.png",
+    "source_crop": [
+      51,
+      232,
+      159,
+      346
+    ],
+    "type": "AI-generated mockup gallery crop"
+  },
+  {
+    "file": "products/navel-barbell-gallery-2.jpg",
+    "source": "Crystal Navel Barbell Shop Page-3.png",
+    "source_crop": [
+      51,
+      367,
+      159,
+      481
+    ],
+    "type": "AI-generated mockup gallery crop"
+  },
+  {
+    "file": "products/navel-barbell-gallery-3.jpg",
+    "source": "Crystal Navel Barbell Shop Page-3.png",
+    "source_crop": [
+      51,
+      503,
+      159,
+      617
+    ],
+    "type": "AI-generated mockup gallery crop"
+  },
+  {
+    "file": "products/navel-barbell-gallery-4.jpg",
+    "source": "Crystal Navel Barbell Shop Page-3.png",
+    "source_crop": [
+      51,
+      639,
+      159,
+      753
+    ],
+    "type": "AI-generated mockup gallery crop"
+  },
+  {
+    "file": "events/expo-main-hero.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      545,
+      117,
+      1195,
+      404
+    ],
+    "type": "AI-generated mockup crop; expo banner"
+  },
+  {
+    "file": "events/featured-event-1.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      38,
+      465,
+      313,
+      583
+    ],
+    "type": "AI-generated mockup event photo crop"
+  },
+  {
+    "file": "events/featured-event-2.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      332,
+      465,
+      607,
+      583
+    ],
+    "type": "AI-generated mockup event photo crop"
+  },
+  {
+    "file": "events/featured-event-3.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      625,
+      465,
+      900,
+      583
+    ],
+    "type": "AI-generated mockup event photo crop"
+  },
+  {
+    "file": "showcase/event-client-result-1.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      45,
+      919,
+      213,
+      1074
+    ],
+    "type": "AI-generated mockup client result crop"
+  },
+  {
+    "file": "showcase/event-client-result-2.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      226,
+      919,
+      394,
+      1074
+    ],
+    "type": "AI-generated mockup client result crop"
+  },
+  {
+    "file": "showcase/event-client-result-3.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      405,
+      919,
+      573,
+      1074
+    ],
+    "type": "AI-generated mockup client result crop"
+  },
+  {
+    "file": "showcase/event-client-result-4.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      585,
+      919,
+      753,
+      1074
+    ],
+    "type": "AI-generated mockup client result crop"
+  },
+  {
+    "file": "showcase/event-client-result-5.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      765,
+      919,
+      933,
+      1074
+    ],
+    "type": "AI-generated mockup client result crop"
+  },
+  {
+    "file": "showcase/event-client-result-6.jpg",
+    "source": "Romell Body Piercing Events Showcase-5.png",
+    "source_crop": [
+      945,
+      919,
+      1113,
+      1074
+    ],
+    "type": "AI-generated mockup client result crop"
+  },
+  {
+    "file": "banners/checkout-jewelry-banner.jpg",
+    "source": "Romell Body Piercing Checkout-4.png",
+    "source_crop": [
+      838,
+      89,
+      1532,
+      298
+    ],
+    "type": "AI-generated mockup banner jewelry photo crop"
+  }
+]

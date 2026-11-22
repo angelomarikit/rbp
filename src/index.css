@@ -1,0 +1,59 @@
+@import '../public/assets/rbp/design-tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    @apply min-h-full w-full overflow-x-hidden bg-rbp-bg text-rbp-text font-body antialiased;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .field-input {
+    @apply w-full rounded border border-rbp-border bg-rbp-bg px-2 py-2 text-sm text-rbp-text outline-none focus:border-rbp-accent;
+  }
+
+  .font-display {
+    font-family: 'Cloister Black', 'Old English Text MT', 'UnifrakturMaguntia', serif;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+
+  .header-glow {
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, #ff7900 20%, #ff9a1a 50%, #ff7900 80%, transparent);
+    box-shadow: 0 0 14px rgba(255, 121, 0, 0.85);
+  }
+
+  .member-track {
+    animation: member-slide 32s linear infinite;
+  }
+
+  .member-track:hover {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes member-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-track {
+    animation: none;
+  }
+}

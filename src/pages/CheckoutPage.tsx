@@ -1,0 +1,305 @@
+import { Link } from 'react-router-dom'
+import { OrangeButton } from '../components/ui/Buttons.tsx'
+import { GothicHeading } from '../components/ui/GothicHeading.tsx'
+import { IconCart, IconTrash } from '../components/ui/Icons.tsx'
+import { QuantityStepper } from '../components/ui/QuantityStepper.tsx'
+import { rbpField, rbpPanel } from '../components/ui/panels.ts'
+import { cartLineImage, useCart } from '../features/cart/CartProvider.tsx'
+import { useAuth } from '../features/auth/AuthProvider.tsx'
+import { useCheckout } from '../hooks/useCheckout.ts'
+import { asset } from '../lib/assets.ts'
+import { formatPhpLabel } from '../lib/format.ts'
+
+export function CheckoutPage() {
+  const { user } = useAuth()
+  const { lines, updateQuantity, removeLine, clearCart, itemCount } = useCart()
+  const {
+    form,
+    updateForm,
+    step,
+    subtotalCents,
+    shippingCents,
+    totalCents,
+    submitOrder,
+    submitting,
+    orderId,
+    error,
+  } = useCheckout(lines)
+
+  const handleSubmit = async () => {
+    if (lines.length === 0) return
+    const result = await submitOrder()
+    if (result.ok) clearCart()
+  }
+
+  if (step === 3 && orderId) {
+    return (
+      <div className="w-full bg-black px-6 py-16 text-center">
+        <GothicHeading className="text-5xl">Order Submitted</GothicHeading>
+        <p className="mx-auto mt-4 max-w-xl text-sm text-white">
+          Reference: <span className="text-rbp-accent">{orderId}</span>
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-rbp-muted">
+          Your order is saved with status payment pending. Complete your {form.paymentMethod.toUpperCase()} or bank
+          transfer using studio instructions. Payment is not automatically verified.
+        </p>
+        {user && (
+          <Link to={`/account/orders/${orderId}`} className="mt-8 block text-rbp-accent">
+            View this order in your account
+          </Link>
+        )}
+        <Link to="/collections" className="mt-4 inline-block text-rbp-accent-gold">
+          Continue Shopping →
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full bg-black">
+      <section className="relative grid min-h-[180px] lg:grid-cols-[minmax(0,46%)_1fr]">
+        <div className="flex flex-col justify-center bg-black px-6 py-8 lg:px-12">
+          <GothicHeading as="h1" className="text-[2.6rem] leading-none text-rbp-accent sm:text-[3.4rem]">
+            Shopping Cart & Checkout
+          </GothicHeading>
+          <p className="mt-3 text-[12px] font-medium uppercase tracking-[0.22em] text-white/75">
+            Review your items and complete your order
+          </p>
+        </div>
+        <div className="relative min-h-[160px]">
+          <img src={asset('banners/checkout-jewelry-banner.jpg')} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
+        </div>
+        <div className="header-glow absolute bottom-0 left-0" />
+      </section>
+
+      <section className="mx-auto grid w-full max-w-[1280px] gap-4 px-3 py-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:px-4">
+        <div className={`${rbpPanel} p-4 lg:p-5`}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-rbp-accent">
+              <IconCart size={26} />
+              <h2 className="font-display text-[1.8rem] leading-none text-rbp-accent">Your Cart</h2>
+              <span className="text-[13px] text-white/70">({itemCount} Items)</span>
+            </div>
+            <Link to="/collections" className="text-[13px] font-medium text-rbp-accent-gold">
+              Continue Shopping →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-[1.6fr_70px_110px_70px_24px] border-b border-white/10 px-1 pb-2 text-[12px] font-semibold text-white/80">
+            <span>Product</span>
+            <span>Price</span>
+            <span>Quantity</span>
+            <span>Total</span>
+            <span />
+          </div>
+
+          {lines.length === 0 ? (
+            <div className="py-10 text-center text-sm text-rbp-muted">
+              Your cart is empty.
+              <div>
+                <Link to="/collections" className="mt-3 inline-block text-rbp-accent-gold">
+                  Browse collections →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            lines.map((line) => (
+              <div
+                key={line.lineId}
+                className="grid grid-cols-[1.6fr_70px_110px_70px_24px] items-center gap-2 border-b border-white/10 py-3 text-[13px]"
+              >
+                <div className="flex min-w-0 gap-3">
+                  <img src={cartLineImage(line)} alt="" className="h-[64px] w-[72px] rounded object-cover" />
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-white">{line.name}</p>
+                    <p className="text-[11px] text-white/55">{line.material}</p>
+                    {line.sizeLabel && <p className="text-[11px] text-white/55">{line.sizeLabel}</p>}
+                  </div>
+                </div>
+                <span>{formatPhpLabel(line.priceCents)}</span>
+                <QuantityStepper size="sm" value={line.quantity} onChange={(q) => updateQuantity(line.lineId, q)} />
+                <span>{formatPhpLabel(line.priceCents * line.quantity)}</span>
+                <button type="button" aria-label="Remove" className="text-rbp-accent" onClick={() => removeLine(line.lineId)}>
+                  <IconTrash />
+                </button>
+              </div>
+            ))
+          )}
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <div>
+              <p className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-white">
+                <span className="text-rbp-accent">▣</span> Shipping Options
+              </p>
+              {(
+                [
+                  ['standard', 'Standard Shipping (3–5 Business Days)', 10000],
+                  ['express', 'Express Shipping (1–2 Business Days)', 20000],
+                ] as const
+              ).map(([id, label, cents]) => (
+                <label key={id} className="mb-2 flex cursor-pointer items-center gap-2 text-[13px] text-white/85">
+                  <input
+                    type="radio"
+                    name="ship"
+                    checked={form.shippingMethod === id}
+                    onChange={() => updateForm({ shippingMethod: id })}
+                    className="accent-rbp-accent"
+                  />
+                  <span className="flex-1">{label}</span>
+                  <span>{formatPhpLabel(cents)}</span>
+                </label>
+              ))}
+            </div>
+            <div className="rounded-rbp border border-rbp-border bg-black p-4 text-[13px]">
+              <p className="text-center text-[16px] font-bold">Order Summary</p>
+              <div className="mt-3 space-y-1 text-white/75">
+                <div className="flex justify-between">
+                  <span>Subtotal ({itemCount} Items)</span>
+                  <span className="text-white">{formatPhpLabel(subtotalCents)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping</span>
+                  <span className="text-white">{formatPhpLabel(shippingCents)}</span>
+                </div>
+              </div>
+              <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-[18px] font-bold">
+                <span>Total</span>
+                <span className="text-rbp-accent">{formatPhpLabel(totalCents)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <CheckoutFormPanel
+          form={form}
+          updateForm={updateForm}
+          step={step}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          error={error}
+          cartEmpty={lines.length === 0}
+        />
+      </section>
+    </div>
+  )
+}
+
+function CheckoutFormPanel({
+  form,
+  updateForm,
+  step,
+  onSubmit,
+  submitting,
+  error,
+  cartEmpty,
+}: {
+  form: ReturnType<typeof useCheckout>['form']
+  updateForm: ReturnType<typeof useCheckout>['updateForm']
+  step: number
+  onSubmit: () => void
+  submitting: boolean
+  error: string | null
+  cartEmpty: boolean
+}) {
+  const payments = [
+    { id: 'gcash' as const, label: 'GCash' },
+    { id: 'maya' as const, label: 'maya' },
+    { id: 'gotyme' as const, label: 'GoTyme' },
+    { id: 'bank' as const, label: 'Bank Transfer' },
+  ]
+
+  return (
+    <div className={`${rbpPanel} p-4 lg:p-5`}>
+      <div className="mb-5 flex items-center gap-2 text-[12px]">
+        {['Information', 'Payment', 'Confirmation'].map((label, i) => {
+          const active = step === i + 1
+          const done = step > i + 1
+          return (
+            <div key={label} className="flex flex-1 items-center gap-2">
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                  active || done ? 'bg-rbp-accent text-black' : 'border border-white/30 text-white/60'
+                }`}
+              >
+                {i + 1}
+              </span>
+              <span className={active ? 'text-white' : 'text-white/50'}>{label}</span>
+              {i < 2 && <span className="mx-1 hidden h-px flex-1 bg-white/20 sm:block" />}
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mb-2 text-[15px] font-bold">Customer Information</p>
+      <Field label="Full Name *">
+        <input className={rbpField} value={form.fullName} placeholder="Enter your full name" onChange={(e) => updateForm({ fullName: e.target.value })} />
+      </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Email Address *">
+          <input className={rbpField} type="email" value={form.email} placeholder="Enter your email" onChange={(e) => updateForm({ email: e.target.value })} />
+        </Field>
+        <Field label="Phone Number *">
+          <input className={rbpField} value={form.phone} placeholder="+63 9XX XXX XXXX" onChange={(e) => updateForm({ phone: e.target.value })} />
+        </Field>
+      </div>
+
+      <p className="mb-2 mt-4 text-[15px] font-bold">Shipping Address</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Province *">
+          <input className={rbpField} value={form.province} placeholder="Select Province" onChange={(e) => updateForm({ province: e.target.value })} />
+        </Field>
+        <Field label="City / Municipality *">
+          <input className={rbpField} value={form.city} placeholder="Select City / Municipality" onChange={(e) => updateForm({ city: e.target.value })} />
+        </Field>
+        <Field label="Barangay *">
+          <input className={rbpField} value={form.barangay} placeholder="Enter Barangay" onChange={(e) => updateForm({ barangay: e.target.value })} />
+        </Field>
+        <Field label="Postal Code *">
+          <input className={rbpField} value={form.postalCode} placeholder="Enter Postal Code" onChange={(e) => updateForm({ postalCode: e.target.value })} />
+        </Field>
+      </div>
+      <Field label="Complete Address *">
+        <textarea
+          className={rbpField}
+          rows={2}
+          value={form.address}
+          placeholder="House No., Street, Subdivision, Landmark"
+          onChange={(e) => updateForm({ address: e.target.value })}
+        />
+      </Field>
+
+      <p className="mb-2 mt-2 text-[15px] font-bold">Payment Method</p>
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {payments.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => updateForm({ paymentMethod: p.id })}
+            className={`rounded-md border px-2 py-3 text-[12px] font-semibold ${
+              form.paymentMethod === p.id
+                ? 'border-rbp-accent bg-[#140c00] text-white shadow-[0_0_12px_rgba(255,122,0,0.25)]'
+                : 'border-rbp-border bg-black text-white/80'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {error && <p className="mb-2 text-sm text-red-400">{error}</p>}
+      <OrangeButton type="button" className="h-11 w-full font-semibold text-black" disabled={submitting || cartEmpty} onClick={onSubmit}>
+        {submitting ? 'Processing…' : 'Proceed to Checkout →'}
+      </OrangeButton>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="mb-2 block text-[12px] text-white/80">
+      {label}
+      <div className="mt-1">{children}</div>
+    </label>
+  )
+}
