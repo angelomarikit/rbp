@@ -20,21 +20,31 @@ export function rowToProduct(row: Record<string, unknown>): ProductType {
 }
 
 export function useProducts() {
-  const [products, setProducts] = useState<ProductType[]>(PRODUCTS)
-  const [loading, setLoading] = useState(false)
+  const [products, setProducts] = useState<ProductType[]>(supabase ? [] : PRODUCTS)
+  const [loading, setLoading] = useState(Boolean(supabase))
 
   useEffect(() => {
     if (!supabase) return
     let cancelled = false
     setLoading(true)
     void (async () => {
-      const { data, error } = await supabase
+      const columns = 'id, slug, name, price_cents, category, material, image_path, specs, description, review_count, rating, status, published, created_at'
+      let result = await supabase
         .from('products')
-        .select('*')
+        .select(columns)
         .eq('status', 'active')
+        .eq('published', true)
         .order('created_at', { ascending: false })
-      if (!cancelled && !error && data?.length) {
-        setProducts(data.map((row) => rowToProduct(row as Record<string, unknown>)))
+      if (result.error) {
+        result = await supabase
+          .from('products')
+          .select(columns)
+          .eq('status', 'active')
+          .eq('published', true)
+          .order('name')
+      }
+      if (!cancelled && !result.error) {
+        setProducts((result.data ?? []).map((row) => rowToProduct(row as Record<string, unknown>)))
       }
       if (!cancelled) setLoading(false)
     })()

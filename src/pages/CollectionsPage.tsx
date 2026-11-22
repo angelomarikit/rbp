@@ -5,7 +5,7 @@ import { ProductCard } from '../components/commerce/ProductCard.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconSearch } from '../components/ui/Icons.tsx'
 import { rbpField } from '../components/ui/panels.ts'
-import { CATEGORY_FILTERS, FEATURED_PRODUCT_SLUG } from '../data/products.ts'
+import { CATEGORY_FILTERS } from '../data/products.ts'
 import { useProducts } from '../hooks/useProducts.ts'
 import { asset } from '../lib/assets.ts'
 import { supabase } from '../lib/supabase.ts'
@@ -29,9 +29,21 @@ function categoryFromParam(value: string | null) {
   return [name ?? value]
 }
 
+function sameName(left: string, right: string) {
+  return left.trim().toLowerCase() === right.trim().toLowerCase()
+}
+
+function productInCollection(product: { id: string; category: string }, name: string, membership: Record<string, string[]>) {
+  if (sameName(product.category, name)) return true
+  const fromSlug = Object.entries(categorySlug).find(([, slug]) => slug === name)?.[0]
+  if (fromSlug && sameName(product.category, fromSlug)) return true
+  if (categorySlug[product.category] === name) return true
+  return (membership[product.id] ?? []).some((group) => sameName(group, name) || (fromSlug ? sameName(group, fromSlug) : false))
+}
+
 export function CollectionsPage() {
-  const { products } = useProducts()
-  const [params] = useSearchParams()
+  const { products, loading } = useProducts()
+  const [params, setParams] = useSearchParams()
   const initialCat = params.get('category')
   const initialQuery = params.get('q') ?? ''
   const [shopCollections, setShopCollections] = useState<{ id: string; name: string }[] | null>(null)
@@ -46,6 +58,11 @@ export function CollectionsPage() {
   const [query, setQuery] = useState(initialQuery)
   const [sort, setSort] = useState('bestselling')
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    setFilters((current) => ({ ...current, categories: categoryFromParam(params.get('category')) }))
+    setQuery(params.get('q') ?? '')
+  }, [params])
 
   useEffect(() => {
     if (!supabase) return
@@ -77,14 +94,14 @@ export function CollectionsPage() {
     }
   }, [])
 
-  const catalog = useMemo(() => products.filter((p) => p.slug !== FEATURED_PRODUCT_SLUG), [products])
+  const catalog = products
 
   const collectionFilters = useMemo(() => {
     if (!shopCollections) return CATEGORY_FILTERS
     return shopCollections.map((group) => ({
       id: group.name,
       label: group.name,
-      count: catalog.filter((product) => product.category === group.name || (membership[product.id] ?? []).includes(group.name)).length,
+      count: catalog.filter((product) => productInCollection(product, group.name, membership)).length,
     }))
   }, [catalog, membership, shopCollections])
 
@@ -95,12 +112,7 @@ export function CollectionsPage() {
       list = list.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
     }
     if (filters.categories.length) {
-      list = list.filter((product) =>
-        filters.categories.some((name) => {
-          if (shopCollections) return product.category === name || (membership[product.id] ?? []).includes(name)
-          return categorySlug[product.category] === name
-        }),
-      )
+      list = list.filter((product) => filters.categories.some((name) => productInCollection(product, name, membership)))
     }
     if (filters.materials.length) {
       list = list.filter((p) => {
@@ -113,7 +125,7 @@ export function CollectionsPage() {
     if (sort === 'price-asc') list.sort((a, b) => a.priceCents - b.priceCents)
     if (sort === 'price-desc') list.sort((a, b) => b.priceCents - a.priceCents)
     return list
-  }, [catalog, filters, membership, query, shopCollections, sort])
+  }, [catalog, filters, membership, query, sort])
 
   useEffect(() => {
     setPage(1)
@@ -150,7 +162,11 @@ export function CollectionsPage() {
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             type="button"
-            onClick={() => setFilters({ ...filters, categories: [] })}
+            onClick={() => {
+              const next = new URLSearchParams(params)
+              next.delete('category')
+              setParams(next, { replace: true })
+            }}
             className={`shrink-0 rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-wide ${
               filters.categories.length === 0
                 ? 'border-rbp-accent bg-rbp-accent text-black'
@@ -165,12 +181,12 @@ export function CollectionsPage() {
               <button
                 key={category.id}
                 type="button"
-                onClick={() =>
-                  setFilters({
-                    ...filters,
-                    categories: active ? [] : [category.id],
-                  })
-                }
+                onClick={() => {
+                  const next = new URLSearchParams(params)
+                  if (active) next.delete('category')
+                  else next.set('category', category.id)
+                  setParams(next, { replace: true })
+                }}
                 className={`shrink-0 rounded-full border px-4 py-2 text-[12px] font-medium ${
                   active
                     ? 'border-rbp-accent bg-rbp-accent text-black'
@@ -218,7 +234,9 @@ export function CollectionsPage() {
                 </select>
               </div>
             </div>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <p className="rounded-rbp border border-dashed border-rbp-border py-16 text-center text-white/60">Loading jewelry…</p>
+            ) : filtered.length === 0 ? (
               <p className="rounded-rbp border border-dashed border-rbp-border py-16 text-center text-white/60">
                 No jewelry matches those filters.
               </p>

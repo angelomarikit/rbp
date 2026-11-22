@@ -1,14 +1,82 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { OrangeLink } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCalendar, IconCalendarLight, IconPin } from '../components/ui/Icons.tsx'
+import { LoadingScreen } from '../components/ui/LoadingScreen.tsx'
 import { rbpPanel } from '../components/ui/panels.ts'
-import { ALL_EVENTS, getEventBySlug } from '../data/events.ts'
-import { asset } from '../lib/assets.ts'
+import { getEventBySlug } from '../data/events.ts'
+import { publicMediaUrl } from '../lib/media.ts'
+import { supabase } from '../lib/supabase.ts'
+
+type EventView = {
+  slug: string
+  title: string
+  image: string
+  date: string
+  location: string
+  body: string[]
+}
+
+function fromLocal(slug: string): EventView | null {
+  const event = getEventBySlug(slug)
+  if (!event) return null
+  return { slug: event.slug, title: event.title, image: event.image, date: event.date, location: event.location, body: event.body }
+}
+
+function fromRow(row: { slug: string; title: string; summary: string | null; body: unknown; image_path: string | null; event_date: string | null; location: string | null }): EventView {
+  const body = Array.isArray(row.body) ? row.body.filter((part): part is string => typeof part === 'string' && part.trim().length > 0) : []
+  return {
+    slug: row.slug,
+    title: row.title,
+    image: row.image_path ?? '',
+    date: row.event_date ?? '',
+    location: row.location ?? '',
+    body: body.length ? body : row.summary ? [row.summary] : [],
+  }
+}
 
 export function EventDetailPage() {
   const { slug = '' } = useParams()
-  const event = getEventBySlug(slug)
+  const [event, setEvent] = useState<EventView | null>(() => fromLocal(slug))
+  const [more, setMore] = useState<EventView[]>([])
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const local = fromLocal(slug)
+    setEvent(local)
+    setReady(false)
+    if (!supabase || !slug) {
+      setReady(true)
+      return
+    }
+    let active = true
+    void supabase
+      .from('events')
+      .select('slug, title, summary, body, image_path, event_date, location, published')
+      .eq('slug', slug)
+      .maybeSingle()
+      .then(async ({ data }) => {
+        if (!active) return
+        if (data?.published) setEvent(fromRow(data))
+        else if (!local) setEvent(null)
+        const others = await supabase!
+          .from('events')
+          .select('slug, title, summary, body, image_path, event_date, location')
+          .eq('published', true)
+          .neq('slug', slug)
+          .order('sort_order')
+          .limit(3)
+        if (!active) return
+        if (others.data?.length) setMore(others.data.map((row) => fromRow(row)))
+        setReady(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [slug])
+
+  if (!ready && !event) return <LoadingScreen label="Opening the event" full />
 
   if (!event) {
     return (
@@ -22,8 +90,6 @@ export function EventDetailPage() {
       </div>
     )
   }
-
-  const more = ALL_EVENTS.filter((item) => item.slug !== event.slug).slice(0, 3)
 
   return (
     <div className="w-full bg-black">
@@ -53,11 +119,13 @@ export function EventDetailPage() {
           </p>
         </div>
 
-        <img
-          src={asset(event.image)}
-          alt=""
-          className="mt-8 h-[280px] w-full rounded-rbp border border-rbp-border object-cover sm:h-[420px]"
-        />
+        {event.image ? (
+          <img
+            src={publicMediaUrl(event.image)}
+            alt=""
+            className="mt-8 h-[280px] w-full rounded-rbp border border-rbp-border object-cover sm:h-[420px]"
+          />
+        ) : null}
 
         <div className="font-secondary mt-10 space-y-5 text-[17px] leading-relaxed text-white/85">
           {event.body.map((paragraph) => (
@@ -88,7 +156,7 @@ export function EventDetailPage() {
                 to={`/events/${item.slug}`}
                 className="overflow-hidden rounded-rbp border border-rbp-border bg-black transition hover:-translate-y-1 hover:border-rbp-accent"
               >
-                <img src={asset(item.image)} alt="" className="h-[180px] w-full object-cover" />
+                {item.image ? <img src={publicMediaUrl(item.image)} alt="" className="h-[180px] w-full object-cover" /> : null}
                 <div className="px-4 py-4">
                   <p className="text-[16px] font-bold text-white">{item.title}</p>
                   <p className="mt-2 text-[13px] text-white/60">{item.date}</p>

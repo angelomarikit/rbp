@@ -42,9 +42,12 @@ export function ProductsAdmin() {
 
   const load = async () => {
     if (!supabase) return
-    const { data, error: queryError } = await supabase.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku, created_at').order('created_at', { ascending: false })
-    if (queryError) setError(queryError.message)
-    else setRows((data ?? []) as ProductRow[])
+    const newest = await supabase.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku, created_at').order('created_at', { ascending: false })
+    const result = newest.error
+      ? await supabase.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku').order('name')
+      : newest
+    if (result.error) setError(result.error.message)
+    else setRows((result.data ?? []) as ProductRow[])
   }
 
   useEffect(() => {
@@ -91,7 +94,7 @@ export function ProductsAdmin() {
                 </td>
                 <td>{formatPhp(row.price_cents)}</td>
                 <td>{row.inventory_qty ?? 'Not tracked'}</td>
-                <td>{row.status}</td>
+                <td>{row.status === 'active' ? 'On the shop' : row.status === 'draft' ? 'Hidden' : 'Archived'}</td>
                 <td className="text-right">
                   <button type="button" className="text-xs text-[#ffb089]" onClick={() => setConfirmId(confirmId === row.id ? null : row.id)}>Delete</button>
                 </td>
@@ -261,7 +264,12 @@ export function ProductEditor() {
     if (extraError) {
       setError(friendlyError(extraError, 'The product was saved, but a photo or option could not be stored.'))
     }
-    setOk(savedWait)
+    const shopNote = status === 'active'
+      ? collectionIds.length
+        ? savedWait
+        : 'Saved. It is on the shop list. Choose a collection if it should also appear inside that collection.'
+      : 'Saved. It stays in All products, but it is hidden from the shop until you choose On the shop.'
+    setOk(shopNote)
     if (isNew) {
       window.setTimeout(() => {
         if (alive.current) navigate('/admin/products', { state: { justSaved: true } })
