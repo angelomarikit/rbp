@@ -19,7 +19,7 @@ type CartContextValue = {
   addProduct: (
     product: Product,
     quantity?: number,
-    variant?: { key: string; label: string },
+    variant?: { key: string; label: string; priceCents?: number; material?: string },
   ) => void
   updateQuantity: (lineId: string, quantity: number) => void
   removeLine: (lineId: string) => void
@@ -51,7 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (
       product: Product,
       quantity = 1,
-      variant?: { key: string; label: string },
+      variant?: { key: string; label: string; priceCents?: number; material?: string },
     ) => {
       const lineId = makeLineId(product.slug, variant?.key)
       setLines((prev) => {
@@ -70,15 +70,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
             productId: product.id,
             slug: product.slug,
             name: product.name,
-            priceCents: product.priceCents,
+            priceCents: variant?.priceCents ?? product.priceCents,
             quantity,
             imagePath: product.imagePath,
             variantKey: variant?.key,
             variantLabel: variant?.label,
-            material: product.specs?.material ?? product.material,
-            sizeLabel: product.specs
-              ? `${product.specs.barLength} (Bar) / 4mm (Gem)`
-              : undefined,
+            material: variant?.material || product.specs?.material || product.material,
+            sizeLabel: variant?.label
+              ? variant.label
+              : product.specs
+                ? `${product.specs.barLength} (Bar) / 4mm (Gem)`
+                : undefined,
           },
         ]
       })

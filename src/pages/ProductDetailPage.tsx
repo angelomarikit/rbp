@@ -32,6 +32,69 @@ function colorChoice(label: string): GemVariant {
   return { key, label, color: '#f2f2f2' }
 }
 
+type StoreVariant = { label: string; priceCents: number | null; options: Record<string, string> }
+type ChoiceGroup = { key: string; name: string; values: string[] }
+
+function splitMeasure(value: string) {
+  const parts = value.split(/\s*(?:,|\/|\||·|;)\s*|\s+(?=\d)/).map((part) => part.trim()).filter(Boolean)
+  const measure = /^\d+(?:\.\d+)?\s*(?:mm|g|ga|gauge)?$/i
+  if (parts.length > 1 && parts.every((part) => measure.test(part))) return parts
+  return [value]
+}
+
+function choiceValues(key: string, value: string) {
+  if (key === 'length' || key === 'size' || key === 'gauge') return splitMeasure(value)
+  return [value]
+}
+
+function variantChoices(version: StoreVariant) {
+  const choices: Record<string, string[]> = {}
+  for (const [key, value] of Object.entries(version.options)) {
+    const next = choiceValues(key, value)
+    if (next.length) choices[key] = next
+  }
+  if (!Object.keys(choices).length && version.label.trim()) choices.version = [version.label.trim()]
+  return choices
+}
+
+function choiceGroups(versions: StoreVariant[], names: Record<string, string>): ChoiceGroup[] {
+  const order: string[] = []
+  const values = new Map<string, string[]>()
+  for (const version of versions) {
+    for (const [key, list] of Object.entries(variantChoices(version))) {
+      if (!values.has(key)) {
+        order.push(key)
+        values.set(key, [])
+      }
+      const current = values.get(key)!
+      for (const value of list) if (!current.includes(value)) current.push(value)
+    }
+  }
+  const preferred = ['length', 'size', 'gauge', 'color', 'material']
+  order.sort((a, b) => {
+    const aIndex = preferred.indexOf(a)
+    const bIndex = preferred.indexOf(b)
+    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex)
+  })
+  return order.map((key) => ({
+    key,
+    name: names[key] || (key === 'version' ? 'Version' : key.charAt(0).toUpperCase() + key.slice(1).replace(/[-_]/g, ' ')),
+    values: values.get(key) ?? [],
+  }))
+}
+
+function firstSelection(versions: StoreVariant[], groups: ChoiceGroup[]) {
+  const selected: Record<string, string> = {}
+  const first = versions[0]
+  const choices = first ? variantChoices(first) : {}
+  for (const group of groups) selected[group.key] = choices[group.key]?.[0] || group.values[0] || ''
+  return selected
+}
+
+function matchesVariant(version: StoreVariant, selected: Record<string, string>) {
+  return Object.entries(variantChoices(version)).every(([key, values]) => values.includes(selected[key] ?? ''))
+}
+
 export function ProductDetailPage() {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
@@ -41,8 +104,9 @@ export function ProductDetailPage() {
   const [gallery, setGallery] = useState<string[]>([])
   const [ready, setReady] = useState(false)
   const [qty, setQty] = useState(1)
-  const [colors, setColors] = useState<GemVariant[]>([])
-  const [gemKey, setGemKey] = useState('')
+  const [variants, setVariants] = useState<StoreVariant[]>([])
+  const [groups, setGroups] = useState<ChoiceGroup[]>([])
+  const [selected, setSelected] = useState<Record<string, string>>({})
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Description')
   const [hero, setHero] = useState(0)
   usePageSeo(
@@ -57,8 +121,9 @@ export function ProductDetailPage() {
     let cancelled = false
     setHero(0)
     setQty(1)
-    setColors([])
-    setGemKey('')
+    setVariants([])
+    setGroups([])
+    setSelected({})
     setActiveTab('Description')
     setReady(false)
     const known = getProductBySlug(slug)
@@ -90,21 +155,23 @@ export function ProductDetailPage() {
         .order('sort_order')
       if (cancelled) return
       const paths = (pictures ?? []).map((picture) => picture.storage_path as string).filter(Boolean)
-      const { data: versions } = await supabase
-        .from('product_variants')
-        .select('options')
-        .eq('product_id', data.id)
-        .eq('status', 'active')
+      const [{ data: versions }, { data: optionNames }] = await Promise.all([
+        supabase.from('product_variants').select('label, price_cents, options, sort_order').eq('product_id', data.id).eq('status', 'active').order('sort_order'),
+        supabase.from('variation_options').select('key, name').order('sort_order'),
+      ])
       if (cancelled) return
-      const labels = [...new Set((versions ?? []).flatMap((version) => {
+      const names = Object.fromEntries((optionNames ?? []).map((option) => [option.key as string, option.name as string]))
+      const stored = (versions ?? []).map((version) => {
         const options = version.options as Record<string, string> | null
-        const color = options?.color?.trim()
-        return color ? [color] : []
-      }))]
-      const choices = labels.map(colorChoice)
+        const clean: Record<string, string> = {}
+        for (const [key, value] of Object.entries(options ?? {})) if (value?.trim()) clean[key] = value.trim()
+        return { label: (version.label as string) ?? '', priceCents: version.price_cents as number | null, options: clean }
+      })
+      const nextGroups = choiceGroups(stored, names)
       setProduct(next)
-      setColors(choices)
-      setGemKey(choices[0]?.key ?? '')
+      setVariants(stored)
+      setGroups(nextGroups)
+      setSelected(firstSelection(stored, nextGroups))
       if (next.slug === FEATURED_PRODUCT_SLUG && paths.length <= 1) setGallery(GALLERY)
       else setGallery(paths.length ? paths : next.imagePath ? [next.imagePath] : [])
       setReady(true)
@@ -136,18 +203,49 @@ export function ProductDetailPage() {
   const description =
     product.description ??
     `${product.name} is made from ${product.material}. A polished piece for ${product.category.toLowerCase()}, finished for everyday wear.`
+  const chosen = variants.find((version) => matchesVariant(version, selected))
+  const priceCents = chosen?.priceCents ?? product.priceCents
+  const pick = (key: string, value: string) => {
+    const next = { ...selected, [key]: value }
+    if (variants.some((version) => matchesVariant(version, next))) {
+      setSelected(next)
+      return
+    }
+    const fallback = variants.find((version) => variantChoices(version)[key]?.includes(value))
+    if (!fallback) {
+      setSelected(next)
+      return
+    }
+    const allowed = variantChoices(fallback)
+    const resolved: Record<string, string> = {}
+    for (const group of groups) {
+      const values = allowed[group.key]
+      if (!values?.length) continue
+      resolved[group.key] = values.includes(next[group.key] ?? '') ? next[group.key] : values[0]
+    }
+    setSelected(resolved)
+  }
+  const choiceLabel = groups.filter((group) => group.key !== 'material').map((group) => selected[group.key]).filter(Boolean).join(' / ')
+  const choiceKey = groups.map((group) => `${group.key}:${selected[group.key] ?? ''}`).join('|')
+  const addCurrent = () => addProduct(
+    product,
+    qty,
+    groups.length
+      ? { key: choiceKey, label: choiceLabel, priceCents, material: selected.material || product.material }
+      : undefined,
+  )
   const specRows = product.specs
     ? [
-        ['Material', product.specs.material],
-        ['Thickness (Gauge)', product.specs.gauge],
-        ['Bar Length', product.specs.barLength],
+        ['Material', selected.material || product.specs.material],
+        ['Thickness (Gauge)', selected.gauge || product.specs.gauge],
+        ['Bar Length', selected.length || product.specs.barLength],
         ['Gem', product.specs.gem],
-        ['Color / Finish', product.specs.finish],
+        ['Color / Finish', selected.color || product.specs.finish],
       ]
     : [
-        ['Material', product.material],
+        ['Material', selected.material || product.material],
         ['Category', product.category],
-        ['Finish', 'Polished'],
+        ['Finish', selected.color || 'Polished'],
       ]
   const related = products.filter((item) => item.slug !== product.slug && item.slug !== FEATURED_PRODUCT_SLUG).slice(0, 4)
 
@@ -230,7 +328,7 @@ export function ProductDetailPage() {
               <span className="tracking-widest text-rbp-accent">★★★★★</span>
               <span className="text-white/70">({product.reviewCount ?? 28} Reviews)</span>
             </div>
-            <p className="mt-4 text-[2.4rem] font-bold leading-none text-white">{formatPhp(product.priceCents)}</p>
+            <p className="mt-4 text-[2.4rem] font-bold leading-none text-white">{formatPhp(priceCents)}</p>
             <p className="font-secondary mt-5 text-[15px] leading-relaxed text-white/80">{description}</p>
 
             <dl className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -242,22 +340,44 @@ export function ProductDetailPage() {
               ))}
             </dl>
 
-            {colors.length > 0 && (
-              <div className="mt-6">
-                <p className="text-[13px] text-white/70">Gem color</p>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                  {colors.map((variant) => (
-                    <button
-                      key={variant.key}
-                      type="button"
-                      onClick={() => setGemKey(variant.key)}
-                      className={`text-[15px] font-semibold ${gemKey === variant.key ? 'underline decoration-2 underline-offset-4' : 'opacity-80 hover:opacity-100'}`}
-                      style={{ color: variant.key === 'black' ? '#f2f2f2' : variant.color }}
-                    >
-                      {variant.label}
-                    </button>
-                  ))}
-                </div>
+            {groups.length > 0 && (
+              <div className="mt-6 space-y-4">
+                {groups.map((group) => (
+                  <div key={group.key}>
+                    <p className="text-[13px] text-white/70">{group.name}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {group.values.map((value) => {
+                        const active = selected[group.key] === value
+                        if (group.key === 'color') {
+                          const swatch = colorChoice(value)
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() => pick(group.key, value)}
+                              className={`text-[15px] font-semibold ${active ? 'underline decoration-2 underline-offset-4' : 'opacity-80 hover:opacity-100'}`}
+                              style={{ color: swatch.key === 'black' ? '#f2f2f2' : swatch.color }}
+                            >
+                              {value}
+                            </button>
+                          )
+                        }
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => pick(group.key, value)}
+                            className={`rounded-full border px-3 py-1.5 text-[14px] font-semibold ${active ? 'border-rbp-accent text-rbp-accent' : 'border-white/20 text-white/80 hover:border-rbp-accent'}`}
+                          >
+                            {value}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -267,14 +387,14 @@ export function ProductDetailPage() {
               <OrangeButton
                 className="h-12 min-w-[160px] flex-1 font-semibold text-black"
                 icon={<IconCart size={18} />}
-                onClick={() => addProduct(product, qty, colors.find((item) => item.key === gemKey))}
+                onClick={addCurrent}
               >
                 Add to Cart
               </OrangeButton>
               <button
                 type="button"
                 onClick={() => {
-                  addProduct(product, qty, colors.find((item) => item.key === gemKey))
+                  addCurrent()
                   navigate('/checkout')
                 }}
                 className="inline-flex h-12 min-w-[140px] flex-1 items-center justify-center rounded-rbp border border-[#ff9a17] bg-[#080808] px-5 text-sm font-semibold text-white hover:border-rbp-accent"
