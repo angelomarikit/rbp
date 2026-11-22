@@ -214,6 +214,7 @@ export function SettingsAdmin() {
   const [paymentQrs, setPaymentQrs] = useState<PaymentQrs>(emptyPaymentQrs)
   const [font, setFont] = useState<SiteFontSet | null>(null)
   const [fontBusy, setFontBusy] = useState<'primary' | 'secondary' | null>(null)
+  const [fontError, setFontError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
@@ -270,10 +271,11 @@ export function SettingsAdmin() {
 
   const saveSiteFont = async (role: 'primary' | 'secondary', file: File) => {
     setFontBusy(role)
+    setFontError(null)
     setError(null)
     setOk(null)
     try {
-      const nextFont = await fontFromZip(file, role)
+      const nextFont = await fontFromZip(file)
       const next: SiteFontSet = {
         primary: role === 'primary' ? nextFont : font?.primary ?? null,
         secondary: role === 'secondary' ? nextFont : font?.secondary ?? null,
@@ -283,7 +285,9 @@ export function SettingsAdmin() {
         ? `${nextFont.family} is now the title font.`
         : `${nextFont.family} is now the font for subtitles and descriptions.`)
     } catch (err) {
-      setError(friendlyError(err, 'That font zip could not be used. Try another zip of TTF, OTF, or WOFF files.'))
+      const message = fontUploadError(err)
+      setFontError(message)
+      setError(message)
     } finally {
       setFontBusy(null)
     }
@@ -469,27 +473,25 @@ export function SettingsAdmin() {
       <Card id="font" className="scroll-mt-4 space-y-4">
         <div>
           <h2 className="text-base font-semibold">Website font</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Add a zip for titles, and a separate zip for subtitles and descriptions. Other text stays on the original font.</p>
+          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Add a zip or a font file for titles, and another for subtitles and descriptions. A shadow or outline file in the zip is skipped when a solid font is in there too.</p>
         </div>
+        {fontError ? <p className="text-sm text-[#ffb089]">{fontError}</p> : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-[#2a2a2a] bg-[#101010] p-4">
             <p className="text-sm text-white">First font: {font?.primary?.family ?? 'The original font'}</p>
             <p className="mt-1 text-xs text-[#8d8d8d]">Titles only.</p>
-            <p className="mt-3 text-3xl text-[#ffb067]" style={{ fontFamily: 'var(--rbp-font-display)' }}>Romell Body Piercing</p>
-            <label className="mt-4 inline-flex cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
-              {fontBusy === 'primary' ? 'Adding font…' : 'Add a title font zip'}
-              <input
-                className="hidden"
-                type="file"
-                accept=".zip,application/zip"
-                disabled={fontBusy !== null}
-                onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  event.target.value = ''
-                  if (file) void saveSiteFont('primary', file)
-                }}
-              />
-            </label>
+            <p className="mt-3 text-3xl leading-tight text-[#ffb067]" style={{ fontFamily: 'var(--rbp-font-display)' }}>Romell Body Piercing</p>
+            <input
+              className="mt-4 block w-full text-sm text-[#cfcfcf] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#FF7900] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black"
+              type="file"
+              accept=".zip,.ttf,.otf,.woff,.woff2,application/zip,application/x-zip-compressed,font/ttf,font/otf"
+              disabled={fontBusy !== null}
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) void saveSiteFont('primary', file)
+              }}
+            />
             {font?.primary ? (
               <button type="button" className="mt-3 block text-sm text-[#ffb089]" onClick={() => void clearSiteFont('primary')}>
                 Use the original title font
@@ -499,21 +501,18 @@ export function SettingsAdmin() {
           <div className="rounded-xl border border-[#2a2a2a] bg-[#101010] p-4">
             <p className="text-sm text-white">Secondary font: {font?.secondary?.family ?? 'The original font'}</p>
             <p className="mt-1 text-xs text-[#8d8d8d]">Subtitles and descriptions. Not titles.</p>
-            <p className="font-secondary mt-3 text-base text-[#f3f3f3]">Expert piercing services and premium body jewelry.</p>
-            <label className="mt-4 inline-flex cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
-              {fontBusy === 'secondary' ? 'Adding font…' : 'Add a secondary font zip'}
-              <input
-                className="hidden"
-                type="file"
-                accept=".zip,application/zip"
-                disabled={fontBusy !== null}
-                onChange={(event) => {
-                  const file = event.target.files?.[0]
-                  event.target.value = ''
-                  if (file) void saveSiteFont('secondary', file)
-                }}
-              />
-            </label>
+            <p className="font-secondary mt-3 text-base leading-relaxed text-[#f3f3f3]">Expert piercing services and premium body jewelry.</p>
+            <input
+              className="mt-4 block w-full text-sm text-[#cfcfcf] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[#FF7900] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black"
+              type="file"
+              accept=".zip,.ttf,.otf,.woff,.woff2,application/zip,application/x-zip-compressed,font/ttf,font/otf"
+              disabled={fontBusy !== null}
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) void saveSiteFont('secondary', file)
+              }}
+            />
             {font?.secondary ? (
               <button type="button" className="mt-3 block text-sm text-[#ffb089]" onClick={() => void clearSiteFont('secondary')}>
                 Use the original text font
@@ -521,7 +520,7 @@ export function SettingsAdmin() {
             ) : null}
           </div>
         </div>
-        {fontBusy ? <LoadingScreen label="Adding the font" full /> : null}
+        {fontBusy ? <p className="text-sm text-[#ffb067]">{fontBusy === 'primary' ? 'Adding the title font…' : 'Adding the secondary font…'}</p> : null}
       </Card>
       <Card id="payment" className="scroll-mt-4 space-y-4">
         <div>
@@ -535,6 +534,13 @@ export function SettingsAdmin() {
       </Card>
     </form>
   )
+}
+
+function fontUploadError(err: unknown) {
+  const message = err instanceof Error ? err.message : ''
+  if (/zip|ttf|otf|woff|font/i.test(message) && message.length < 180 && !/[{}[\]]/.test(message)) return message
+  if (/payload|too large|413/i.test(message)) return 'That font is too large to save. Use a smaller TTF, OTF, or WOFF file.'
+  return friendlyError(err, 'That font could not be added. Use a zip, TTF, OTF, or WOFF file.')
 }
 
 function moveItem<T>(items: T[], index: number, direction: -1 | 1) {

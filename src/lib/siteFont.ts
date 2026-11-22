@@ -35,17 +35,16 @@ export function siteFontFromExtra(title: string | null | undefined, extra: unkno
   return { primary: legacy, secondary: null }
 }
 
-export async function fontFromZip(file: File, role: 'primary' | 'secondary' = 'primary'): Promise<SiteFont> {
-  if (!file.name.toLowerCase().endsWith('.zip')) throw new Error('Add a .zip file.')
-  if (file.size > 8_000_000) throw new Error('That zip is too large. Keep it under 8 MB.')
+export async function fontFromZip(file: File): Promise<SiteFont> {
+  const ext = extension(file.name)
+  if (FONT_EXTENSIONS.has(ext)) return fontFromFile(file, ext)
+  if (!file.name.toLowerCase().endsWith('.zip')) throw new Error('Add a zip, TTF, OTF, or WOFF file.')
+  if (file.size > 12_000_000) throw new Error('That zip is too large. Keep it under 12 MB.')
   const entries = await unzip(await file.arrayBuffer())
   const fonts = entries.filter((entry) => FONT_EXTENSIONS.has(extension(entry.name)))
   if (!fonts.length) throw new Error('That zip does not contain a font. Use TTF, OTF, WOFF, or WOFF2.')
-  if (fonts.length > 8) throw new Error('That zip has too many font files. Keep it to eight or fewer.')
-  const total = fonts.reduce((sum, entry) => sum + entry.data.length, 0)
-  if (total > 2_500_000) throw new Error('Those font files are too large to store.')
 
-  const groups = new Map<string, SiteFontFile[]>()
+  const groups = new Map<string, Array<SiteFontFile & { bytes: number }>>()
   const order: string[] = []
   for (const entry of fonts) {
     const family = familyName(entry.name)
@@ -58,10 +57,28 @@ export async function fontFromZip(file: File, role: 'primary' | 'secondary' = 'p
       style: /italic|oblique/i.test(entry.name) ? 'italic' : 'normal',
       format: formatFor(extension(entry.name)),
       data: toBase64(entry.data),
+      bytes: entry.data.length,
     })
   }
-  const index = role === 'secondary' && order.length > 1 ? 1 : 0
-  return toFont(order[index] ?? 'Custom font', groups)
+  const chosen = order.find((name) => !/shadow|outline|stencil/i.test(name)) ?? order[0] ?? 'Custom font'
+  const drafts = (groups.get(chosen) ?? []).slice(0, 4)
+  const total = drafts.reduce((sum, item) => sum + item.bytes, 0)
+  if (!drafts.length || total > 1_500_000) throw new Error('That font is too large. Use a TTF, OTF, or WOFF under 1.5 MB.')
+  return { family: chosen, files: drafts.map(({ bytes: _bytes, ...item }) => item) }
+}
+
+async function fontFromFile(file: File, ext: string): Promise<SiteFont> {
+  if (file.size > 1_500_000) throw new Error('That font is too large. Use a TTF, OTF, or WOFF under 1.5 MB.')
+  const data = new Uint8Array(await file.arrayBuffer())
+  return {
+    family: familyName(file.name),
+    files: [{
+      weight: weightFromName(file.name),
+      style: /italic|oblique/i.test(file.name) ? 'italic' : 'normal',
+      format: formatFor(ext),
+      data: toBase64(data),
+    }],
+  }
 }
 
 export function applySiteFont(fonts: SiteFontSet | null) {
@@ -106,10 +123,6 @@ function parseFiles(value: unknown): SiteFontFile[] {
       data: row.data,
     }]
   })
-}
-
-function toFont(family: string, groups: Map<string, SiteFontFile[]>): SiteFont {
-  return { family, files: groups.get(family) ?? [] }
 }
 
 function faceRules(cssFamily: string, font: SiteFont) {
