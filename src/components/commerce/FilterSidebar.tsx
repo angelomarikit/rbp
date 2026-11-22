@@ -68,8 +68,11 @@ export function FilterSidebar({ filters, onChange, categories = CATEGORY_FILTERS
         className={`mb-3 ${rbpField} text-[13px]`}
       >
         <option value="all">All Lengths</option>
+        <option value="6mm">6 mm</option>
         <option value="8mm">8 mm</option>
         <option value="10mm">10 mm</option>
+        <option value="12mm">12 mm</option>
+        <option value="14mm">14 mm</option>
       </select>
       <p className="mb-1 text-[14px] text-rbp-text">Gauge (Thickness)</p>
       <select

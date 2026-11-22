@@ -48,6 +48,7 @@ export function CollectionsPage() {
   const initialQuery = params.get('q') ?? ''
   const [shopCollections, setShopCollections] = useState<{ id: string; name: string }[] | null>(null)
   const [membership, setMembership] = useState<Record<string, string[]>>({})
+  const [lengths, setLengths] = useState<Record<string, string[]>>({})
 
   const [filters, setFilters] = useState<FilterState>({
     categories: categoryFromParam(initialCat),
@@ -70,7 +71,8 @@ export function CollectionsPage() {
     void Promise.all([
       supabase.from('collections').select('id, name').eq('status', 'active').order('sort_order'),
       supabase.from('product_collections').select('product_id, collection_id'),
-    ]).then(([collectionResult, linkResult]) => {
+      supabase.from('product_variants').select('product_id, options').eq('status', 'active'),
+    ]).then(([collectionResult, linkResult, variantResult]) => {
       if (!active) return
       const rows = (collectionResult.data ?? []) as { id: string; name: string }[]
       const seen = new Set<string>()
@@ -88,6 +90,14 @@ export function CollectionsPage() {
         next[link.product_id] = [...(next[link.product_id] ?? []), name]
       }
       setMembership(next)
+      const offered: Record<string, string[]> = {}
+      for (const version of (variantResult.data ?? []) as { product_id: string; options: Record<string, string> | null }[]) {
+        const raw = version.options?.length || version.options?.size || ''
+        const parts = raw.split(/\s*(?:,|\/|\||·|;)\s*|\s+(?=\d)/).map((part) => part.toLowerCase().replace(/\s+/g, '')).filter((part) => /^\d+(?:\.\d+)?mm$/.test(part))
+        if (!parts.length) continue
+        offered[version.product_id] = [...new Set([...(offered[version.product_id] ?? []), ...parts])]
+      }
+      setLengths(offered)
     })
     return () => {
       active = false
@@ -122,10 +132,16 @@ export function CollectionsPage() {
         return false
       })
     }
+    if (filters.barLength !== 'all') {
+      list = list.filter((product) => {
+        const recorded = product.specs?.barLength?.toLowerCase().replace(/\s+/g, '') ?? ''
+        return lengths[product.id]?.includes(filters.barLength) || recorded.includes(filters.barLength)
+      })
+    }
     if (sort === 'price-asc') list.sort((a, b) => a.priceCents - b.priceCents)
     if (sort === 'price-desc') list.sort((a, b) => b.priceCents - a.priceCents)
     return list
-  }, [catalog, filters, membership, query, sort])
+  }, [catalog, filters, lengths, membership, query, sort])
 
   useEffect(() => {
     setPage(1)
