@@ -27,30 +27,60 @@ function toCents(value: string) {
 export function ProductsAdmin() {
   const [rows, setRows] = useState<ProductRow[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [ok, setOk] = useState<string | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
 
-  useEffect(() => {
-    void supabase?.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku').order('name').then(({ data, error: queryError }) => {
-      if (queryError) setError(queryError.message)
-      else setRows((data ?? []) as ProductRow[])
-    })
-  }, [])
+  const load = async () => {
+    if (!supabase) return
+    const { data, error: queryError } = await supabase.from('products').select('id, name, price_cents, compare_at_price_cents, inventory_qty, status, sku').order('name')
+    if (queryError) setError(queryError.message)
+    else setRows((data ?? []) as ProductRow[])
+  }
+
+  useEffect(() => { void load() }, [])
+
+  const removeProduct = async (row: ProductRow) => {
+    setError(null)
+    setOk(null)
+    const { error: deleteError } = await supabase!.from('products').delete().eq('id', row.id)
+    if (deleteError) setError(deleteError.message)
+    else {
+      setConfirmId(null)
+      setOk(`${row.name} was deleted.`)
+      await load()
+    }
+  }
 
   return (
     <div>
       <PageTitle title="Products" subtitle="The current catalog is already stored. Edit price, photos, and variations here. The address is created from the name, so there is no slug field." action={<Link to="/admin/products/new" className="rounded-lg bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black">Add product</Link>} />
-      <Notice error={error} />
+      <Notice error={error} ok={ok} />
       <Card>
         <table className="w-full text-left text-sm">
           <thead className="text-xs text-[#8a8a8a]">
-            <tr><th className="py-2">Product</th><th>Price</th><th>Stock</th><th>Status</th></tr>
+            <tr><th className="py-2">Product</th><th>Price</th><th>Stock</th><th>Status</th><th /></tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-[#2a2a2a]">
-                <td className="py-3"><Link className="text-[#ffb067]" to={`/admin/products/${row.id}`}>{row.name}</Link></td>
+                <td className="py-3">
+                  <Link className="text-[#ffb067]" to={`/admin/products/${row.id}`}>{row.name}</Link>
+                  {confirmId === row.id && (
+                    <div className="mt-2 max-w-sm rounded-lg border border-[#443028] bg-[#1c1210] px-3 py-2">
+                      <p className="text-sm text-[#f0d2c4]">Delete {row.name}? It leaves the shop. Past orders keep the item name.</p>
+                      <div className="mt-2 flex gap-2">
+                        <button type="button" className="rounded-lg bg-[#FF7900] px-3 py-1.5 text-xs font-semibold text-black" onClick={() => void removeProduct(row)}>Delete product</button>
+                        <button type="button" className="rounded-lg border border-[#333] px-3 py-1.5 text-xs" onClick={() => setConfirmId(null)}>Keep it</button>
+                      </div>
+                    </div>
+                  )}
+                </td>
                 <td>{formatPhp(row.price_cents)}</td>
                 <td>{row.inventory_qty ?? 'Not tracked'}</td>
                 <td>{row.status}</td>
+                <td className="text-right">
+                  <button type="button" className="text-xs text-[#ffb089]" onClick={() => setConfirmId(confirmId === row.id ? null : row.id)}>Delete</button>
+                </td>
               </tr>
             ))}
           </tbody>
