@@ -53,7 +53,7 @@ export function HomePage() {
     if (!supabase) return
     void Promise.all([
       supabase.from('content_sections').select('title, subtitle, body, media_path, buttons').eq('page', 'home').eq('section_key', 'hero').maybeSingle(),
-      supabase.from('collections').select('name, image_path').eq('featured', true).eq('status', 'active').order('sort_order'),
+      supabase.from('collections').select('name, image_path, featured').eq('status', 'active').order('featured', { ascending: false }).order('sort_order'),
       supabase.from('showcase_items').select('storage_path, placement').eq('published', true).in('placement', ['home', 'both']).order('sort_order'),
       supabase.from('events').select('slug, title, image_path, event_date, location').eq('kind', 'featured').eq('published', true).order('sort_order'),
     ]).then(([heroRow, collectionRows, shotRows, eventRows]) => {
@@ -68,11 +68,13 @@ export function HomePage() {
         })
       }
       if (collectionRows.data?.length) {
-        setCollectionCards(collectionRows.data.map((row) => ({
-          title: row.name as string,
-          image: publicMediaUrl(row.image_path as string),
-          category: row.name as string,
-        })))
+        const seen = new Set<string>()
+        setCollectionCards(collectionRows.data.flatMap((row) => {
+          const name = row.name as string
+          if (seen.has(name)) return []
+          seen.add(name)
+          return [{ title: name, image: publicMediaUrl(row.image_path as string), category: name }]
+        }))
       }
       const shots = (shotRows.data ?? []).filter((row) => row.placement === 'home' || !String(row.storage_path).includes('event-client-result'))
       if (shots.length) setResults(shots.slice(0, 5).map((row) => publicMediaUrl(row.storage_path as string)))

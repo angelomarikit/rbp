@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { formatPhp } from '../../lib/format.ts'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { Card, MediaField, Notice, PageTitle, PrimaryButton, QuietButton, TextArea, TextField, fieldClass } from './ui.tsx'
 
 type ProductRow = { id: string; name: string; price_cents: number; compare_at_price_cents: number | null; inventory_qty: number | null; status: string; sku: string | null }
@@ -155,6 +156,7 @@ export function ProductEditor() {
     }
     setSaving(true)
     setError(null)
+    setOk(null)
     const collection = collections.find((item) => item.id === collectionIds[0])
     const payload = {
       name: name.trim(),
@@ -240,6 +242,7 @@ export function ProductEditor() {
           </a>
         ))}
       </nav>
+      {saving ? <LoadingScreen label="Saving" full /> : null}
       <Notice error={error} ok={ok} />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-5">
@@ -404,7 +407,7 @@ export function CollectionsAdmin() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [image, setImage] = useState('')
-  const [featured, setFeatured] = useState(false)
+  const [featured, setFeatured] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
@@ -433,7 +436,7 @@ export function CollectionsAdmin() {
     setName('')
     setDescription('')
     setImage('')
-    setFeatured(false)
+    setFeatured(true)
   }
 
   const startEdit = (row: Collection) => {
@@ -465,7 +468,7 @@ export function CollectionsAdmin() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-5">
         <h1 className="text-2xl font-semibold text-white">Collections</h1>
-        <p className="mt-1 text-sm text-[#9a9a9a]">A collection is a group of jewelry, such as Navel or Ear. Featured groups appear on the homepage.</p>
+        <p className="mt-1 text-sm text-[#9a9a9a]">A collection is a group of jewelry, such as Navel or Ear. Active groups show on the shop and the homepage.</p>
       </div>
       <Notice error={error} ok={ok} />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -488,7 +491,7 @@ export function CollectionsAdmin() {
                     onClick={() => void setFeaturedFlag(row.id, !row.featured)}
                     className={`rounded-full border px-3 py-1 text-xs ${row.featured ? 'border-[#FF7900] bg-[#2a1608] text-white' : 'border-[#333] text-[#cfcfcf]'}`}
                   >
-                    {row.featured ? 'On the homepage' : 'Show on homepage'}
+                    {row.featured ? 'Pinned first' : 'Pin to the front'}
                   </button>
                   <button type="button" className="rounded-full border border-[#333] px-3 py-1 text-xs text-[#cfcfcf]" onClick={() => startEdit(row)}>
                     Edit
@@ -593,8 +596,8 @@ export function CollectionsAdmin() {
               onClick={() => setFeatured((value) => !value)}
               className={`w-full rounded-xl border px-3 py-2 text-left ${featured ? 'border-[#FF7900] bg-[#2a1608]' : 'border-[#333] bg-[#101010]'}`}
             >
-              <span className="block text-sm font-medium">{featured ? 'Will show on the homepage' : 'Keep it off the homepage'}</span>
-              <span className="block text-xs text-[#9a9a9a]">Tap to change. You can switch this later on the card.</span>
+              <span className="block text-sm font-medium">{featured ? 'Pinned to the front of the homepage' : 'Shows with the other collections'}</span>
+              <span className="block text-xs text-[#9a9a9a]">Every active collection is on the shop. Pin one to put it first.</span>
             </button>
             <div className="flex gap-2">
               <PrimaryButton type="submit" disabled={!name.trim()}>{editingId ? 'Save changes' : 'Add collection'}</PrimaryButton>

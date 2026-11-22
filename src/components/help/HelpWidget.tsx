@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LoadingScreen } from '../ui/LoadingScreen.tsx'
 import { rbpField } from '../ui/panels.ts'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { supabase, supabaseConfigured } from '../../lib/supabase.ts'
 
 type Faq = {
@@ -140,7 +142,7 @@ export function HelpWidget() {
       if (dbError) throw dbError
       setSent(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send your question.')
+      setError(friendlyError(err, 'Your question could not be sent. Please try again.'))
     } finally {
       setSending(false)
     }
@@ -210,13 +212,13 @@ export function HelpWidget() {
                 placeholder="Email"
                 className={`${rbpField} h-11`}
               />
-              {error && <p className="text-[12px] text-red-400">{error}</p>}
+              {error && <p className="text-[12px] text-red-400">{friendlyError(error)}</p>}
               <button
                 type="submit"
                 disabled={sending}
                 className="h-10 w-full rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] text-[13px] font-semibold text-black disabled:opacity-50"
               >
-                {sending ? 'Sending…' : 'Send my details'}
+                {sending ? <LoadingScreen label="Sending" compact /> : 'Send my details'}
               </button>
             </form>
           )}

@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpField } from '../../components/ui/panels.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 
 export function AccountSettingsPage() {
   const { profile, updateEmail, updatePassword, signOut } = useAuth()
-  const navigate = useNavigate()
   const [email, setEmail] = useState(profile?.email ?? '')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -28,7 +29,7 @@ export function AccountSettingsPage() {
     const result = await updateEmail(email)
     setSavingEmail(false)
     if (result.error) setError(result.error)
-    else setNotice('Confirm the new email from the message Supabase sends. The profile updates after that confirmation.')
+    else setNotice('Check your email to confirm the new address.')
   }
 
   const savePassword = async (event: React.FormEvent) => {
@@ -59,8 +60,9 @@ export function AccountSettingsPage() {
       <GothicHeading as="h1" className="text-[3rem] leading-[0.9]">
         Settings
       </GothicHeading>
-      {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
-      {notice && <p className="mt-4 text-sm text-rbp-accent">{notice}</p>}
+      {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
+      {notice ? <SuccessModal message={notice} onClose={() => setNotice(null)} /> : null}
+      {savingEmail || savingPassword ? <LoadingScreen label="Saving" full /> : null}
       <form className="mt-8 space-y-4" onSubmit={saveEmail}>
         <h2 className="text-sm uppercase tracking-[0.18em] text-rbp-cream">Email</h2>
         <input className={`${rbpField} h-11`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -80,7 +82,7 @@ export function AccountSettingsPage() {
         type="button"
         className="mt-10 text-sm text-rbp-accent"
         onClick={() => {
-          void signOut().then(() => navigate('/login'))
+          void signOut()
         }}
       >
         Sign out

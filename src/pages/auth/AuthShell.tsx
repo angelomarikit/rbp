@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
 import { rbpField, rbpPanel } from '../../components/ui/panels.ts'
+import { friendlyError } from '../../lib/friendlyError.ts'
 
 export const authField = `${rbpField} h-11 [color-scheme:dark]`
 
@@ -32,7 +33,7 @@ export function AuthShell({
 
 export function AuthError({ message }: { message: string | null }) {
   if (!message) return null
-  return <p className="mb-4 text-sm text-[#ffb089]">{message}</p>
+  return <p className="mb-4 text-sm text-[#ffb089]">{friendlyError(message)}</p>
 }
 
 export function AuthLink({ to, children }: { to: string; children: ReactNode }) {

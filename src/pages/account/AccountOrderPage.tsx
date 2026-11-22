@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
@@ -36,8 +38,8 @@ export function AccountOrderPage() {
     }
   }, [orderId, user])
 
-  if (loading) return <p className="text-sm uppercase tracking-[0.18em] text-rbp-cream">Loading order</p>
-  if (error || !order) return <p className="text-sm text-[#ffb089]">{error ?? 'This order is not on your account.'}</p>
+  if (loading) return <LoadingScreen label="Loading order" />
+  if (error || !order) return <p className="text-sm text-[#ffb089]">{friendlyError(error, 'This order is not on your account.')}</p>
 
   const address = order.shipping_address
   const shipment = [...(order.shipments ?? [])].sort((a, b) => (a.id < b.id ? -1 : 1))[0]

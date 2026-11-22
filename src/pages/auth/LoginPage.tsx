@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { type AccountRole, useAuth } from '../../features/auth/AuthProvider.tsx'
 import { AuthError, AuthLink, AuthShell, authField } from './AuthShell.tsx'
 
@@ -25,7 +26,9 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  if (!loading && user && profile) {
+  if (loading || submitting) return <LoadingScreen label={submitting ? 'Signing in' : 'Loading'} full />
+
+  if (user && profile) {
     const requested = safeNext((location.state as { from?: string } | null)?.from)
     return <Navigate to={destinationAfterLogin(profile.role, requested)} replace />
   }
@@ -61,7 +64,7 @@ export function LoginPage() {
       }
     >
       {!configured && (
-        <p className="mb-4 text-sm text-rbp-cream">Supabase credentials are missing, so sign-in cannot reach the database.</p>
+        <p className="mb-4 text-sm text-rbp-cream">Sign-in is not available right now.</p>
       )}
       <AuthError message={error} />
       <form className="space-y-4" onSubmit={submit}>

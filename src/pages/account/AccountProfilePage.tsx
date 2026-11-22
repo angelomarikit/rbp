@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpField } from '../../components/ui/panels.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 
@@ -34,8 +37,9 @@ export function AccountProfilePage() {
       </GothicHeading>
       <p className="mt-3 text-sm text-white/75">Email changes stay on the settings page so the confirmation message can arrive first.</p>
       <form className="mt-8 space-y-4" onSubmit={save}>
-        {error && <p className="text-sm text-[#ffb089]">{error}</p>}
-        {message && <p className="text-sm text-rbp-accent">{message}</p>}
+        {error && <p className="text-sm text-[#ffb089]">{friendlyError(error)}</p>}
+        {message ? <SuccessModal message={message} onClose={() => setMessage(null)} /> : null}
+        {saving ? <LoadingScreen label="Saving" full /> : null}
         <label className="block text-xs uppercase tracking-[0.16em] text-rbp-cream">
           Full name
           <input className={`${rbpField} mt-2 h-11`} value={fullName} onChange={(e) => setFullName(e.target.value)} />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { PageTitle } from './ui.tsx'
 import { formatPhp } from '../../lib/format.ts'
 import { formatWhen, fulfillmentLabel, paymentLabel } from '../../lib/orderStatus.ts'
@@ -76,7 +77,7 @@ export function AdminOrdersPage() {
           <option value="cancelled">Cancelled</option>
         </select>
       </div>
-      {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
+      {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       <div className="mt-6 overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="text-[11px] uppercase tracking-[0.16em] text-rbp-cream">

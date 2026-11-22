@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { PageTitle } from './ui.tsx'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
@@ -78,7 +81,7 @@ export function AdminOrderPage() {
   }
 
   if (!order) {
-    return <p className="text-sm text-white/70">{error ?? 'Loading order'}</p>
+    return error ? <p className="text-sm text-[#ffb089]">{friendlyError(error)}</p> : <LoadingScreen label="Loading order" />
   }
 
   const shipment = order.shipments?.[0]
@@ -92,8 +95,9 @@ export function AdminOrderPage() {
       </Link>
       <PageTitle title={order.order_number || 'Order'} />
       <p className="mt-2 text-sm text-white/70">{formatWhen(order.created_at)}</p>
-      {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
-      {notice && <p className="mt-4 text-sm text-rbp-accent">{notice}</p>}
+      {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
+      {notice ? <SuccessModal message="The order was saved." onClose={() => setNotice(null)} /> : null}
+      {saving ? <LoadingScreen label="Saving" full /> : null}
       <form className={`mt-6 space-y-4 p-4 ${rbpPanel}`} onSubmit={save}>
         <label className="block text-xs uppercase tracking-[0.16em] text-rbp-cream">
           Payment

@@ -8,12 +8,15 @@ export type FilterState = {
   gauge: string
 }
 
+type FilterOption = { id: string; label: string; count: number }
+
 type Props = {
   filters: FilterState
   onChange: (next: FilterState) => void
+  categories?: FilterOption[]
 }
 
-export function FilterSidebar({ filters, onChange }: Props) {
+export function FilterSidebar({ filters, onChange, categories = CATEGORY_FILTERS }: Props) {
   const toggle = (key: 'categories' | 'materials', id: string) => {
     const set = new Set(filters[key])
     if (set.has(id)) set.delete(id)
@@ -25,7 +28,7 @@ export function FilterSidebar({ filters, onChange }: Props) {
     <aside className="w-full shrink-0 rounded-rbp border border-rbp-border/70 bg-[#070707] p-5 lg:sticky lg:top-6 lg:w-[240px] lg:self-start">
       <p className="mb-3 text-[16px] font-bold text-rbp-text">Collections</p>
       <ul className="space-y-2.5 text-[13px] text-[#c5c0bb]">
-        {CATEGORY_FILTERS.map((c) => (
+        {categories.map((c) => (
           <li key={c.id} className="flex items-start gap-2">
             <input
               type="checkbox"

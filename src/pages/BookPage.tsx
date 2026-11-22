@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../components/ui/LoadingScreen.tsx'
+import { friendlyError } from '../lib/friendlyError.ts'
 import { rbpField, rbpPanel } from '../components/ui/panels.ts'
 import { supabase, supabaseConfigured } from '../lib/supabase.ts'
 
@@ -28,7 +30,7 @@ export function BookPage() {
       return
     }
     if (!supabaseConfigured || !supabase) {
-      setError('Booking is not connected yet. Please contact the studio directly or configure Supabase.')
+      setError('Booking is not available right now. Please contact the studio.')
       return
     }
     setSubmitting(true)
@@ -48,7 +50,7 @@ export function BookPage() {
       if (dbError) throw dbError
       setSuccessId(data.id as string)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not submit booking request.')
+      setError(friendlyError(err, 'The booking could not be sent. Please try again.'))
     } finally {
       setSubmitting(false)
     }
@@ -76,6 +78,7 @@ export function BookPage() {
 
   return (
     <div className="w-full bg-black px-5 py-14 sm:px-8 lg:py-20">
+      {submitting ? <LoadingScreen label="Sending your request" full /> : null}
       <div className="mx-auto max-w-3xl text-center">
         <p className="text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Piercing Services</p>
         <GothicHeading as="h1" className="mt-3 text-[3.6rem] leading-[0.85] sm:text-[4.6rem]">
@@ -144,7 +147,7 @@ export function BookPage() {
             />
           </Field>
         </div>
-        {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-4 text-center text-sm text-red-400">{friendlyError(error)}</p>}
         <div className="mt-6 flex justify-center">
           <OrangeButton type="submit" disabled={submitting} className="h-11 min-w-[240px] font-semibold">
             {submitting ? 'Submitting…' : 'Submit Booking Request'}

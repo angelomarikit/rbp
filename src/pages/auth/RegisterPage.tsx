@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { destinationForRole, useAuth } from '../../features/auth/AuthProvider.tsx'
 import { AuthError, AuthLink, AuthShell, authField } from './AuthShell.tsx'
 
@@ -44,6 +45,8 @@ export function RegisterPage() {
     navigate(destinationForRole(result.role ?? 'customer'), { replace: true })
   }
 
+  if (submitting) return <LoadingScreen label="Creating your account" full />
+
   if (sent) {
     return (
       <AuthShell kicker="Romell Body Piercing" title="Check Your Email" footer={<AuthLink to="/login">Back to sign in</AuthLink>}>
@@ -62,7 +65,7 @@ export function RegisterPage() {
       footer={<AuthLink to="/login">Already registered? Sign in</AuthLink>}
     >
       {!configured && (
-        <p className="mb-4 text-sm text-rbp-cream">Supabase credentials are missing, so registration cannot create an account.</p>
+        <p className="mb-4 text-sm text-rbp-cream">Registration is not available right now.</p>
       )}
       <AuthError message={error} />
       <form className="space-y-4" onSubmit={submit}>

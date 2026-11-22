@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { PageTitle } from './ui.tsx'
 import { formatPhp } from '../../lib/format.ts'
 import { formatWhen, fulfillmentLabel, paymentLabel } from '../../lib/orderStatus.ts'
@@ -173,8 +175,8 @@ export function AdminDashboardPage() {
           <input className="mt-2 block border border-rbp-border bg-black px-3 py-2 text-sm text-white" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
         </label>
       </div>
-      {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
-      {loading && <p className="mt-4 text-sm uppercase tracking-[0.16em] text-rbp-cream">Loading store numbers</p>}
+      {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
+      {loading && <LoadingScreen label="Loading store numbers" />}
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Sales in range" value={formatPhp(sales)} />
         <Stat label="Today" value={formatPhp(daily)} />

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpField, rbpPanel } from '../../components/ui/panels.ts'
 import { type CustomerAddress } from '../../features/account/types.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
@@ -24,6 +27,7 @@ export function AccountAddressesPage() {
   const [form, setForm] = useState({ ...empty, recipient_name: profile?.full_name ?? '', phone: profile?.phone ?? '' })
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const load = async () => {
     if (!supabase || !user) return
@@ -67,9 +71,10 @@ export function AccountAddressesPage() {
     })
     setSaving(false)
     if (insertError) {
-      setError(insertError.message)
+      setError(friendlyError(insertError, 'The address could not be saved.'))
       return
     }
+    setSaved(true)
     setForm({ ...empty, recipient_name: profile?.full_name ?? '', phone: profile?.phone ?? '' })
     await load()
   }
@@ -78,14 +83,14 @@ export function AccountAddressesPage() {
     if (!supabase || !user) return
     await supabase.from('customer_addresses').update({ is_default: false }).eq('customer_id', user.id)
     const { error: updateError } = await supabase.from('customer_addresses').update({ is_default: true }).eq('id', id).eq('customer_id', user.id)
-    if (updateError) setError(updateError.message)
+    if (updateError) setError(friendlyError(updateError, 'The address could not be updated.'))
     else await load()
   }
 
   const remove = async (id: string) => {
     if (!supabase || !user) return
     const { error: deleteError } = await supabase.from('customer_addresses').delete().eq('id', id).eq('customer_id', user.id)
-    if (deleteError) setError(deleteError.message)
+    if (deleteError) setError(friendlyError(deleteError, 'The address could not be removed.'))
     else await load()
   }
 
@@ -107,6 +112,8 @@ export function AccountAddressesPage() {
       </GothicHeading>
       <p className="mt-3 text-sm text-white/75">Saved shipping addresses stay on this account. Origin for studio shipments remains Taguig.</p>
       {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
+      {saved ? <SuccessModal message="Address saved." onClose={() => setSaved(false)} /> : null}
+      {saving ? <LoadingScreen label="Saving" full /> : null}
       <div className="mt-6 space-y-3">
         {rows.length === 0 && <p className="text-sm text-white/70">No saved addresses yet.</p>}
         {rows.map((row) => (

@@ -8,6 +8,7 @@ import { rbpField } from '../components/ui/panels.ts'
 import { CATEGORY_FILTERS, FEATURED_PRODUCT_SLUG } from '../data/products.ts'
 import { useProducts } from '../hooks/useProducts.ts'
 import { asset } from '../lib/assets.ts'
+import { supabase } from '../lib/supabase.ts'
 
 const PAGE_SIZE = 8
 
@@ -21,14 +22,23 @@ const categorySlug: Record<string, string> = {
   'Ear Jewelry': 'ear',
 }
 
+function categoryFromParam(value: string | null) {
+  if (!value) return []
+  if (categorySlug[value]) return [value]
+  const name = Object.entries(categorySlug).find(([, slug]) => slug === value)?.[0]
+  return [name ?? value]
+}
+
 export function CollectionsPage() {
   const { products } = useProducts()
   const [params] = useSearchParams()
   const initialCat = params.get('category')
   const initialQuery = params.get('q') ?? ''
+  const [shopCollections, setShopCollections] = useState<{ id: string; name: string }[] | null>(null)
+  const [membership, setMembership] = useState<Record<string, string[]>>({})
 
   const [filters, setFilters] = useState<FilterState>({
-    categories: initialCat ? [categorySlug[initialCat] ?? ''].filter(Boolean) : [],
+    categories: categoryFromParam(initialCat),
     materials: [],
     barLength: 'all',
     gauge: 'all',
@@ -37,7 +47,46 @@ export function CollectionsPage() {
   const [sort, setSort] = useState('bestselling')
   const [page, setPage] = useState(1)
 
+  useEffect(() => {
+    if (!supabase) return
+    let active = true
+    void Promise.all([
+      supabase.from('collections').select('id, name').eq('status', 'active').order('sort_order'),
+      supabase.from('product_collections').select('product_id, collection_id'),
+    ]).then(([collectionResult, linkResult]) => {
+      if (!active) return
+      const rows = (collectionResult.data ?? []) as { id: string; name: string }[]
+      const seen = new Set<string>()
+      const groups = rows.filter((group) => {
+        if (seen.has(group.name)) return false
+        seen.add(group.name)
+        return true
+      })
+      if (!collectionResult.error && groups.length) setShopCollections(groups)
+      const names = new Map(rows.map((group) => [group.id, group.name]))
+      const next: Record<string, string[]> = {}
+      for (const link of (linkResult.data ?? []) as { product_id: string; collection_id: string }[]) {
+        const name = names.get(link.collection_id)
+        if (!name) continue
+        next[link.product_id] = [...(next[link.product_id] ?? []), name]
+      }
+      setMembership(next)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
   const catalog = useMemo(() => products.filter((p) => p.slug !== FEATURED_PRODUCT_SLUG), [products])
+
+  const collectionFilters = useMemo(() => {
+    if (!shopCollections) return CATEGORY_FILTERS
+    return shopCollections.map((group) => ({
+      id: group.name,
+      label: group.name,
+      count: catalog.filter((product) => product.category === group.name || (membership[product.id] ?? []).includes(group.name)).length,
+    }))
+  }, [catalog, membership, shopCollections])
 
   const filtered = useMemo(() => {
     let list = [...catalog]
@@ -46,10 +95,12 @@ export function CollectionsPage() {
       list = list.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
     }
     if (filters.categories.length) {
-      list = list.filter((p) => {
-        const id = categorySlug[p.category]
-        return id && filters.categories.includes(id)
-      })
+      list = list.filter((product) =>
+        filters.categories.some((name) => {
+          if (shopCollections) return product.category === name || (membership[product.id] ?? []).includes(name)
+          return categorySlug[product.category] === name
+        }),
+      )
     }
     if (filters.materials.length) {
       list = list.filter((p) => {
@@ -62,7 +113,7 @@ export function CollectionsPage() {
     if (sort === 'price-asc') list.sort((a, b) => a.priceCents - b.priceCents)
     if (sort === 'price-desc') list.sort((a, b) => b.priceCents - a.priceCents)
     return list
-  }, [catalog, filters, query, sort])
+  }, [catalog, filters, membership, query, shopCollections, sort])
 
   useEffect(() => {
     setPage(1)
@@ -108,7 +159,7 @@ export function CollectionsPage() {
           >
             All
           </button>
-          {CATEGORY_FILTERS.map((category) => {
+          {collectionFilters.map((category) => {
             const active = filters.categories.includes(category.id)
             return (
               <button
@@ -135,7 +186,7 @@ export function CollectionsPage() {
 
       <section className="px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
         <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-          <FilterSidebar filters={filters} onChange={setFilters} />
+          <FilterSidebar filters={filters} onChange={setFilters} categories={collectionFilters} />
           <div className="min-w-0 flex-1">
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>

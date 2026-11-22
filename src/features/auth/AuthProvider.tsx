@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { supabase, supabaseConfigured } from '../../lib/supabase.ts'
 
 export type AccountRole = 'admin' | 'customer'
@@ -53,7 +55,7 @@ export function destinationForRole(role: AccountRole) {
 }
 
 async function fetchProfile(user: User): Promise<{ profile: Profile | null; error: string | null }> {
-  if (!supabase) return { profile: null, error: 'Supabase is not configured.' }
+  if (!supabase) return { profile: null, error: 'Accounts are not available right now.' }
 
   const { data, error } = await supabase
     .from('profiles')
@@ -61,7 +63,7 @@ async function fetchProfile(user: User): Promise<{ profile: Profile | null; erro
     .eq('id', user.id)
     .maybeSingle()
 
-  if (error) return { profile: null, error: error.message }
+  if (error) return { profile: null, error: friendlyError(error, 'We could not open your account.') }
 
   if (!data) {
     const { data: created, error: insertError } = await supabase
@@ -78,7 +80,7 @@ async function fetchProfile(user: User): Promise<{ profile: Profile | null; erro
     if (insertError) {
       return {
         profile: null,
-        error: 'Your profile is not in the database yet. Run migrations 005 and 012, then sign in again.',
+        error: 'We could not open your account. Please sign in again.',
       }
     }
     return { profile: created as Profile, error: null }
@@ -97,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [loading, setLoading] = useState(supabaseConfigured)
+  const [signingOut, setSigningOut] = useState(false)
 
   const applyUser = useCallback(async (user: User | null) => {
     if (!user) {
@@ -147,17 +150,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileError,
       refreshProfile,
       async signIn(email, password) {
-        if (!supabase) return { error: 'Supabase is not configured.', role: null }
+        if (!supabase) return { error: 'Sign-in is not available right now.', role: null }
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         })
-        if (error || !data.user) return { error: error?.message ?? 'Sign in failed.', role: null }
+        if (error || !data.user) return { error: friendlyError(error, 'Sign in failed. Check the email and password.'), role: null }
         const next = await applyUser(data.user)
-        return { error: next ? null : 'Signed in, but the profile could not be loaded.', role: next?.role ?? null }
+        return { error: next ? null : 'Signed in, but the account could not be opened.', role: next?.role ?? null }
       },
       async signUp(input) {
-        if (!supabase) return { error: 'Supabase is not configured.', needsVerification: false, role: null }
+        if (!supabase) return { error: 'Registration is not available right now.', needsVerification: false, role: null }
         const { data, error } = await supabase.auth.signUp({
           email: input.email.trim(),
           password: input.password,
@@ -167,31 +170,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         })
         if (error || !data.user) {
-          return { error: error?.message ?? 'Registration failed.', needsVerification: false, role: null }
+          return { error: friendlyError(error, 'The account could not be created.'), needsVerification: false, role: null }
         }
         if (!data.session) return { error: null, needsVerification: true, role: null }
         const next = await applyUser(data.user)
-        return { error: next ? null : 'Account created, but the profile could not be loaded.', needsVerification: false, role: next?.role ?? null }
+        return { error: next ? null : 'The account was created, but it could not be opened.', needsVerification: false, role: next?.role ?? null }
       },
       async sendPasswordReset(email) {
-        if (!supabase) return { error: 'Supabase is not configured.' }
+        if (!supabase) return { error: 'Accounts are not available right now.' }
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: `${window.location.origin}/reset-password`,
         })
-        return { error: error?.message ?? null }
+        return { error: error ? friendlyError(error, 'The reset email could not be sent.') : null }
       },
       async updatePassword(password) {
-        if (!supabase) return { error: 'Supabase is not configured.' }
+        if (!supabase) return { error: 'Accounts are not available right now.' }
         const { error } = await supabase.auth.updateUser({ password })
-        return { error: error?.message ?? null }
+        return { error: error ? friendlyError(error, 'The password could not be updated.') : null }
       },
       async updateEmail(email) {
-        if (!supabase) return { error: 'Supabase is not configured.' }
+        if (!supabase) return { error: 'Accounts are not available right now.' }
         const { error } = await supabase.auth.updateUser(
           { email: email.trim() },
           { emailRedirectTo: `${window.location.origin}/account/settings` },
         )
-        return { error: error?.message ?? null }
+        return { error: error ? friendlyError(error, 'The email could not be updated.') : null }
       },
       async updateProfile(patch) {
         if (!supabase || !session?.user) return { error: 'Sign in to update your profile.' }
@@ -199,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('profiles')
           .update({ full_name: patch.fullName.trim(), phone: patch.phone.trim() })
           .eq('id', session.user.id)
-        if (error) return { error: error.message }
+        if (error) return { error: friendlyError(error, 'The profile could not be saved.') }
         await supabase.auth.updateUser({
           data: { full_name: patch.fullName.trim(), phone: patch.phone.trim() },
         })
@@ -207,15 +210,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null }
       },
       async signOut() {
-        if (supabase) await supabase.auth.signOut()
+        setSigningOut(true)
         setSession(null)
         setProfile(null)
+        try {
+          if (supabase) await supabase.auth.signOut({ scope: 'local' })
+        } catch {
+          /* The local session is already cleared. */
+        }
+        window.location.replace('/')
       },
     }),
     [applyUser, loading, profile, profileError, refreshProfile, session],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {signingOut ? <LoadingScreen label="Signing out" full /> : null}
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

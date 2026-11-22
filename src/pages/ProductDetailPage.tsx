@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ProductCard } from '../components/commerce/ProductCard.tsx'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../components/ui/LoadingScreen.tsx'
 import { IconCart, IconChevron, IconHeart, IconShield } from '../components/ui/Icons.tsx'
 import { QuantityStepper } from '../components/ui/QuantityStepper.tsx'
 import { rbpPanel } from '../components/ui/panels.ts'
@@ -107,7 +108,7 @@ export function ProductDetailPage() {
   }, [slug])
 
   if (!ready && !product) {
-    return <div className="px-6 py-20 text-center text-sm text-white/60">Loading product…</div>
+    return <LoadingScreen label="Loading product" />
   }
 
   if (!product) {

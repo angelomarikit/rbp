@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
@@ -50,7 +51,7 @@ export function AccountDashboardPage() {
       <p className="mt-3 max-w-xl text-sm text-white/75">
         Orders placed while you are signed in use this account. Payment and J&T updates from the studio appear on the same order.
       </p>
-      {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
+      {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className={`p-4 ${rbpPanel}`}>
           <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Recent orders</p>

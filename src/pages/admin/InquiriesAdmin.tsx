@@ -10,6 +10,7 @@ export function InquiriesAdmin() {
   const [faqs, setFaqs] = useState<Faq[]>([])
   const [draft, setDraft] = useState({ question: '', answer: '', keywords: '' })
   const [error, setError] = useState<string | null>(null)
+  const [ok, setOk] = useState<string | null>(null)
 
   const load = async () => {
     const [inquiryResult, faqResult] = await Promise.all([
@@ -35,7 +36,7 @@ export function InquiriesAdmin() {
         <a href="#inbox" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">1. Questions{openCount ? ` · ${openCount} waiting` : ''}</a>
         <a href="#faqs" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">2. Saved answers</a>
       </nav>
-      <Notice error={error} />
+      <Notice error={error} ok={ok} />
       <section id="inbox" className="scroll-mt-4 space-y-3">
         <div>
           <h2 className="text-base font-semibold">Questions from the chat</h2>
@@ -112,6 +113,7 @@ export function InquiriesAdmin() {
             onSubmit={async (event) => {
               event.preventDefault()
               if (!draft.question.trim() || !draft.answer.trim()) return
+              setOk(null)
               const { error: insertError } = await supabase!.from('faqs').insert({
                 question: draft.question.trim(),
                 answer: draft.answer.trim(),
@@ -121,7 +123,9 @@ export function InquiriesAdmin() {
               })
               if (insertError) setError(insertError.message)
               else {
+                setError(null)
                 setDraft({ question: '', answer: '', keywords: '' })
+                setOk('Answer saved.')
                 await load()
               }
             }}

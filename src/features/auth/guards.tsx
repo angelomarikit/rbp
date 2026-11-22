@@ -1,4 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { destinationForRole, useAuth } from './AuthProvider.tsx'
 
 export function RequireAuth() {
@@ -9,15 +11,13 @@ export function RequireAuth() {
     return (
       <div className="mx-auto max-w-lg px-6 py-20 text-center">
         <h1 className="font-display text-4xl text-rbp-accent">Account</h1>
-        <p className="mt-4 text-sm text-rbp-cream">
-          Add the Supabase URL and anon key, then run migrations 005 through 012.
-        </p>
+        <p className="mt-4 text-sm text-rbp-cream">Accounts are not available right now. Please try again later.</p>
       </div>
     )
   }
 
   if (loading) {
-    return <p className="px-6 py-20 text-center text-sm uppercase tracking-[0.2em] text-rbp-cream">Loading account</p>
+    return <LoadingScreen label="Loading" full />
   }
 
   if (!user) {
@@ -28,7 +28,7 @@ export function RequireAuth() {
     return (
       <div className="mx-auto max-w-lg px-6 py-20 text-center">
         <h1 className="font-display text-4xl text-rbp-accent">Profile</h1>
-        <p className="mt-4 text-sm text-rbp-cream">{profileError ?? 'This account has no profile row yet.'}</p>
+        <p className="mt-4 text-sm text-rbp-cream">{friendlyError(profileError, 'We could not open your account.')}</p>
       </div>
     )
   }
@@ -39,7 +39,7 @@ export function RequireAuth() {
 export function RequireCustomer() {
   const { loading, profile } = useAuth()
   if (loading) {
-    return <p className="px-6 py-20 text-center text-sm uppercase tracking-[0.2em] text-rbp-cream">Loading account</p>
+    return <LoadingScreen label="Loading" full />
   }
   if (profile?.role === 'admin') return <Navigate to="/admin/dashboard" replace />
   return <Outlet />
@@ -48,7 +48,7 @@ export function RequireCustomer() {
 export function RequireAdmin() {
   const { loading, profile } = useAuth()
   if (loading) {
-    return <p className="px-6 py-20 text-center text-sm uppercase tracking-[0.2em] text-rbp-cream">Loading account</p>
+    return <LoadingScreen label="Loading" full />
   }
   if (!profile) return <Navigate to="/login" replace />
   if (profile.role !== 'admin') return <Navigate to={destinationForRole(profile.role)} replace />

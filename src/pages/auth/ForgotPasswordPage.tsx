@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 import { AuthError, AuthLink, AuthShell, authField } from './AuthShell.tsx'
 
@@ -27,13 +28,13 @@ export function ForgotPasswordPage() {
     setSent(true)
   }
 
+  if (submitting) return <LoadingScreen label="Sending the link" full />
+
   return (
     <AuthShell kicker="Romell Body Piercing" title="Reset Password" footer={<AuthLink to="/login">Back to sign in</AuthLink>}>
       {sent ? (
         <p className="text-center text-sm leading-relaxed text-white/80">
-          If an account exists for <span className="text-rbp-accent">{email.trim()}</span>, a recovery link is on its way.
-          Add <span className="text-rbp-cream">{window.location.origin}/reset-password</span> to the Supabase Auth redirect
-          allow list so the link can open this site.
+          If an account exists for <span className="text-rbp-accent">{email.trim()}</span>, a recovery link is on its way. Open it in this browser.
         </p>
       ) : (
         <>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { destinationForRole, useAuth } from '../../features/auth/AuthProvider.tsx'
 import { supabase } from '../../lib/supabase.ts'
 import { AuthError, AuthLink, AuthShell, authField } from './AuthShell.tsx'
@@ -46,11 +47,13 @@ export function ResetPasswordPage() {
     navigate(profile ? destinationForRole(profile.role) : '/account/dashboard', { replace: true })
   }
 
+  if (submitting) return <LoadingScreen label="Saving" full />
+
   return (
     <AuthShell kicker="Romell Body Piercing" title="New Password" footer={<AuthLink to="/login">Back to sign in</AuthLink>}>
       {!ready ? (
         <p className="text-center text-sm leading-relaxed text-white/80">
-          Open the recovery link from your email on this browser. The form appears after Supabase confirms the link.
+          Open the recovery link from your email in this browser, then choose a new password.
         </p>
       ) : (
         <>

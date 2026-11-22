@@ -1,4 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
+import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
 
 export const fieldClass =
@@ -57,9 +60,16 @@ export function TextArea({ label, hint, ...props }: { label: string; hint?: stri
 }
 
 export function Notice({ error, ok }: { error?: string | null; ok?: string | null }) {
-  if (error) return <p className="mb-3 text-sm text-[#ffb089]">{error}</p>
-  if (ok) return <p className="mb-3 text-sm text-[#ffb067]">{ok}</p>
-  return null
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (ok) setOpen(true)
+  }, [ok])
+  return (
+    <>
+      {error ? <p className="mb-3 text-sm text-[#ffb089]">{friendlyError(error)}</p> : null}
+      {open && ok ? <SuccessModal message={ok} onClose={() => setOpen(false)} /> : null}
+    </>
+  )
 }
 
 export function MediaField({
@@ -106,13 +116,13 @@ export function MediaField({
           try {
             onChange(await uploadMedia(file, folder))
           } catch (err) {
-            setError(err instanceof Error ? err.message : 'Upload failed')
+            setError(friendlyError(err, 'That file could not be uploaded.'))
           } finally {
             setBusy(false)
           }
         }}
       />
-      {busy && <p className="mt-2 text-xs text-[#ffb067]">Uploading…</p>}
+      {busy ? <LoadingScreen label="Uploading" /> : null}
       {error && <p className="mt-2 text-xs text-[#ffb089]">{error}</p>}
     </div>
   )

@@ -61,6 +61,7 @@ export function EventsAdmin() {
 
   const saveHero = async (path: string) => {
     setHero(path)
+    setOk(null)
     const { error: saveError } = await supabase!.from('content_sections').upsert(
       { page: 'events', section_key: 'hero', media_path: path, title: 'Client Showcase', subtitle: 'Events &', visible: true, sort_order: 1 },
       { onConflict: 'page,section_key' },
@@ -73,6 +74,7 @@ export function EventsAdmin() {
     event.preventDefault()
     if (!supabase || !draft.title.trim()) return
     setError(null)
+    setOk(null)
     const payload = {
       title: draft.title.trim(),
       summary: draft.summary,
@@ -97,6 +99,8 @@ export function EventsAdmin() {
   const saveQuote = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!supabase || !quote.customer_name || !quote.quote) return
+    setError(null)
+    setOk(null)
     const { error: insertError } = await supabase.from('testimonials').insert({
       customer_name: quote.customer_name,
       quote: quote.quote,
@@ -107,6 +111,8 @@ export function EventsAdmin() {
     })
     if (insertError) setError(insertError.message)
     else {
+      setError(null)
+      setOk('Quote saved.')
       setQuote({ customer_name: '', quote: '', image_path: '', rating: '5' })
       await load()
     }

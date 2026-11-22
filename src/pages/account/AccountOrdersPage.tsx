@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
+import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
@@ -37,7 +38,7 @@ export function AccountOrdersPage() {
         Orders
       </GothicHeading>
       <p className="mt-3 text-sm text-white/75">These are the studio order records for this account, including payment and shipment status.</p>
-      {error && <p className="mt-4 text-sm text-[#ffb089]">{error}</p>}
+      {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       <div className="mt-6 space-y-3">
         {orders.length === 0 && <p className="text-sm text-white/70">No orders are linked to this account yet.</p>}
         {orders.map((order) => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
+import { LoadingScreen } from '../components/ui/LoadingScreen.tsx'
 import { IconCart, IconTrash } from '../components/ui/Icons.tsx'
 import { QuantityStepper } from '../components/ui/QuantityStepper.tsx'
 import { rbpField, rbpPanel } from '../components/ui/panels.ts'
@@ -11,6 +12,7 @@ import { supabase } from '../lib/supabase.ts'
 import { useCheckout } from '../hooks/useCheckout.ts'
 import { asset } from '../lib/assets.ts'
 import { formatPhpLabel } from '../lib/format.ts'
+import { friendlyError } from '../lib/friendlyError.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
 
@@ -75,6 +77,7 @@ export function CheckoutPage() {
 
   return (
     <div className="w-full bg-black">
+      {submitting ? <LoadingScreen label="Placing your order" full /> : null}
       <section className="relative grid min-h-[180px] lg:grid-cols-[minmax(0,46%)_1fr]">
         <div className="flex flex-col justify-center bg-black px-6 py-8 lg:px-12">
           <GothicHeading as="h1" className="text-[2.6rem] leading-none text-rbp-accent sm:text-[3.4rem]">
@@ -309,7 +312,7 @@ function CheckoutFormPanel({
       </div>
       <PaymentQr method={selected.label} path={qrPath} />
 
-      {error && <p className="mb-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-2 text-sm text-red-400">{friendlyError(error)}</p>}
       <OrangeButton type="button" className="h-11 w-full font-semibold text-black" disabled={submitting || cartEmpty} onClick={onSubmit}>
         {submitting ? 'Processing…' : 'Proceed to Checkout →'}
       </OrangeButton>

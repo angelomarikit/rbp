@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 import type { CartLine, CheckoutForm } from '../data/types.ts'
 import { useAuth } from '../features/auth/AuthProvider.tsx'
+import { friendlyError } from '../lib/friendlyError.ts'
 import { supabase, supabaseConfigured } from '../lib/supabase.ts'
 
 const SHIPPING_CENTS = { standard: 10000, express: 20000 } as const
@@ -72,9 +73,7 @@ export function useCheckout(lines: CartLine[]) {
     }
 
     if (!supabaseConfigured || !supabase) {
-      setError(
-        'Checkout is not connected to the database. Add Supabase credentials to .env.local and apply migrations.',
-      )
+      setError('Checkout is not available right now. Please try again later.')
       return { ok: false }
     }
 
@@ -116,7 +115,7 @@ export function useCheckout(lines: CartLine[]) {
       setStep(3)
       return { ok: true, orderId: id }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Checkout failed')
+      setError(friendlyError(e, 'The order could not be placed. Please try again.'))
       return { ok: false }
     } finally {
       setSubmitting(false)

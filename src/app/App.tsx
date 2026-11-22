@@ -28,6 +28,7 @@ import { EventDetailPage } from '../pages/EventDetailPage.tsx'
 import { EventsPage } from '../pages/EventsPage.tsx'
 import { AboutPage, ContactPage, GalleryPage } from '../pages/ContentPages.tsx'
 import { HomePage } from '../pages/HomePage.tsx'
+import { NotFoundPage } from '../pages/NotFoundPage.tsx'
 import { ProductDetailPage } from '../pages/ProductDetailPage.tsx'
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="register" element={<RegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="*" element={<NotFoundPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<RequireCustomer />}>
             <Route path="account" element={<AccountLayout />}>
@@ -80,6 +82,7 @@ export default function App() {
             <Route path="contact" element={<ContactAdmin />} />
             <Route path="inquiries" element={<InquiriesAdmin />} />
             <Route path="settings" element={<SettingsAdmin />} />
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Route>
         </Route>
       </Route>

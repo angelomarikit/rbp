@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { Card, MediaField, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
 
 type Section = {
@@ -95,6 +96,7 @@ export function HomepageEditor() {
     const client = supabase
     setSaving(true)
     setError(null)
+    setOk(null)
     const results = await Promise.all(
       collections.map((collection) =>
         client.from('collections').update({ featured: collection.featured, sort_order: collection.sort_order }).eq('id', collection.id),
@@ -157,6 +159,7 @@ export function HomepageEditor() {
           </a>
         ))}
       </nav>
+      {saving ? <LoadingScreen label="Saving" full /> : null}
       <Notice error={error} ok={ok} />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">

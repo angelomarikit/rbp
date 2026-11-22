@@ -3,6 +3,7 @@ import { affiliationFromRow, defaultAffiliation, type AffiliationContent } from 
 import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../../lib/paymentQr.ts'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
+import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { Card, MediaField, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
 
 type GalleryItem = { id: string; storage_path: string; caption: string | null; category: string | null; published: boolean; sort_order: number }
@@ -62,6 +63,7 @@ export function GalleryAdmin() {
         </label>
       </div>
       <p className="text-xs text-[#8d8d8d]">Best size 1080×1080, a square. JPG, PNG, or WebP.</p>
+      {busy ? <LoadingScreen label="Uploading" full /> : null}
       <Notice error={error} />
       {items.length === 0 && <div className="rounded-xl border border-dashed border-[#444] px-4 py-16 text-center text-sm text-[#9a9a9a]">No photos yet. Use Add photos.</div>}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -105,6 +107,8 @@ export function AboutAdmin() {
       className="mx-auto max-w-6xl space-y-5"
       onSubmit={async (event) => {
         event.preventDefault()
+        setError(null)
+        setOk(null)
         const { error: saveError } = await supabase!.from('content_sections').upsert(
           { page: 'about', section_key: 'main', title, body, media_path: image || null, extra: { video_path: video || null }, visible: true, sort_order: 1 },
           { onConflict: 'page,section_key' },
@@ -166,6 +170,8 @@ export function ContactAdmin() {
       className="mx-auto max-w-6xl space-y-5"
       onSubmit={async (event) => {
         event.preventDefault()
+        setError(null)
+        setOk(null)
         const [section, settings] = await Promise.all([
           supabase!.from('content_sections').upsert({ page: 'contact', section_key: 'main', title: form.title, body: form.body, visible: true, sort_order: 1 }, { onConflict: 'page,section_key' }),
           supabase!.from('site_settings').update({ phone: form.phone || null, email: form.email || null, address: form.address || null, city: form.city }).eq('id', 1),
