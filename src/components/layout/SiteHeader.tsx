@@ -111,10 +111,15 @@ function MenuButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
-      className="rounded border border-rbp-border px-2 py-1 text-[11px] uppercase tracking-wide text-rbp-text xl:hidden"
+      className="flex h-9 w-9 items-center justify-center text-rbp-accent xl:hidden"
       onClick={onClick}
+      aria-label="Open menu"
     >
-      Menu
+      <span className="flex flex-col gap-[5px]" aria-hidden>
+        <span className="block h-[2px] w-6 bg-current" />
+        <span className="block h-[2px] w-6 bg-current" />
+        <span className="block h-[2px] w-6 bg-current" />
+      </span>
     </button>
   )
 }
