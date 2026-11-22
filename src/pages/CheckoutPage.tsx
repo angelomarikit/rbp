@@ -53,7 +53,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
     let active = true
     void optionGroupsFor(line.productId).then((result) => {
       if (!active) return
-      setGroups(result.groups.filter((group) => ['length', 'size', 'gauge', 'color', 'material'].includes(group.key)))
+      setGroups(result.groups)
       setRows(result.rows)
     })
     return () => {
@@ -78,14 +78,16 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
     const described = describeSelection(nextSelected, rows)
     const ordered = sizeGroup ? sizeGroup.values.filter((value) => nextSizes.includes(value)) : []
     const sizeText = ordered.join(', ')
-    const sizeLabel = [sizeText, nextSelected.gauge].filter(Boolean).join(' / ') || described.sizeLabel
+    const sizeLabel = sizeGroup
+      ? [sizeText, nextSelected.gauge].filter(Boolean).join(' / ') || described.sizeLabel
+      : described.sizeLabel
     const variantKey = [
       sizeGroup ? `${sizeGroup.key}:${ordered.join('+')}` : '',
       ...Object.entries(nextSelected).filter(([key]) => key !== sizeGroup?.key).map(([key, value]) => `${key}:${value}`),
     ].filter(Boolean).join('|')
     onChange(line.lineId, {
       options: { ...described.options, ...(sizeGroup ? { [sizeGroup.key]: ordered[0] ?? '' } : {}) },
-      sizes: ordered,
+      ...(sizeGroup ? { sizes: ordered } : {}),
       ...(quantity === undefined ? {} : { quantity }),
       variantKey,
       material: described.material || line.material,

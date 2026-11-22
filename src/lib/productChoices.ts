@@ -98,11 +98,27 @@ async function versionRows(productId: string) {
   return (data ?? []) as VersionRow[]
 }
 
-export async function defaultChoiceFor(productId: string) {
-  return choiceFromVersions(await versionRows(productId))
+function rowsFromProduct(product: { material?: string | null; specs?: { material?: string; gauge?: string; barLength?: string; gem?: string; finish?: string } | null }) {
+  const options: Record<string, string> = {}
+  const material = product.specs?.material?.trim() || product.material?.trim()
+  if (material) options.material = material
+  if (product.specs?.gauge?.trim()) options.gauge = product.specs.gauge.trim()
+  if (product.specs?.barLength?.trim()) options.length = product.specs.barLength.trim()
+  if (product.specs?.finish?.trim()) options.finish = product.specs.finish.trim()
+  if (product.specs?.gem?.trim()) options.gem = product.specs.gem.trim()
+  return Object.keys(options).length ? [{ options }] : []
 }
 
 export async function optionGroupsFor(productId: string) {
-  const rows = await versionRows(productId)
+  let rows = await versionRows(productId)
+  if (!groupsFromVersions(rows).length && supabase && productId) {
+    const { data } = await supabase.from('products').select('material, specs').eq('id', productId).maybeSingle()
+    if (data) rows = rowsFromProduct(data)
+  }
   return { groups: groupsFromVersions(rows), rows }
+}
+
+export async function defaultChoiceFor(productId: string) {
+  const { rows } = await optionGroupsFor(productId)
+  return choiceFromVersions(rows)
 }
