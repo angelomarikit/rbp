@@ -1,11 +1,7 @@
-import { CATEGORY_FILTERS, MATERIAL_FILTERS } from '../../data/products.ts'
-import { rbpField } from '../ui/panels.ts'
+import { CATEGORY_FILTERS } from '../../data/products.ts'
 
 export type FilterState = {
   categories: string[]
-  materials: string[]
-  barLength: string
-  gauge: string
 }
 
 type FilterOption = { id: string; label: string; count: number }
@@ -17,11 +13,11 @@ type Props = {
 }
 
 export function FilterSidebar({ filters, onChange, categories = CATEGORY_FILTERS }: Props) {
-  const toggle = (key: 'categories' | 'materials', id: string) => {
-    const set = new Set(filters[key])
+  const toggle = (id: string) => {
+    const set = new Set(filters.categories)
     if (set.has(id)) set.delete(id)
     else set.add(id)
-    onChange({ ...filters, [key]: [...set] })
+    onChange({ ...filters, categories: [...set] })
   }
 
   return (
@@ -33,7 +29,7 @@ export function FilterSidebar({ filters, onChange, categories = CATEGORY_FILTERS
             <input
               type="checkbox"
               checked={filters.categories.includes(c.id)}
-              onChange={() => toggle('categories', c.id)}
+              onChange={() => toggle(c.id)}
               className="mt-0.5 accent-rbp-accent"
             />
             <span>
@@ -42,48 +38,6 @@ export function FilterSidebar({ filters, onChange, categories = CATEGORY_FILTERS
           </li>
         ))}
       </ul>
-      <div className="my-4 h-px bg-rbp-border" />
-      <p className="mb-3 text-[16px] font-bold text-rbp-text">Material</p>
-      <ul className="space-y-2.5 text-[13px] text-[#c5c0bb]">
-        {MATERIAL_FILTERS.map((m) => (
-          <li key={m.id} className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              checked={filters.materials.includes(m.id)}
-              onChange={() => toggle('materials', m.id)}
-              className="mt-0.5 accent-rbp-accent"
-            />
-            <span>
-              {m.label} ({m.count})
-            </span>
-          </li>
-        ))}
-      </ul>
-      <div className="my-4 h-px bg-rbp-border" />
-      <p className="mb-2 text-[16px] font-bold text-rbp-text">Size</p>
-      <p className="mb-1 text-[14px] text-rbp-text">Bar Length</p>
-      <select
-        value={filters.barLength}
-        onChange={(e) => onChange({ ...filters, barLength: e.target.value })}
-        className={`mb-3 ${rbpField} text-[13px]`}
-      >
-        <option value="all">All Lengths</option>
-        <option value="6mm">6 mm</option>
-        <option value="8mm">8 mm</option>
-        <option value="10mm">10 mm</option>
-        <option value="12mm">12 mm</option>
-        <option value="14mm">14 mm</option>
-      </select>
-      <p className="mb-1 text-[14px] text-rbp-text">Gauge (Thickness)</p>
-      <select
-        value={filters.gauge}
-        onChange={(e) => onChange({ ...filters, gauge: e.target.value })}
-        className={`${rbpField} text-[13px]`}
-      >
-        <option value="all">All Gauges</option>
-        <option value="14g">14G</option>
-        <option value="16g">16G</option>
-      </select>
     </aside>
   )
 }

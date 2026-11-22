@@ -48,13 +48,9 @@ export function CollectionsPage() {
   const initialQuery = params.get('q') ?? ''
   const [shopCollections, setShopCollections] = useState<{ id: string; name: string }[] | null>(null)
   const [membership, setMembership] = useState<Record<string, string[]>>({})
-  const [lengths, setLengths] = useState<Record<string, string[]>>({})
 
   const [filters, setFilters] = useState<FilterState>({
     categories: categoryFromParam(initialCat),
-    materials: [],
-    barLength: 'all',
-    gauge: 'all',
   })
   const [query, setQuery] = useState(initialQuery)
   const [sort, setSort] = useState('bestselling')
@@ -71,8 +67,7 @@ export function CollectionsPage() {
     void Promise.all([
       supabase.from('collections').select('id, name').eq('status', 'active').order('sort_order'),
       supabase.from('product_collections').select('product_id, collection_id'),
-      supabase.from('product_variants').select('product_id, options').eq('status', 'active'),
-    ]).then(([collectionResult, linkResult, variantResult]) => {
+    ]).then(([collectionResult, linkResult]) => {
       if (!active) return
       const rows = (collectionResult.data ?? []) as { id: string; name: string }[]
       const seen = new Set<string>()
@@ -90,14 +85,6 @@ export function CollectionsPage() {
         next[link.product_id] = [...(next[link.product_id] ?? []), name]
       }
       setMembership(next)
-      const offered: Record<string, string[]> = {}
-      for (const version of (variantResult.data ?? []) as { product_id: string; options: Record<string, string> | null }[]) {
-        const raw = version.options?.length || version.options?.size || ''
-        const parts = raw.split(/\s*(?:,|\/|\||·|;)\s*|\s+(?=\d)/).map((part) => part.toLowerCase().replace(/\s+/g, '')).filter((part) => /^\d+(?:\.\d+)?mm$/.test(part))
-        if (!parts.length) continue
-        offered[version.product_id] = [...new Set([...(offered[version.product_id] ?? []), ...parts])]
-      }
-      setLengths(offered)
     })
     return () => {
       active = false
@@ -124,24 +111,10 @@ export function CollectionsPage() {
     if (filters.categories.length) {
       list = list.filter((product) => filters.categories.some((name) => productInCollection(product, name, membership)))
     }
-    if (filters.materials.length) {
-      list = list.filter((p) => {
-        if (filters.materials.includes('titanium') && p.material.includes('Titanium')) return true
-        if (filters.materials.includes('316l') && p.material.includes('316')) return true
-        if (filters.materials.includes('gold') && p.material.includes('Gold')) return true
-        return false
-      })
-    }
-    if (filters.barLength !== 'all') {
-      list = list.filter((product) => {
-        const recorded = product.specs?.barLength?.toLowerCase().replace(/\s+/g, '') ?? ''
-        return lengths[product.id]?.includes(filters.barLength) || recorded.includes(filters.barLength)
-      })
-    }
     if (sort === 'price-asc') list.sort((a, b) => a.priceCents - b.priceCents)
     if (sort === 'price-desc') list.sort((a, b) => b.priceCents - a.priceCents)
     return list
-  }, [catalog, filters, lengths, membership, query, sort])
+  }, [catalog, filters, membership, query, sort])
 
   useEffect(() => {
     setPage(1)
