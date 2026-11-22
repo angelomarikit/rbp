@@ -77,9 +77,13 @@ join (
     ('color', 'Pink', 8),
     ('color', 'Red', 9),
     ('color', 'Purple', 10),
+    ('color', 'Gold color', 11),
+    ('color', 'Steel color', 12),
     ('material', 'Surgical Stainless 316L', 1),
     ('material', 'Titanium', 2),
-    ('material', '14K Gold Plated', 3)
+    ('material', '14K Gold Plated', 3),
+    ('material', 'Titanium G23', 4),
+    ('material', 'Stainless 316L', 5)
 ) as v(option_key, value, sort_order) on v.option_key = o.key
 on conflict (option_id, value) do nothing;
 

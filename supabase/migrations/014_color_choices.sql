@@ -13,6 +13,8 @@ join (
     ('color', 'Blue', 7),
     ('color', 'Pink', 8),
     ('color', 'Red', 9),
-    ('color', 'Purple', 10)
+    ('color', 'Purple', 10),
+    ('color', 'Gold color', 11),
+    ('color', 'Steel color', 12)
 ) as v(option_key, value, sort_order) on v.option_key = o.key
 on conflict (option_id, value) do update set sort_order = excluded.sort_order;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { GEM_VARIANTS } from '../../data/products.ts'
+import { GEM_VARIANTS, MATERIAL_CHOICES } from '../../data/products.ts'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { formatPhp } from '../../lib/format.ts'
@@ -119,7 +119,7 @@ export function ProductEditor() {
   const [sku, setSku] = useState('')
   const [inventory, setInventory] = useState('')
   const [status, setStatus] = useState('active')
-  const [material, setMaterial] = useState('Surgical Stainless 316L')
+  const [material, setMaterial] = useState('Stainless 316L')
   const [images, setImages] = useState<string[]>([])
   const [collectionIds, setCollectionIds] = useState<string[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
@@ -175,6 +175,28 @@ export function ProductEditor() {
           const refreshed = await supabase.from('variation_option_values').select('id, option_id, value').eq('option_id', color.id).order('sort_order')
           if (!refreshed.error && refreshed.data) {
             nextOptions = nextOptions.map((option) => option.id === color.id ? { ...option, values: refreshed.data as OptionValue[] } : option)
+          }
+        }
+      }
+      const materialOption = nextOptions.find((option) => option.key === 'material')
+      if (materialOption) {
+        const known = new Set(MATERIAL_CHOICES.map((label) => label.toLowerCase()))
+        const extras = materialOption.values.filter((value) => !known.has(value.value.toLowerCase()))
+        nextOptions = nextOptions.map((option) => option.id === materialOption.id ? {
+          ...option,
+          values: [
+            ...MATERIAL_CHOICES.map((label) => materialOption.values.find((value) => value.value.toLowerCase() === label.toLowerCase()) ?? { id: `material-${label}`, option_id: materialOption.id, value: label }),
+            ...extras,
+          ],
+        } : option)
+        const saved = await supabase.from('variation_option_values').upsert(
+          [...MATERIAL_CHOICES.map((label, index) => ({ option_id: materialOption.id, value: label, sort_order: index + 1 })), ...extras.map((value, index) => ({ option_id: materialOption.id, value: value.value, sort_order: MATERIAL_CHOICES.length + index + 1 }))],
+          { onConflict: 'option_id,value' },
+        )
+        if (!saved.error) {
+          const refreshed = await supabase.from('variation_option_values').select('id, option_id, value').eq('option_id', materialOption.id).order('sort_order')
+          if (!refreshed.error && refreshed.data) {
+            nextOptions = nextOptions.map((option) => option.id === materialOption.id ? { ...option, values: refreshed.data as OptionValue[] } : option)
           }
         }
       }

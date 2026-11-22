@@ -13,6 +13,16 @@ export const GEM_VARIANTS: GemVariant[] = [
   { key: 'pink', label: 'Pink', color: '#e87ab8' },
   { key: 'red', label: 'Red', color: '#c44545' },
   { key: 'purple', label: 'Purple', color: '#9b6fd4' },
+  { key: 'gold-color', label: 'Gold color', color: '#d4af37' },
+  { key: 'steel-color', label: 'Steel color', color: '#c5c9ce' },
+]
+
+export const MATERIAL_CHOICES = [
+  'Surgical Stainless 316L',
+  'Titanium',
+  '14K Gold Plated',
+  'Titanium G23',
+  'Stainless 316L',
 ]
 
 export const PRODUCTS: Product[] = [
