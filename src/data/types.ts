@@ -38,6 +38,7 @@ export type CartLine = {
   variantLabel?: string
   material?: string
   sizeLabel?: string
+  color?: string
 }
 
 export type ShippingMethod = 'standard' | 'express'

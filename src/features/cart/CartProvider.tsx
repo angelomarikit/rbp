@@ -9,6 +9,8 @@ import {
 } from 'react'
 import type { CartLine, Product } from '../../data/types.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
+import { defaultChoiceFor, type ProductChoice } from '../../lib/productChoices.ts'
+import { supabase } from '../../lib/supabase.ts'
 
 const STORAGE_KEY = 'rbp_cart_v1'
 
@@ -19,7 +21,7 @@ type CartContextValue = {
   addProduct: (
     product: Product,
     quantity?: number,
-    variant?: { key: string; label: string; priceCents?: number; material?: string },
+    variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string },
   ) => void
   updateQuantity: (lineId: string, quantity: number) => void
   removeLine: (lineId: string) => void
@@ -47,11 +49,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lines))
   }, [lines])
 
+  useEffect(() => {
+    if (!supabase) return
+    const pending = lines.filter((line) => !line.variantKey && !line.sizeLabel && !line.color)
+    if (!pending.length) return
+    let cancelled = false
+    void (async () => {
+      const choices = new Map<string, ProductChoice | null>()
+      await Promise.all(pending.map(async (line) => {
+        if (choices.has(line.productId)) return
+        choices.set(line.productId, await defaultChoiceFor(line.productId))
+      }))
+      if (cancelled) return
+      setLines((current) => current.map((line) => {
+        if (line.variantKey || line.sizeLabel || line.color) return line
+        const choice = choices.get(line.productId)
+        if (!choice) return { ...line, variantKey: 'default' }
+        return {
+          ...line,
+          variantKey: choice.key || 'default',
+          material: choice.material || line.material,
+          sizeLabel: choice.sizeLabel,
+          color: choice.color,
+          priceCents: choice.priceCents ?? line.priceCents,
+        }
+      }))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [lines])
+
   const addProduct = useCallback(
     (
       product: Product,
       quantity = 1,
-      variant?: { key: string; label: string; priceCents?: number; material?: string },
+      variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string },
     ) => {
       const lineId = makeLineId(product.slug, variant?.key)
       setLines((prev) => {
@@ -74,13 +107,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             quantity,
             imagePath: product.imagePath,
             variantKey: variant?.key,
-            variantLabel: variant?.label,
+            variantLabel: variant?.sizeLabel || variant?.label,
             material: variant?.material || product.specs?.material || product.material,
-            sizeLabel: variant?.label
-              ? variant.label
-              : product.specs
-                ? `${product.specs.barLength} (Bar) / 4mm (Gem)`
-                : undefined,
+            sizeLabel: variant?.sizeLabel || variant?.label,
+            color: variant?.color,
           },
         ]
       })

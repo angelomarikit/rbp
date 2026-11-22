@@ -134,8 +134,9 @@ export function CheckoutPage() {
                   <img src={cartLineImage(line)} alt="" className="h-[64px] w-[72px] rounded object-cover" />
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-white">{line.name}</p>
-                    <p className="text-[11px] text-white/55">{line.material}</p>
-                    {line.sizeLabel && <p className="text-[11px] text-white/55">{line.sizeLabel}</p>}
+                    {line.material && <p className="text-[11px] text-white/55">Material: {line.material}</p>}
+                    {line.sizeLabel && <p className="text-[11px] text-white/55">Size: {line.sizeLabel}</p>}
+                    {line.color && <p className="text-[11px] text-white/55">Color: {line.color}</p>}
                   </div>
                 </div>
                 <span>{formatPhpLabel(line.priceCents)}</span>

@@ -14,6 +14,7 @@ import { useCart } from '../features/cart/CartProvider.tsx'
 import { rowToProduct, useProducts } from '../hooks/useProducts.ts'
 import { formatPhp } from '../lib/format.ts'
 import { publicMediaUrl } from '../lib/media.ts'
+import { defaultChoiceFor } from '../lib/productChoices.ts'
 import { supabase } from '../lib/supabase.ts'
 
 const GALLERY = [
@@ -225,15 +226,22 @@ export function ProductDetailPage() {
     }
     setSelected(resolved)
   }
-  const choiceLabel = groups.filter((group) => group.key !== 'material').map((group) => selected[group.key]).filter(Boolean).join(' / ')
+  const sizeLabel = groups.filter((group) => group.key !== 'material' && group.key !== 'color').map((group) => selected[group.key]).filter(Boolean).join(' / ')
   const choiceKey = groups.map((group) => `${group.key}:${selected[group.key] ?? ''}`).join('|')
-  const addCurrent = () => addProduct(
-    product,
-    qty,
-    groups.length
-      ? { key: choiceKey, label: choiceLabel, priceCents, material: selected.material || product.material }
-      : undefined,
-  )
+  const addCurrent = async () => {
+    if (!groups.length) {
+      const choice = await defaultChoiceFor(product.id)
+      addProduct(product, qty, choice ? { ...choice, material: choice.material || product.material } : undefined)
+      return
+    }
+    addProduct(product, qty, {
+      key: choiceKey,
+      sizeLabel,
+      color: selected.color,
+      priceCents,
+      material: selected.material || product.material,
+    })
+  }
   const specRows = product.specs
     ? [
         ['Material', selected.material || product.specs.material],
@@ -387,15 +395,14 @@ export function ProductDetailPage() {
               <OrangeButton
                 className="h-12 min-w-[160px] flex-1 font-semibold text-black"
                 icon={<IconCart size={18} />}
-                onClick={addCurrent}
+                onClick={() => void addCurrent()}
               >
                 Add to Cart
               </OrangeButton>
               <button
                 type="button"
                 onClick={() => {
-                  addCurrent()
-                  navigate('/checkout')
+                  void addCurrent().then(() => navigate('/checkout'))
                 }}
                 className="inline-flex h-12 min-w-[140px] flex-1 items-center justify-center rounded-rbp border border-[#ff9a17] bg-[#080808] px-5 text-sm font-semibold text-white hover:border-rbp-accent"
               >

@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import type { Product } from '../../data/types.ts'
 import { useCart } from '../../features/cart/CartProvider.tsx'
 import { publicMediaUrl } from '../../lib/media.ts'
+import { defaultChoiceFor } from '../../lib/productChoices.ts'
 import { formatPhp } from '../../lib/format.ts'
 import { IconCart } from '../ui/Icons.tsx'
 
@@ -38,7 +39,9 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="mt-4 flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => addProduct(product)}
+            onClick={() => {
+              void defaultChoiceFor(product.id).then((choice) => addProduct(product, 1, choice ? { ...choice, material: choice.material || product.material } : undefined))
+            }}
             className="flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] px-3 text-[13px] font-semibold leading-none tracking-normal text-black"
           >
             <IconCart size={15} />
@@ -47,8 +50,10 @@ export function ProductCard({ product }: { product: Product }) {
           <button
             type="button"
             onClick={() => {
-              addProduct(product)
-              navigate('/checkout')
+              void defaultChoiceFor(product.id).then((choice) => {
+                addProduct(product, 1, choice ? { ...choice, material: choice.material || product.material } : undefined)
+                navigate('/checkout')
+              })
             }}
             className="flex h-10 w-full items-center justify-center whitespace-nowrap rounded-md border border-rbp-accent px-3 text-[13px] font-semibold leading-none tracking-normal text-rbp-accent hover:bg-rbp-accent hover:text-black"
           >
