@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { affiliationFromRow, defaultAffiliation, type AffiliationContent } from '../../lib/affiliation.ts'
+import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../../lib/paymentQr.ts'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
 import { Card, MediaField, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
@@ -202,6 +203,7 @@ export function ContactAdmin() {
 export function SettingsAdmin() {
   const [form, setForm] = useState({ facebook_url: '', instagram_url: '', whatsapp: '', viber: '', footer_text: '', seo_title: '', seo_description: '', logo_path: '' })
   const [affiliation, setAffiliation] = useState<AffiliationContent>(defaultAffiliation)
+  const [paymentQrs, setPaymentQrs] = useState<PaymentQrs>(emptyPaymentQrs)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
 
@@ -210,8 +212,9 @@ export function SettingsAdmin() {
     void Promise.all([
       supabase.from('site_settings').select('facebook_url, instagram_url, whatsapp, viber, footer_text, seo_title, seo_description, logo_path').eq('id', 1).maybeSingle(),
       supabase.from('content_sections').select('subtitle, title, body, extra').eq('page', 'site').eq('section_key', 'affiliation').maybeSingle(),
-    ]).then(([settings, section]) => {
-      if (settings.error || section.error) setError(settings.error?.message || section.error?.message || '')
+      supabase.from('content_sections').select('extra').eq('page', 'site').eq('section_key', 'payment').maybeSingle(),
+    ]).then(([settings, section, payment]) => {
+      if (settings.error || section.error || payment.error) setError(settings.error?.message || section.error?.message || payment.error?.message || '')
       if (settings.data) setForm({
         facebook_url: settings.data.facebook_url ?? '',
         instagram_url: settings.data.instagram_url ?? '',
@@ -223,6 +226,7 @@ export function SettingsAdmin() {
         logo_path: settings.data.logo_path ?? '',
       })
       if (section.data) setAffiliation(affiliationFromRow(section.data))
+      if (payment.data) setPaymentQrs(paymentQrsFromExtra(payment.data.extra))
     })
   }, [])
 
@@ -233,7 +237,7 @@ export function SettingsAdmin() {
         event.preventDefault()
         setError(null)
         setOk(null)
-        const [settings, section] = await Promise.all([
+        const [settings, section, payment] = await Promise.all([
           supabase!.from('site_settings').update({
             facebook_url: form.facebook_url || null,
             instagram_url: form.instagram_url || null,
@@ -254,15 +258,23 @@ export function SettingsAdmin() {
             visible: true,
             sort_order: 1,
           }, { onConflict: 'page,section_key' }),
+          supabase!.from('content_sections').upsert({
+            page: 'site',
+            section_key: 'payment',
+            title: 'Payment QR',
+            extra: { gcash_qr: paymentQrs.gcash || null, maya_qr: paymentQrs.maya || null },
+            visible: true,
+            sort_order: 2,
+          }, { onConflict: 'page,section_key' }),
         ])
-        if (settings.error || section.error) setError(settings.error?.message || section.error?.message || '')
+        if (settings.error || section.error || payment.error) setError(settings.error?.message || section.error?.message || payment.error?.message || '')
         else setOk('Settings saved.')
       }}
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-white">Settings</h1>
-          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Social links, the footer, the Google text, the store logo, and the affiliation strip at the bottom of the site.</p>
+          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Social links, the footer, the Google text, the store logo, the affiliation strip, and the GCash and Maya QR codes.</p>
         </div>
         <PrimaryButton type="submit">Save settings</PrimaryButton>
       </div>
@@ -273,6 +285,7 @@ export function SettingsAdmin() {
           ['search', '3. Google'],
           ['logo', '4. Logo'],
           ['affiliation', '5. Affiliation'],
+          ['payment', '6. Payment'],
         ].map(([id, label]) => (
           <a key={id} href={`#${id}`} className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">{label}</a>
         ))}
@@ -376,6 +389,16 @@ export function SettingsAdmin() {
               }}
             />
           </label>
+        </div>
+      </Card>
+      <Card id="payment" className="scroll-mt-4 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">Payment QR codes</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Upload the QR from the GCash app and the Maya app. At checkout, the customer sees the QR for the method they pick and sends the order total there.</p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <MediaField label="GCash QR" hint="A square picture of the GCash QR. PNG or JPG." folder="payments" accept="image/png,image/jpeg,image/webp" value={paymentQrs.gcash} onChange={(path) => setPaymentQrs({ ...paymentQrs, gcash: path })} previewClassName="mt-3 aspect-square w-full max-w-[240px] rounded-xl bg-white object-contain p-3" />
+          <MediaField label="Maya QR" hint="A square picture of the Maya QR. PNG or JPG." folder="payments" accept="image/png,image/jpeg,image/webp" value={paymentQrs.maya} onChange={(path) => setPaymentQrs({ ...paymentQrs, maya: path })} previewClassName="mt-3 aspect-square w-full max-w-[240px] rounded-xl bg-white object-contain p-3" />
         </div>
       </Card>
     </form>

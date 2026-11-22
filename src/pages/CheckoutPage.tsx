@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
@@ -6,9 +7,12 @@ import { QuantityStepper } from '../components/ui/QuantityStepper.tsx'
 import { rbpField, rbpPanel } from '../components/ui/panels.ts'
 import { cartLineImage, useCart } from '../features/cart/CartProvider.tsx'
 import { useAuth } from '../features/auth/AuthProvider.tsx'
+import { supabase } from '../lib/supabase.ts'
 import { useCheckout } from '../hooks/useCheckout.ts'
 import { asset } from '../lib/assets.ts'
 import { formatPhpLabel } from '../lib/format.ts'
+import { publicMediaUrl } from '../lib/media.ts'
+import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
 
 export function CheckoutPage() {
   const { user } = useAuth()
@@ -25,6 +29,20 @@ export function CheckoutPage() {
     orderId,
     error,
   } = useCheckout(lines)
+  const [paymentQrs, setPaymentQrs] = useState<PaymentQrs>(emptyPaymentQrs)
+
+  useEffect(() => {
+    if (!supabase) return
+    void supabase
+      .from('content_sections')
+      .select('extra')
+      .eq('page', 'site')
+      .eq('section_key', 'payment')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setPaymentQrs(paymentQrsFromExtra(data.extra))
+      })
+  }, [])
 
   const handleSubmit = async () => {
     if (lines.length === 0) return
@@ -40,9 +58,9 @@ export function CheckoutPage() {
           Reference: <span className="text-rbp-accent">{orderId}</span>
         </p>
         <p className="mx-auto mt-3 max-w-xl text-sm text-rbp-muted">
-          Your order is saved with status payment pending. Complete your {form.paymentMethod.toUpperCase()} or bank
-          transfer using studio instructions. Payment is not automatically verified.
+          Your order is saved with payment pending. Send the total with the {form.paymentMethod === 'maya' ? 'Maya' : 'GCash'} QR. The studio confirms it. It is not checked automatically.
         </p>
+        <PaymentQr method={form.paymentMethod === 'maya' ? 'Maya' : 'GCash'} path={form.paymentMethod === 'maya' ? paymentQrs.maya : paymentQrs.gcash} />
         {user && (
           <Link to={`/account/orders/${orderId}`} className="mt-8 block text-rbp-accent">
             View this order in your account
@@ -179,6 +197,7 @@ export function CheckoutPage() {
           submitting={submitting}
           error={error}
           cartEmpty={lines.length === 0}
+          paymentQrs={paymentQrs}
         />
       </section>
     </div>
@@ -193,6 +212,7 @@ function CheckoutFormPanel({
   submitting,
   error,
   cartEmpty,
+  paymentQrs,
 }: {
   form: ReturnType<typeof useCheckout>['form']
   updateForm: ReturnType<typeof useCheckout>['updateForm']
@@ -201,13 +221,14 @@ function CheckoutFormPanel({
   submitting: boolean
   error: string | null
   cartEmpty: boolean
+  paymentQrs: PaymentQrs
 }) {
   const payments = [
     { id: 'gcash' as const, label: 'GCash' },
-    { id: 'maya' as const, label: 'maya' },
-    { id: 'gotyme' as const, label: 'GoTyme' },
-    { id: 'bank' as const, label: 'Bank Transfer' },
+    { id: 'maya' as const, label: 'Maya' },
   ]
+  const selected = payments.find((method) => method.id === form.paymentMethod) ?? payments[0]
+  const qrPath = selected.id === 'maya' ? paymentQrs.maya : paymentQrs.gcash
 
   return (
     <div className={`${rbpPanel} p-4 lg:p-5`}>
@@ -270,13 +291,13 @@ function CheckoutFormPanel({
       </Field>
 
       <p className="mb-2 mt-2 text-[15px] font-bold">Payment Method</p>
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-2">
         {payments.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => updateForm({ paymentMethod: p.id })}
-            className={`rounded-md border px-2 py-3 text-[12px] font-semibold ${
+            className={`rounded-md border px-2 py-3 text-[13px] font-semibold ${
               form.paymentMethod === p.id
                 ? 'border-rbp-accent bg-[#140c00] text-white shadow-[0_0_12px_rgba(255,122,0,0.25)]'
                 : 'border-rbp-border bg-black text-white/80'
@@ -286,11 +307,24 @@ function CheckoutFormPanel({
           </button>
         ))}
       </div>
+      <PaymentQr method={selected.label} path={qrPath} />
 
       {error && <p className="mb-2 text-sm text-red-400">{error}</p>}
       <OrangeButton type="button" className="h-11 w-full font-semibold text-black" disabled={submitting || cartEmpty} onClick={onSubmit}>
         {submitting ? 'Processing…' : 'Proceed to Checkout →'}
       </OrangeButton>
+    </div>
+  )
+}
+
+function PaymentQr({ method, path }: { method: string; path: string }) {
+  if (!path) {
+    return <p className="mb-4 text-sm text-white/70">A {method} QR is not available yet.</p>
+  }
+  return (
+    <div className="mb-4 rounded-md border border-rbp-border bg-black p-4 text-center">
+      <p className="text-sm text-white">Scan this {method} QR and send the order total.</p>
+      <img src={publicMediaUrl(path)} alt={`${method} QR code`} className="mx-auto mt-3 w-full max-w-[220px] rounded-md bg-white p-2" />
     </div>
   )
 }

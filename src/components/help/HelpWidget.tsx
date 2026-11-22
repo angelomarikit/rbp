@@ -36,9 +36,9 @@ const FAQS: Faq[] = [
   },
   {
     question: 'How can I pay?',
-    keywords: ['pay', 'payment', 'gcash', 'maya', 'gotyme', 'bank', 'cash'],
+    keywords: ['pay', 'payment', 'gcash', 'maya', 'qr', 'cash'],
     answer:
-      'Checkout accepts GCash, Maya, GoTyme, and bank transfer. The studio confirms the payment. It is not verified automatically.',
+      'Checkout accepts GCash and Maya. Scan the QR shown at checkout and send the order total. The studio confirms the payment. It is not verified automatically.',
   },
   {
     question: 'Where are your events?',
