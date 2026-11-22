@@ -187,10 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async updateEmail(email) {
         if (!supabase) return { error: 'Supabase is not configured.' }
-        const { error } = await supabase.auth.updateUser({
-          email: email.trim(),
-          options: { emailRedirectTo: `${window.location.origin}/account/settings` },
-        })
+        const { error } = await supabase.auth.updateUser(
+          { email: email.trim() },
+          { emailRedirectTo: `${window.location.origin}/account/settings` },
+        )
         return { error: error?.message ?? null }
       },
       async updateProfile(patch) {

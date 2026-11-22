@@ -92,11 +92,12 @@ export function HomepageEditor() {
 
   const saveCollections = async () => {
     if (!supabase) return
+    const client = supabase
     setSaving(true)
     setError(null)
     const results = await Promise.all(
       collections.map((collection) =>
-        supabase.from('collections').update({ featured: collection.featured, sort_order: collection.sort_order }).eq('id', collection.id),
+        client.from('collections').update({ featured: collection.featured, sort_order: collection.sort_order }).eq('id', collection.id),
       ),
     )
     setSaving(false)

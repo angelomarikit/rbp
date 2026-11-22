@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { OrangeLink, OutlineButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCalendar, IconCalendarLight, IconChevron, IconPin } from '../components/ui/Icons.tsx'
-import { FEATURED_EVENTS, UPCOMING_EVENTS } from '../data/events.ts'
+import { FEATURED_EVENTS, UPCOMING_EVENTS, type EventCard } from '../data/events.ts'
 import { asset } from '../lib/assets.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
@@ -60,11 +60,13 @@ export function EventsPage() {
           date: (row.event_date as string) || '',
           location: (row.location as string) || '',
           kind: row.kind as string,
+          verified: false,
+          body: [] as string[],
         }))
-        const featuredRows = rows.filter((row) => row.kind === 'featured')
-        const upcomingRows = rows.filter((row) => row.kind === 'upcoming')
-        if (featuredRows.length) setFeatured(featuredRows as typeof FEATURED_EVENTS)
-        if (upcomingRows.length) setUpcoming(upcomingRows as typeof UPCOMING_EVENTS)
+        const featuredRows: EventCard[] = rows.filter((row) => row.kind === 'featured')
+        const upcomingRows: EventCard[] = rows.filter((row) => row.kind === 'upcoming')
+        if (featuredRows.length) setFeatured(featuredRows)
+        if (upcomingRows.length) setUpcoming(upcomingRows)
       }
       const eventShots = (showcase.data ?? []).filter((row) => row.placement === 'events' || String(row.storage_path).includes('event-client-result') || String(row.storage_path).startsWith('uploads/'))
       if (eventShots.length) setShots(eventShots.map((row) => publicMediaUrl(row.storage_path as string)))
