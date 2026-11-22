@@ -130,18 +130,23 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
         </fieldset>
       )}
       {groups.filter((group) => group.key !== sizeGroup?.key).map((group) => (
-        <label key={group.key} className="block text-[11px] text-white/55">
-          {group.name}
-          <select
-            value={selected[group.key] ?? group.values[0]}
-            onChange={(event) => apply({ ...selected, [group.key]: event.target.value }, sizes)}
-            className="mt-0.5 w-full rounded border border-white/20 bg-black px-1.5 py-1 text-[12px] text-white"
-          >
+        <fieldset key={group.key} className="text-[11px] text-white/55">
+          <legend>{group.name}</legend>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {group.values.map((value) => (
-              <option key={value} value={value}>{value}</option>
+              <label key={value} className="flex items-center gap-1.5 text-[12px] text-white">
+                <input
+                  type="radio"
+                  name={`${line.cartId ?? line.lineId}-${group.key}`}
+                  className="accent-[#FF7900]"
+                  checked={(selected[group.key] ?? group.values[0]) === value}
+                  onChange={() => apply({ ...selected, [group.key]: value }, sizes)}
+                />
+                {value}
+              </label>
             ))}
-          </select>
-        </label>
+          </div>
+        </fieldset>
       ))}
     </div>
   )
