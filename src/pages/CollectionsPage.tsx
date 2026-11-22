@@ -10,7 +10,7 @@ import { useProducts } from '../hooks/useProducts.ts'
 import { asset } from '../lib/assets.ts'
 import { supabase } from '../lib/supabase.ts'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 12
 
 const categorySlug: Record<string, string> = {
   'Navel Jewelry': 'navel',
@@ -241,7 +241,7 @@ export function CollectionsPage() {
                 No jewelry matches those filters.
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 {visible.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
