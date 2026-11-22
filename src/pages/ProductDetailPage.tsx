@@ -7,6 +7,7 @@ import { IconCart, IconChevron, IconHeart, IconShield } from '../components/ui/I
 import { QuantityStepper } from '../components/ui/QuantityStepper.tsx'
 import { rbpPanel } from '../components/ui/panels.ts'
 import { FEATURED_PRODUCT_SLUG, GEM_VARIANTS, getProductBySlug } from '../data/products.ts'
+import type { GemVariant } from '../data/types.ts'
 import { useCart } from '../features/cart/CartProvider.tsx'
 import { rowToProduct, useProducts } from '../hooks/useProducts.ts'
 import { formatPhp } from '../lib/format.ts'
@@ -22,6 +23,13 @@ const GALLERY = [
 
 const tabs = ['Description', 'Specifications', 'Reviews', 'Shipping & Returns'] as const
 
+function colorChoice(label: string): GemVariant {
+  const known = GEM_VARIANTS.find((item) => item.label.toLowerCase() === label.toLowerCase() || item.key === label.toLowerCase())
+  if (known) return known
+  const key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'color'
+  return { key, label, color: '#f2f2f2' }
+}
+
 export function ProductDetailPage() {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
@@ -31,7 +39,8 @@ export function ProductDetailPage() {
   const [gallery, setGallery] = useState<string[]>([])
   const [ready, setReady] = useState(false)
   const [qty, setQty] = useState(1)
-  const [gem, setGem] = useState(GEM_VARIANTS[0])
+  const [colors, setColors] = useState<GemVariant[]>([])
+  const [gemKey, setGemKey] = useState('')
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Description')
   const [hero, setHero] = useState(0)
 
@@ -39,7 +48,8 @@ export function ProductDetailPage() {
     let cancelled = false
     setHero(0)
     setQty(1)
-    setGem(GEM_VARIANTS[0])
+    setColors([])
+    setGemKey('')
     setActiveTab('Description')
     setReady(false)
     const known = getProductBySlug(slug)
@@ -71,7 +81,21 @@ export function ProductDetailPage() {
         .order('sort_order')
       if (cancelled) return
       const paths = (pictures ?? []).map((picture) => picture.storage_path as string).filter(Boolean)
+      const { data: versions } = await supabase
+        .from('product_variants')
+        .select('options')
+        .eq('product_id', data.id)
+        .eq('status', 'active')
+      if (cancelled) return
+      const labels = [...new Set((versions ?? []).flatMap((version) => {
+        const options = version.options as Record<string, string> | null
+        const color = options?.color?.trim()
+        return color ? [color] : []
+      }))]
+      const choices = labels.map(colorChoice)
       setProduct(next)
+      setColors(choices)
+      setGemKey(choices[0]?.key ?? '')
       if (next.slug === FEATURED_PRODUCT_SLUG && paths.length <= 1) setGallery(GALLERY)
       else setGallery(paths.length ? paths : next.imagePath ? [next.imagePath] : [])
       setReady(true)
@@ -209,22 +233,24 @@ export function ProductDetailPage() {
               ))}
             </dl>
 
-            <div className="mt-6">
-              <p className="text-[13px] text-white/70">Gem color</p>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                {GEM_VARIANTS.map((variant) => (
-                  <button
-                    key={variant.key}
-                    type="button"
-                    onClick={() => setGem(variant)}
-                    className={`text-[15px] font-semibold ${gem.key === variant.key ? 'underline decoration-2 underline-offset-4' : 'opacity-80 hover:opacity-100'}`}
-                    style={{ color: variant.key === 'black' ? '#f2f2f2' : variant.color }}
-                  >
-                    {variant.label}
-                  </button>
-                ))}
+            {colors.length > 0 && (
+              <div className="mt-6">
+                <p className="text-[13px] text-white/70">Gem color</p>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                  {colors.map((variant) => (
+                    <button
+                      key={variant.key}
+                      type="button"
+                      onClick={() => setGemKey(variant.key)}
+                      className={`text-[15px] font-semibold ${gemKey === variant.key ? 'underline decoration-2 underline-offset-4' : 'opacity-80 hover:opacity-100'}`}
+                      style={{ color: variant.key === 'black' ? '#f2f2f2' : variant.color }}
+                    >
+                      {variant.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <p className="mb-3 mt-6 text-[13px] text-white/70">Quantity</p>
             <div className="flex flex-wrap items-center gap-3">
@@ -232,14 +258,14 @@ export function ProductDetailPage() {
               <OrangeButton
                 className="h-12 min-w-[160px] flex-1 font-semibold text-black"
                 icon={<IconCart size={18} />}
-                onClick={() => addProduct(product, qty, { key: gem.key, label: gem.label })}
+                onClick={() => addProduct(product, qty, colors.find((item) => item.key === gemKey))}
               >
                 Add to Cart
               </OrangeButton>
               <button
                 type="button"
                 onClick={() => {
-                  addProduct(product, qty, { key: gem.key, label: gem.label })
+                  addProduct(product, qty, colors.find((item) => item.key === gemKey))
                   navigate('/checkout')
                 }}
                 className="inline-flex h-12 min-w-[140px] flex-1 items-center justify-center rounded-rbp border border-[#ff9a17] bg-[#080808] px-5 text-sm font-semibold text-white hover:border-rbp-accent"

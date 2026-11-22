@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { SiteLayout } from '../components/layout/SiteLayout.tsx'
 import { RequireAdmin, RequireAuth, RequireCustomer } from '../features/auth/guards.tsx'
 import { AccountAddressesPage } from '../pages/account/AccountAddressesPage.tsx'
@@ -65,6 +65,7 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<RequireAdmin />}>
           <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="orders/:orderId" element={<AdminOrderPage />} />
