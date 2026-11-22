@@ -6,10 +6,12 @@ import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCart, IconChevron, IconHeart, IconShield } from '../components/ui/Icons.tsx'
 import { QuantityStepper } from '../components/ui/QuantityStepper.tsx'
 import { rbpPanel } from '../components/ui/panels.ts'
-import { FEATURED_PRODUCT_SLUG, GEM_VARIANTS, PRODUCTS, getProductBySlug } from '../data/products.ts'
+import { FEATURED_PRODUCT_SLUG, GEM_VARIANTS, getProductBySlug } from '../data/products.ts'
 import { useCart } from '../features/cart/CartProvider.tsx'
-import { asset } from '../lib/assets.ts'
+import { rowToProduct, useProducts } from '../hooks/useProducts.ts'
 import { formatPhp } from '../lib/format.ts'
+import { publicMediaUrl } from '../lib/media.ts'
+import { supabase } from '../lib/supabase.ts'
 
 const GALLERY = [
   'products/navel-barbell-hero.jpg',
@@ -21,21 +23,68 @@ const GALLERY = [
 const tabs = ['Description', 'Specifications', 'Reviews', 'Shipping & Returns'] as const
 
 export function ProductDetailPage() {
-  const { slug = 'crystal-navel-barbell' } = useParams()
-  const product = getProductBySlug(slug)
+  const { slug = '' } = useParams()
   const navigate = useNavigate()
   const { addProduct } = useCart()
+  const { products } = useProducts()
+  const [product, setProduct] = useState<ReturnType<typeof getProductBySlug>>(getProductBySlug(slug))
+  const [gallery, setGallery] = useState<string[]>([])
+  const [ready, setReady] = useState(false)
   const [qty, setQty] = useState(1)
   const [gem, setGem] = useState(GEM_VARIANTS[0])
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Description')
   const [hero, setHero] = useState(0)
 
   useEffect(() => {
+    let cancelled = false
     setHero(0)
     setQty(1)
     setGem(GEM_VARIANTS[0])
     setActiveTab('Description')
+    setReady(false)
+    const known = getProductBySlug(slug)
+    setProduct(known)
+    setGallery(known ? (known.slug === FEATURED_PRODUCT_SLUG ? GALLERY : [known.imagePath]) : [])
+
+    if (!supabase || !slug) {
+      setReady(true)
+      return
+    }
+
+    void (async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle()
+      if (cancelled) return
+      if (!data || data.published !== true || data.status !== 'active') {
+        if (!known) setProduct(undefined)
+        setReady(true)
+        return
+      }
+      const next = rowToProduct(data as Record<string, unknown>)
+      const { data: pictures } = await supabase
+        .from('product_images')
+        .select('storage_path')
+        .eq('product_id', data.id)
+        .order('sort_order')
+      if (cancelled) return
+      const paths = (pictures ?? []).map((picture) => picture.storage_path as string).filter(Boolean)
+      setProduct(next)
+      if (next.slug === FEATURED_PRODUCT_SLUG && paths.length <= 1) setGallery(GALLERY)
+      else setGallery(paths.length ? paths : next.imagePath ? [next.imagePath] : [])
+      setReady(true)
+    })()
+
+    return () => {
+      cancelled = true
+    }
   }, [slug])
+
+  if (!ready && !product) {
+    return <div className="px-6 py-20 text-center text-sm text-white/60">Loading product…</div>
+  }
 
   if (!product) {
     return (
@@ -50,7 +99,7 @@ export function ProductDetailPage() {
     )
   }
 
-  const gallery = product.slug === FEATURED_PRODUCT_SLUG ? GALLERY : [product.imagePath]
+  const photos = gallery.length ? gallery : product.imagePath ? [product.imagePath] : []
   const description =
     product.description ??
     `${product.name} is made from ${product.material}. A polished piece for ${product.category.toLowerCase()}, finished for everyday wear.`
@@ -67,7 +116,7 @@ export function ProductDetailPage() {
         ['Category', product.category],
         ['Finish', 'Polished'],
       ]
-  const related = PRODUCTS.filter((item) => item.slug !== product.slug && item.slug !== FEATURED_PRODUCT_SLUG).slice(0, 4)
+  const related = products.filter((item) => item.slug !== product.slug && item.slug !== FEATURED_PRODUCT_SLUG).slice(0, 4)
 
   return (
     <div className="w-full bg-black">
@@ -90,9 +139,9 @@ export function ProductDetailPage() {
 
         <section className="mt-8 grid items-start gap-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex gap-4">
-            {gallery.length > 1 && (
+            {photos.length > 1 && (
               <div className="hidden w-[84px] shrink-0 flex-col gap-3 sm:flex">
-                {gallery.map((src, i) => (
+                {photos.map((src, i) => (
                   <button
                     key={src}
                     type="button"
@@ -101,24 +150,26 @@ export function ProductDetailPage() {
                       hero === i ? 'border-rbp-accent' : 'border-rbp-border'
                     }`}
                   >
-                    <img src={asset(src)} alt="" className="h-full w-full object-cover" />
+                    <img src={publicMediaUrl(src)} alt="" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
             <div className="relative aspect-square flex-1 overflow-hidden rounded-rbp border border-rbp-border bg-[#111]">
-              <img
-                src={asset(gallery[hero] ?? product.imagePath)}
-                alt={product.name}
-                className="h-full w-full object-contain"
-              />
-              {gallery.length > 1 && (
+              {publicMediaUrl(photos[hero] ?? product.imagePath) ? (
+                <img
+                  src={publicMediaUrl(photos[hero] ?? product.imagePath)}
+                  alt={product.name}
+                  className="h-full w-full object-contain"
+                />
+              ) : null}
+              {photos.length > 1 && (
                 <>
                   <button
                     type="button"
                     aria-label="Previous image"
                     className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-rbp-border bg-black/70 text-rbp-accent"
-                    onClick={() => setHero((n) => (n === 0 ? gallery.length - 1 : n - 1))}
+                    onClick={() => setHero((n) => (n === 0 ? photos.length - 1 : n - 1))}
                   >
                     <IconChevron direction="left" size={16} />
                   </button>
@@ -126,7 +177,7 @@ export function ProductDetailPage() {
                     type="button"
                     aria-label="Next image"
                     className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-rbp-border bg-black/70 text-rbp-accent"
-                    onClick={() => setHero((n) => (n + 1) % gallery.length)}
+                    onClick={() => setHero((n) => (n + 1) % photos.length)}
                   >
                     <IconChevron direction="right" size={16} />
                   </button>

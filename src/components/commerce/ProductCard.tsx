@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import type { Product } from '../../data/types.ts'
 import { useCart } from '../../features/cart/CartProvider.tsx'
-import { asset } from '../../lib/assets.ts'
+import { publicMediaUrl } from '../../lib/media.ts'
 import { formatPhp } from '../../lib/format.ts'
 import { IconCart } from '../ui/Icons.tsx'
 
@@ -12,14 +12,16 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-rbp border border-rbp-border/80 bg-[#0a0a0a] transition duration-300 hover:-translate-y-1 hover:border-rbp-accent hover:shadow-[0_12px_32px_rgba(255,121,0,0.16)]">
       <Link to={`/products/${product.slug}`} className="relative flex aspect-[5/4] items-center justify-center overflow-hidden bg-[#111]">
-        <img
-          src={asset(product.imagePath)}
-          alt={product.name}
-          width={764}
-          height={612}
-          decoding="async"
-          className="h-full w-full object-contain"
-        />
+        {publicMediaUrl(product.imagePath) ? (
+          <img
+            src={publicMediaUrl(product.imagePath)}
+            alt={product.name}
+            width={764}
+            height={612}
+            decoding="async"
+            className="h-full w-full object-contain"
+          />
+        ) : null}
         <span className="absolute left-3 top-3 rounded-full border border-rbp-accent/70 bg-black/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rbp-accent">
           {product.category}
         </span>

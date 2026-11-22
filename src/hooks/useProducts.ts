@@ -3,7 +3,7 @@ import { PRODUCTS } from '../data/products.ts'
 import type { Product as ProductType } from '../data/types.ts'
 import { supabase } from '../lib/supabase.ts'
 
-function rowToProduct(row: Record<string, unknown>): ProductType {
+export function rowToProduct(row: Record<string, unknown>): ProductType {
   return {
     id: String(row.id),
     slug: String(row.slug),

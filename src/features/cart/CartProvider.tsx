@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { CartLine, Product } from '../../data/types.ts'
-import { asset } from '../../lib/assets.ts'
+import { publicMediaUrl } from '../../lib/media.ts'
 
 const STORAGE_KEY = 'rbp_cart_v1'
 
@@ -128,5 +128,5 @@ export function useCart() {
 }
 
 export function cartLineImage(line: CartLine) {
-  return asset(line.imagePath)
+  return publicMediaUrl(line.imagePath)
 }
