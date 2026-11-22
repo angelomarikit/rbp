@@ -28,6 +28,7 @@ export type GemVariant = {
 
 export type CartLine = {
   lineId: string
+  cartId?: string
   productId: string
   slug: string
   name: string
@@ -39,6 +40,7 @@ export type CartLine = {
   material?: string
   sizeLabel?: string
   color?: string
+  options?: Record<string, string>
 }
 
 export type ShippingMethod = 'standard' | 'express'

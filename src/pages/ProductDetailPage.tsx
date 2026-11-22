@@ -240,6 +240,7 @@ export function ProductDetailPage() {
       color: selected.color,
       priceCents,
       material: selected.material || product.material,
+      options: Object.fromEntries(Object.entries(selected).filter(([, value]) => value)),
     })
   }
   const specRows = product.specs

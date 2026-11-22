@@ -6,11 +6,15 @@ export type ProductChoice = {
   sizeLabel?: string
   color?: string
   priceCents?: number
+  options: Record<string, string>
 }
+
+export type ChoiceGroup = { key: string; name: string; values: string[] }
 
 type VersionRow = { label?: string | null; price_cents?: number | null; options?: Record<string, string> | null }
 
 const SIZE_KEYS = new Set(['length', 'size', 'gauge'])
+const ORDER = ['length', 'size', 'gauge', 'color', 'material']
 
 function measures(value: string) {
   const parts = value.split(/\s*(?:,|\/|\||·|;)\s*|\s+(?=\d)/).map((part) => part.trim()).filter(Boolean)
@@ -24,11 +28,9 @@ function valuesFor(key: string, value: string) {
   return [value]
 }
 
-export function choiceFromVersions(rows: VersionRow[]): ProductChoice | null {
+export function groupsFromVersions(rows: VersionRow[]): ChoiceGroup[] {
   const groups = new Map<string, string[]>()
-  let priceCents: number | null = null
   for (const row of rows) {
-    if (priceCents == null && row.price_cents != null) priceCents = row.price_cents
     const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
     if (!options.length && row.label?.trim()) {
       const current = groups.get('version') ?? []
@@ -42,31 +44,65 @@ export function choiceFromVersions(rows: VersionRow[]): ProductChoice | null {
       if (current.length) groups.set(key, current)
     }
   }
-  if (!groups.size) return null
-  const selected = Object.fromEntries([...groups].map(([key, list]) => [key, list[0]]))
-  const preferred = ['length', 'size', 'gauge']
-  const sizeLabel = [...groups.keys()]
-    .filter((key) => key !== 'material' && key !== 'color')
-    .sort((a, b) => (preferred.indexOf(a) === -1 ? 99 : preferred.indexOf(a)) - (preferred.indexOf(b) === -1 ? 99 : preferred.indexOf(b)))
+  const hasSize = groups.has('size')
+  return [...groups.keys()]
+    .sort((a, b) => (ORDER.indexOf(a) === -1 ? 99 : ORDER.indexOf(a)) - (ORDER.indexOf(b) === -1 ? 99 : ORDER.indexOf(b)))
+    .map((key) => ({
+      key,
+      name: key === 'length' && hasSize ? 'Length' : key === 'length' ? 'Size' : key === 'gauge' ? 'Gauge' : key === 'color' ? 'Color' : key === 'material' ? 'Material' : key === 'size' ? 'Size' : key.charAt(0).toUpperCase() + key.slice(1),
+      values: groups.get(key) ?? [],
+    }))
+    .filter((group) => group.values.length > 0)
+}
+
+function versionAllows(row: VersionRow, selected: Record<string, string>) {
+  const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
+  if (!options.length) return false
+  return options.every(([key, value]) => {
+    const choices = valuesFor(key, value.trim())
+    return !selected[key] || choices.includes(selected[key])
+  })
+}
+
+export function describeSelection(selected: Record<string, string>, rows: VersionRow[] = []): ProductChoice {
+  const sizeLabel = ['length', 'size', 'gauge']
     .map((key) => selected[key])
     .filter(Boolean)
     .join(' / ')
+  const priced = rows.find((row) => row.price_cents != null && versionAllows(row, selected))
   return {
-    key: Object.entries(selected).map(([key, value]) => `${key}:${value}`).join('|'),
+    key: Object.entries(selected).filter(([, value]) => value).map(([key, value]) => `${key}:${value}`).join('|') || 'default',
     material: selected.material,
     sizeLabel: sizeLabel || undefined,
     color: selected.color,
-    priceCents: priceCents ?? undefined,
+    priceCents: priced?.price_cents ?? undefined,
+    options: selected,
   }
 }
 
-export async function defaultChoiceFor(productId: string) {
-  if (!supabase || !productId) return null
+export function choiceFromVersions(rows: VersionRow[]): ProductChoice | null {
+  const groups = groupsFromVersions(rows)
+  if (!groups.length) return null
+  const selected = Object.fromEntries(groups.map((group) => [group.key, group.values[0]]))
+  return describeSelection(selected, rows)
+}
+
+async function versionRows(productId: string) {
+  if (!supabase || !productId) return []
   const { data } = await supabase
     .from('product_variants')
     .select('label, price_cents, options')
     .eq('product_id', productId)
     .eq('status', 'active')
     .order('sort_order')
-  return choiceFromVersions((data ?? []) as VersionRow[])
+  return (data ?? []) as VersionRow[]
+}
+
+export async function defaultChoiceFor(productId: string) {
+  return choiceFromVersions(await versionRows(productId))
+}
+
+export async function optionGroupsFor(productId: string) {
+  const rows = await versionRows(productId)
+  return { groups: groupsFromVersions(rows), rows }
 }

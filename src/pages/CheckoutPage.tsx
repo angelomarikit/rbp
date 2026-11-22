@@ -11,14 +11,87 @@ import { useAuth } from '../features/auth/AuthProvider.tsx'
 import { supabase } from '../lib/supabase.ts'
 import { useCheckout } from '../hooks/useCheckout.ts'
 import { asset } from '../lib/assets.ts'
+import type { CartLine } from '../data/types.ts'
 import { formatPhpLabel } from '../lib/format.ts'
+import { describeSelection, optionGroupsFor, type ChoiceGroup } from '../lib/productChoices.ts'
 import { friendlyError } from '../lib/friendlyError.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
 
+function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
+  const selected: Record<string, string> = { ...(line.options ?? {}) }
+  const parts = (line.sizeLabel ?? '').split(' / ').map((part) => part.trim())
+  for (const group of groups) {
+    if (selected[group.key] && group.values.includes(selected[group.key])) continue
+    if (group.key === 'color' && line.color && group.values.includes(line.color)) selected.color = line.color
+    else if (group.key === 'material' && line.material && group.values.includes(line.material)) selected.material = line.material
+    else selected[group.key] = group.values.find((value) => parts.includes(value)) || group.values[0]
+  }
+  return selected
+}
+
+function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: string, patch: Partial<CartLine>) => void }) {
+  const [groups, setGroups] = useState<ChoiceGroup[]>([])
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof optionGroupsFor>>['rows']>([])
+
+  useEffect(() => {
+    let active = true
+    void optionGroupsFor(line.productId).then((result) => {
+      if (!active) return
+      setGroups(result.groups.filter((group) => ['length', 'size', 'gauge', 'color', 'material'].includes(group.key)))
+      setRows(result.rows)
+    })
+    return () => {
+      active = false
+    }
+  }, [line.productId])
+
+  if (!groups.length) {
+    return (
+      <>
+        {line.material && <p className="text-[11px] text-white/55">Material: {line.material}</p>}
+        {line.sizeLabel && <p className="text-[11px] text-white/55">Size: {line.sizeLabel}</p>}
+        {line.color && <p className="text-[11px] text-white/55">Color: {line.color}</p>}
+      </>
+    )
+  }
+
+  const selected = chosenOptions(line, groups)
+  return (
+    <div className="mt-1 space-y-1.5">
+      {groups.map((group) => (
+        <label key={group.key} className="block text-[11px] text-white/55">
+          {group.name}
+          <select
+            value={selected[group.key] ?? group.values[0]}
+            onChange={(event) => {
+              const next = { ...selected, [group.key]: event.target.value }
+              const described = describeSelection(next, rows)
+              onChange(line.lineId, {
+                options: described.options,
+                variantKey: described.key,
+                material: described.material || line.material,
+                sizeLabel: described.sizeLabel,
+                color: described.color,
+                priceCents: described.priceCents ?? line.priceCents,
+                variantLabel: described.sizeLabel,
+              })
+            }}
+            className="mt-0.5 w-full rounded border border-white/20 bg-black px-1.5 py-1 text-[12px] text-white"
+          >
+            {group.values.map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+      ))}
+    </div>
+  )
+}
+
 export function CheckoutPage() {
   const { user } = useAuth()
-  const { lines, updateQuantity, removeLine, clearCart, itemCount } = useCart()
+  const { lines, updateQuantity, updateLine, removeLine, clearCart, itemCount } = useCart()
   const {
     form,
     updateForm,
@@ -127,16 +200,14 @@ export function CheckoutPage() {
           ) : (
             lines.map((line) => (
               <div
-                key={line.lineId}
-                className="grid grid-cols-[1.6fr_70px_110px_70px_24px] items-center gap-2 border-b border-white/10 py-3 text-[13px]"
+                key={line.cartId ?? line.lineId}
+                className="grid grid-cols-[1.6fr_70px_110px_70px_24px] items-start gap-2 border-b border-white/10 py-3 text-[13px]"
               >
                 <div className="flex min-w-0 gap-3">
                   <img src={cartLineImage(line)} alt="" className="h-[64px] w-[72px] rounded object-cover" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-white">{line.name}</p>
-                    {line.material && <p className="text-[11px] text-white/55">Material: {line.material}</p>}
-                    {line.sizeLabel && <p className="text-[11px] text-white/55">Size: {line.sizeLabel}</p>}
-                    {line.color && <p className="text-[11px] text-white/55">Color: {line.color}</p>}
+                    <CartChoices line={line} onChange={updateLine} />
                   </div>
                 </div>
                 <span>{formatPhpLabel(line.priceCents)}</span>

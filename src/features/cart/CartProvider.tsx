@@ -21,8 +21,9 @@ type CartContextValue = {
   addProduct: (
     product: Product,
     quantity?: number,
-    variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string },
+    variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string; options?: Record<string, string> },
   ) => void
+  updateLine: (lineId: string, patch: Partial<CartLine>) => void
   updateQuantity: (lineId: string, quantity: number) => void
   removeLine: (lineId: string) => void
   clearCart: () => void
@@ -71,6 +72,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           material: choice.material || line.material,
           sizeLabel: choice.sizeLabel,
           color: choice.color,
+          options: choice.options,
           priceCents: choice.priceCents ?? line.priceCents,
         }
       }))
@@ -84,7 +86,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (
       product: Product,
       quantity = 1,
-      variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string },
+      variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string; options?: Record<string, string> },
     ) => {
       const lineId = makeLineId(product.slug, variant?.key)
       setLines((prev) => {
@@ -100,6 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ...prev,
           {
             lineId,
+            cartId: lineId,
             productId: product.id,
             slug: product.slug,
             name: product.name,
@@ -111,12 +114,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
             material: variant?.material || product.specs?.material || product.material,
             sizeLabel: variant?.sizeLabel || variant?.label,
             color: variant?.color,
+            options: variant?.options,
           },
         ]
       })
     },
     [],
   )
+
+  const updateLine = useCallback((lineId: string, patch: Partial<CartLine>) => {
+    setLines((prev) => {
+      const current = prev.find((line) => line.lineId === lineId)
+      if (!current) return prev
+      const next = { ...current, ...patch, cartId: current.cartId ?? lineId, lineId: makeLineId(current.slug, patch.variantKey ?? current.variantKey) }
+      const duplicate = prev.find((line) => line.lineId === next.lineId && line.lineId !== lineId)
+      if (duplicate) {
+        return prev
+          .filter((line) => line.lineId !== lineId)
+          .map((line) => (line.lineId === next.lineId ? { ...line, quantity: line.quantity + next.quantity } : line))
+      }
+      return prev.map((line) => (line.lineId === lineId ? next : line))
+    })
+  }, [])
 
   const updateQuantity = useCallback((lineId: string, quantity: number) => {
     if (quantity < 1) return
@@ -142,11 +161,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount,
       subtotalCents,
       addProduct,
+      updateLine,
       updateQuantity,
       removeLine,
       clearCart,
     }
-  }, [lines, addProduct, updateQuantity, removeLine, clearCart])
+  }, [lines, addProduct, updateLine, updateQuantity, removeLine, clearCart])
 
   return (
     <CartContext.Provider value={value}>{children}</CartContext.Provider>
