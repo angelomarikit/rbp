@@ -21,8 +21,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Cloister Black', 'Old English Text MT', 'UnifrakturMaguntia', 'serif'],
-        body: ['Inter', 'Arial', 'sans-serif'],
+        display: ['var(--rbp-font-display)'],
+        body: ['var(--rbp-font-body)'],
       },
       borderRadius: {
         rbp: '7px',
