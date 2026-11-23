@@ -397,8 +397,14 @@ export function ProductEditor() {
                   <p className="text-sm font-semibold">Version {index + 1}</p>
                   <button type="button" className="text-xs text-[#ffb089]" onClick={() => setVariants(variants.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>
                 </div>
+                <TextField
+                  label="Design"
+                  hint="Type the design for this version, such as Butterfly or Plain."
+                  value={variant.options.design ?? ''}
+                  onChange={(event) => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design: event.target.value } } : item))}
+                />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {options.map((option) => (
+                  {options.filter((option) => option.key !== 'design').map((option) => (
                     <label key={option.id} className="text-sm font-medium text-[#f0f0f0]">
                       {option.name}
                       <select

@@ -71,7 +71,7 @@ function choiceGroups(versions: StoreVariant[], names: Record<string, string>): 
       for (const value of list) if (!current.includes(value)) current.push(value)
     }
   }
-  const preferred = ['length', 'size', 'gauge', 'color', 'material']
+  const preferred = ['length', 'size', 'gauge', 'design', 'color', 'material']
   order.sort((a, b) => {
     const aIndex = preferred.indexOf(a)
     const bIndex = preferred.indexOf(b)
@@ -108,6 +108,7 @@ export function ProductDetailPage() {
   const [variants, setVariants] = useState<StoreVariant[]>([])
   const [groups, setGroups] = useState<ChoiceGroup[]>([])
   const [selected, setSelected] = useState<Record<string, string>>({})
+  const [sizes, setSizes] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Description')
   const [hero, setHero] = useState(0)
   usePageSeo(
@@ -125,6 +126,7 @@ export function ProductDetailPage() {
     setVariants([])
     setGroups([])
     setSelected({})
+    setSizes([])
     setActiveTab('Description')
     setReady(false)
     const known = getProductBySlug(slug)
@@ -171,8 +173,12 @@ export function ProductDetailPage() {
       const nextGroups = choiceGroups(stored, names)
       setProduct(next)
       setVariants(stored)
+      const initial = firstSelection(stored, nextGroups)
+      const lengthGroup = nextGroups.find((group) => group.key === 'length') ?? nextGroups.find((group) => group.key === 'size')
+      const firstSize = lengthGroup ? initial[lengthGroup.key] || lengthGroup.values[0] : ''
       setGroups(nextGroups)
-      setSelected(firstSelection(stored, nextGroups))
+      setSelected(initial)
+      setSizes(firstSize ? [firstSize] : [])
       if (next.slug === FEATURED_PRODUCT_SLUG && paths.length <= 1) setGallery(GALLERY)
       else setGallery(paths.length ? paths : next.imagePath ? [next.imagePath] : [])
       setReady(true)
@@ -226,8 +232,21 @@ export function ProductDetailPage() {
     }
     setSelected(resolved)
   }
-  const sizeLabel = groups.filter((group) => group.key !== 'material' && group.key !== 'color').map((group) => selected[group.key]).filter(Boolean).join(' / ')
-  const choiceKey = groups.map((group) => `${group.key}:${selected[group.key] ?? ''}`).join('|')
+  const sizeGroup = groups.find((group) => group.key === 'length') ?? groups.find((group) => group.key === 'size')
+  const chosenSizes = sizeGroup ? sizeGroup.values.filter((value) => sizes.includes(value)) : []
+  const activeSizes = chosenSizes.length ? chosenSizes : sizeGroup?.values.slice(0, 1) ?? []
+  const chooseSizes = (next: string[]) => {
+    if (!sizeGroup) return
+    const list = next.length ? sizeGroup.values.filter((value) => next.includes(value)) : [sizeGroup.values[0]]
+    pick(sizeGroup.key, list[0])
+    setSizes(list)
+    setQty(list.length)
+  }
+  const sizeLabel = [activeSizes.join(', '), selected.gauge].filter(Boolean).join(' / ')
+  const choiceKey = [
+    sizeGroup ? `${sizeGroup.key}:${activeSizes.join('+')}` : '',
+    ...groups.filter((group) => group.key !== sizeGroup?.key).map((group) => `${group.key}:${selected[group.key] ?? ''}`),
+  ].filter(Boolean).join('|')
   const addCurrent = async () => {
     if (!groups.length) {
       const choice = await defaultChoiceFor(product.id)
@@ -240,14 +259,16 @@ export function ProductDetailPage() {
       color: selected.color,
       priceCents,
       material: selected.material || product.material,
-      options: Object.fromEntries(Object.entries(selected).filter(([, value]) => value)),
+      options: { ...Object.fromEntries(Object.entries(selected).filter(([, value]) => value)), ...(sizeGroup ? { [sizeGroup.key]: activeSizes[0] ?? '' } : {}) },
+      sizes: activeSizes,
     })
   }
   const specRows = product.specs
     ? [
         ['Material', selected.material || product.specs.material],
         ['Thickness (Gauge)', selected.gauge || product.specs.gauge],
-        ['Bar Length', selected.length || product.specs.barLength],
+        ['Bar Length', activeSizes.join(', ') || selected.length || product.specs.barLength],
+        ['Design', selected.design],
         ['Gem', product.specs.gem],
         ['Color / Finish', selected.color || product.specs.finish],
       ]
@@ -341,7 +362,7 @@ export function ProductDetailPage() {
             <p className="font-secondary mt-5 text-[15px] leading-relaxed text-white/80">{description}</p>
 
             <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-              {specRows.map(([label, value]) => (
+              {specRows.filter(([, value]) => value).map(([label, value]) => (
                 <div key={label} className="rounded-rbp border border-white/10 px-4 py-3">
                   <dt className="text-[11px] uppercase tracking-[0.14em] text-white/45">{label}</dt>
                   <dd className="mt-1 text-[14px] text-white">{value}</dd>
@@ -351,7 +372,33 @@ export function ProductDetailPage() {
 
             {groups.length > 0 && (
               <div className="mt-6 space-y-4">
-                {groups.map((group) => (
+                {groups.map((group) => group.key === sizeGroup?.key ? (
+                  <fieldset key={group.key} className="text-[13px] text-white/70">
+                    <legend>{group.name}</legend>
+                    <label className="mt-3 flex items-center gap-2 text-[14px] text-white">
+                      <input
+                        type="checkbox"
+                        className="accent-[#FF7900]"
+                        checked={activeSizes.length === group.values.length}
+                        onChange={() => chooseSizes(activeSizes.length === group.values.length ? [activeSizes[0] ?? group.values[0]] : [...group.values])}
+                      />
+                      All sizes
+                    </label>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                      {group.values.map((value) => (
+                        <label key={value} className="flex items-center gap-2 text-[14px] font-semibold text-white">
+                          <input
+                            type="checkbox"
+                            className="accent-[#FF7900]"
+                            checked={activeSizes.includes(value)}
+                            onChange={() => chooseSizes(activeSizes.includes(value) ? activeSizes.filter((size) => size !== value) : [...group.values])}
+                          />
+                          {value}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                ) : (
                   <div key={group.key}>
                     <p className="text-[13px] text-white/70">{group.name}</p>
                     <div className="mt-3 flex flex-wrap gap-2">

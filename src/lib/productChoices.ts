@@ -14,7 +14,7 @@ export type ChoiceGroup = { key: string; name: string; values: string[] }
 type VersionRow = { label?: string | null; price_cents?: number | null; options?: Record<string, string> | null }
 
 const SIZE_KEYS = new Set(['length', 'size', 'gauge'])
-const ORDER = ['length', 'size', 'gauge', 'color', 'material']
+const ORDER = ['length', 'size', 'gauge', 'design', 'color', 'material']
 
 function measures(value: string) {
   const parts = value.split(/\s*(?:,|\/|\||·|;)\s*|\s+(?=\d)/).map((part) => part.trim()).filter(Boolean)
@@ -49,7 +49,7 @@ export function groupsFromVersions(rows: VersionRow[]): ChoiceGroup[] {
     .sort((a, b) => (ORDER.indexOf(a) === -1 ? 99 : ORDER.indexOf(a)) - (ORDER.indexOf(b) === -1 ? 99 : ORDER.indexOf(b)))
     .map((key) => ({
       key,
-      name: key === 'length' && hasSize ? 'Length' : key === 'length' ? 'Size' : key === 'gauge' ? 'Gauge' : key === 'color' ? 'Color' : key === 'material' ? 'Material' : key === 'size' ? 'Size' : key.charAt(0).toUpperCase() + key.slice(1),
+      name: key === 'length' && hasSize ? 'Length' : key === 'length' ? 'Size' : key === 'gauge' ? 'Gauge' : key === 'design' ? 'Design' : key === 'color' ? 'Color' : key === 'material' ? 'Material' : key === 'size' ? 'Size' : key.charAt(0).toUpperCase() + key.slice(1),
       values: groups.get(key) ?? [],
     }))
     .filter((group) => group.values.length > 0)

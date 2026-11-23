@@ -21,7 +21,7 @@ type CartContextValue = {
   addProduct: (
     product: Product,
     quantity?: number,
-    variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string; options?: Record<string, string> },
+    variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string; options?: Record<string, string>; sizes?: string[] },
   ) => void
   updateLine: (lineId: string, patch: Partial<CartLine>) => void
   updateQuantity: (lineId: string, quantity: number) => void
@@ -86,7 +86,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (
       product: Product,
       quantity = 1,
-      variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string; options?: Record<string, string> },
+      variant?: { key: string; label?: string; priceCents?: number; material?: string; sizeLabel?: string; color?: string; options?: Record<string, string>; sizes?: string[] },
     ) => {
       const lineId = makeLineId(product.slug, variant?.key)
       setLines((prev) => {
@@ -115,6 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             sizeLabel: variant?.sizeLabel || variant?.label,
             color: variant?.color,
             options: variant?.options,
+            sizes: variant?.sizes,
           },
         ]
       })

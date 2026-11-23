@@ -97,7 +97,7 @@ export function useCheckout(lines: CartLine[]) {
         variant_key: line.variantKey ?? '',
         quantity: line.quantity,
         unit_price_cents: line.priceCents,
-        product_name: [line.name, line.sizeLabel, line.color, line.material].filter(Boolean).join(' · '),
+        product_name: [line.name, line.sizeLabel, line.options?.design, line.color, line.material].filter(Boolean).join(' · '),
       }))
 
       const { data, error: rpcError } = await supabase.rpc('create_order_with_items', {
