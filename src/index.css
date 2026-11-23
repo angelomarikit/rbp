@@ -36,11 +36,7 @@
   }
 
   .member-track {
-    animation: member-slide 32s linear infinite;
-  }
-
-  .member-track:hover {
-    animation-play-state: paused;
+    animation: member-slide 80s linear infinite;
   }
 }
 
