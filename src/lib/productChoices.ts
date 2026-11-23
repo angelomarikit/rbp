@@ -13,7 +13,6 @@ export type ChoiceGroup = { key: string; name: string; values: string[] }
 
 export type StoreDesign = { name: string; image: string }
 
-const DESIGN_KEYS = new Set(['design', 'design_image'])
 const HIDDEN_KEYS = new Set(['design', 'design_image', 'version'])
 
 type VersionRow = { label?: string | null; price_cents?: number | null; options?: Record<string, string> | null }
