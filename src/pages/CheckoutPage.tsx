@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
@@ -170,6 +170,8 @@ export function CheckoutPage() {
     error,
   } = useCheckout(lines)
   const [paymentQrs, setPaymentQrs] = useState<PaymentQrs>(emptyPaymentQrs)
+  const [proofFile, setProofFile] = useState<File | null>(null)
+  const [referenceLast4, setReferenceLast4] = useState('')
 
   useEffect(() => {
     if (!supabase) return
@@ -186,7 +188,7 @@ export function CheckoutPage() {
 
   const handleSubmit = async () => {
     if (lines.length === 0) return
-    const result = await submitOrder()
+    const result = await submitOrder({ file: proofFile, referenceLast4 })
     if (result.ok) clearCart()
   }
 
@@ -198,8 +200,9 @@ export function CheckoutPage() {
           Reference: <span className="text-rbp-accent">{orderId}</span>
         </p>
         <p className="mx-auto mt-3 max-w-xl text-sm text-rbp-muted">
-          Your order is saved with payment pending. Send the total with the {form.paymentMethod === 'maya' ? 'Maya' : 'GCash'} QR. The studio confirms it. It is not checked automatically.
+          Your order is saved. The studio confirms the payment screenshot and reference number. It is not checked automatically.
         </p>
+        {error && <p className="mx-auto mt-3 max-w-xl text-sm text-red-400">{friendlyError(error)}</p>}
         <PaymentQr method={form.paymentMethod === 'maya' ? 'Maya' : 'GCash'} path={form.paymentMethod === 'maya' ? paymentQrs.maya : paymentQrs.gcash} />
         {user && (
           <Link to={`/account/orders/${orderId}`} className="mt-8 block text-rbp-accent">
@@ -338,6 +341,10 @@ export function CheckoutPage() {
           error={error}
           cartEmpty={lines.length === 0}
           paymentQrs={paymentQrs}
+          proofFile={proofFile}
+          onProofFile={setProofFile}
+          referenceLast4={referenceLast4}
+          onReferenceLast4={setReferenceLast4}
         />
       </section>
     </div>
@@ -353,6 +360,10 @@ function CheckoutFormPanel({
   error,
   cartEmpty,
   paymentQrs,
+  proofFile,
+  onProofFile,
+  referenceLast4,
+  onReferenceLast4,
 }: {
   form: ReturnType<typeof useCheckout>['form']
   updateForm: ReturnType<typeof useCheckout>['updateForm']
@@ -362,6 +373,10 @@ function CheckoutFormPanel({
   error: string | null
   cartEmpty: boolean
   paymentQrs: PaymentQrs
+  proofFile: File | null
+  onProofFile: (file: File | null) => void
+  referenceLast4: string
+  onReferenceLast4: (value: string) => void
 }) {
   const payments = [
     { id: 'gcash' as const, label: 'GCash' },
@@ -369,6 +384,10 @@ function CheckoutFormPanel({
   ]
   const selected = payments.find((method) => method.id === form.paymentMethod) ?? payments[0]
   const qrPath = selected.id === 'maya' ? paymentQrs.maya : paymentQrs.gcash
+  const proofPreview = useMemo(() => (proofFile ? URL.createObjectURL(proofFile) : ''), [proofFile])
+  useEffect(() => () => {
+    if (proofPreview) URL.revokeObjectURL(proofPreview)
+  }, [proofPreview])
 
   return (
     <div className={`${rbpPanel} p-4 lg:p-5`}>
@@ -448,6 +467,27 @@ function CheckoutFormPanel({
         ))}
       </div>
       <PaymentQr method={selected.label} path={qrPath} />
+      <Field label="Payment screenshot *">
+        <input
+          className={`${rbpField} file:mr-3 file:rounded file:border-0 file:bg-rbp-accent file:px-2 file:py-1 file:text-xs file:font-semibold file:text-black`}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => onProofFile(event.target.files?.[0] ?? null)}
+        />
+      </Field>
+      {proofFile && (
+        <img src={proofPreview} alt="Payment screenshot preview" className="mb-3 max-h-40 rounded-md border border-rbp-border object-contain" />
+      )}
+      <Field label="Last 4 digits of the reference number *">
+        <input
+          className={rbpField}
+          inputMode="numeric"
+          maxLength={4}
+          value={referenceLast4}
+          placeholder="1234"
+          onChange={(event) => onReferenceLast4(event.target.value.replace(/\D/g, '').slice(0, 4))}
+        />
+      </Field>
 
       {error && <p className="mb-2 text-sm text-red-400">{friendlyError(error)}</p>}
       <OrangeButton type="button" className="h-11 w-full font-semibold text-black" disabled={submitting || cartEmpty} onClick={onSubmit}>

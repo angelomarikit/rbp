@@ -8,7 +8,7 @@ export type NavItem = {
 
 export const NAV_HOME: NavItem[] = [
   { label: 'Home', to: '/', match: ['/'] },
-  { label: 'Collections', to: '/collections', match: ['/collections'] },
+  { label: 'Products', to: '/collections', match: ['/collections'] },
   { label: 'Piercing Services', to: '/book', match: ['/book'] },
   { label: 'Events', to: '/events', match: ['/events'] },
   { label: 'Gallery', to: '/gallery', match: ['/gallery'] },
@@ -18,7 +18,7 @@ export const NAV_HOME: NavItem[] = [
 
 export const NAV_COLLECTIONS: NavItem[] = [
   { label: 'HOME', to: '/' },
-  { label: 'COLLECTIONS', to: '/collections', match: ['/collections'] },
+  { label: 'Products', to: '/collections', match: ['/collections'] },
   { label: 'EVENTS', to: '/events' },
   { label: 'ABOUT', to: '/events' },
   { label: 'CONTACT', to: '/book', match: ['/contact'] },
@@ -26,7 +26,7 @@ export const NAV_COLLECTIONS: NavItem[] = [
 
 export const NAV_PRODUCT: NavItem[] = [
   { label: 'HOME', to: '/' },
-  { label: 'COLLECTIONS', to: '/collections', match: ['/collections'] },
+  { label: 'Products', to: '/collections', match: ['/collections'] },
   { label: 'PIERCING SERVICES', to: '/book', match: ['/book'] },
   { label: 'EVENTS', to: '/events' },
   { label: 'ABOUT', to: '/events' },
@@ -35,7 +35,7 @@ export const NAV_PRODUCT: NavItem[] = [
 
 export const NAV_CHECKOUT: NavItem[] = [
   { label: 'Home', to: '/' },
-  { label: 'Collections', to: '/collections' },
+  { label: 'Products', to: '/collections' },
   { label: 'Events', to: '/events' },
   { label: 'About', to: '/events' },
   { label: 'Contact', to: '/book', match: ['/contact'] },
@@ -43,7 +43,7 @@ export const NAV_CHECKOUT: NavItem[] = [
 
 export const NAV_EVENTS: NavItem[] = [
   { label: 'Home', to: '/' },
-  { label: 'Collections', to: '/collections' },
+  { label: 'Products', to: '/collections' },
   { label: 'Events', to: '/events', match: ['/events'] },
   { label: 'Client Showcase', to: '/events#showcase' },
   { label: 'About', to: '/events' },

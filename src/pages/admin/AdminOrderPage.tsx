@@ -9,6 +9,7 @@ import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
 import { formatPhp } from '../../lib/format.ts'
 import { courierLabel, formatWhen, fulfillmentLabel } from '../../lib/orderStatus.ts'
+import { paymentProofUrl, uploadPaymentProof } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 
 export function AdminOrderPage() {
@@ -21,8 +22,13 @@ export function AdminOrderPage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [askDelete, setAskDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [proofFile, setProofFile] = useState<File | null>(null)
+  const [referenceLast4, setReferenceLast4] = useState('')
+  const [proofSaving, setProofSaving] = useState(false)
+  const [proofUrls, setProofUrls] = useState<Record<string, string>>({})
 
   const load = async () => {
     if (!supabase || !orderId) return
@@ -43,6 +49,18 @@ export function AdminOrderPage() {
   useEffect(() => {
     void load()
   }, [orderId])
+
+  useEffect(() => {
+    const proofs = order?.payment_proofs ?? []
+    if (!proofs.length) return
+    let active = true
+    void Promise.all(proofs.map(async (proof) => [proof.id, await paymentProofUrl(proof.storage_path)] as const)).then((pairs) => {
+      if (active) setProofUrls(Object.fromEntries(pairs))
+    })
+    return () => {
+      active = false
+    }
+  }, [order])
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -84,20 +102,61 @@ export function AdminOrderPage() {
   }
 
   const remove = async () => {
-    if (!supabase || !order) return
+    if (!supabase || !order || deleting) return
     setDeleting(true)
+    setDeleteError(null)
+    const finished = (message: string | null) => {
+      setDeleting(false)
+      if (message) setDeleteError(message)
+      else navigate('/admin/orders', { replace: true })
+    }
+    const rpc = await supabase.rpc('admin_delete_order', { p_order_id: order.id })
+    const missingRpc = rpc.error && /could not find|does not exist|schema cache|PGRST202/i.test(rpc.error.message)
+    if (!rpc.error) {
+      finished(null)
+      return
+    }
+    if (!missingRpc) {
+      finished(friendlyError(rpc.error, 'The order could not be deleted.'))
+      return
+    }
+    const direct = await supabase.from('orders').delete().eq('id', order.id).select('id')
+    if (direct.error) {
+      finished(friendlyError(direct.error, 'The order could not be deleted.'))
+      return
+    }
+    if (!direct.data?.length) {
+      finished('This order is still here. Run supabase/migrations/018_admin_delete_order.sql in Supabase, then try again.')
+      return
+    }
+    finished(null)
+  }
+
+  const uploadProof = async () => {
+    if (!supabase || !order || !proofFile) return
+    const digits = referenceLast4.trim()
+    if (!/^\d{4}$/.test(digits)) {
+      setError('Enter the last 4 digits of the reference number.')
+      return
+    }
+    setProofSaving(true)
     setError(null)
-    const { error: deleteError, count } = await supabase.from('orders').delete({ count: 'exact' }).eq('id', order.id)
-    setDeleting(false)
-    if (deleteError) {
-      setError(deleteError.message)
-      return
+    try {
+      const path = await uploadPaymentProof(proofFile, order.id)
+      const { error: proofError } = await supabase.rpc('attach_payment_proof', {
+        p_order_id: order.id,
+        p_storage_path: path,
+        p_reference_last4: digits,
+      })
+      if (proofError) throw proofError
+      setProofFile(null)
+      setReferenceLast4('')
+      await load()
+    } catch (uploadError) {
+      setError(friendlyError(uploadError, 'The payment screenshot was not saved. Run the payment proof migration, then try again.'))
+    } finally {
+      setProofSaving(false)
     }
-    if (!count) {
-      setError('This order was not deleted. The database still needs the admin delete permission.')
-      return
-    }
-    navigate('/admin/orders')
   }
 
   if (!order) {
@@ -117,7 +176,43 @@ export function AdminOrderPage() {
       <p className="mt-2 text-sm text-white/70">{formatWhen(order.created_at)}</p>
       {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       {notice ? <SuccessModal message="The order was saved." onClose={() => setNotice(null)} /> : null}
-      {saving || deleting ? <LoadingScreen label={deleting ? 'Deleting' : 'Saving'} full /> : null}
+      {saving ? <LoadingScreen label="Saving" full /> : null}
+      {askDelete && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-4" role="dialog" aria-modal="true" aria-labelledby="delete-order-title">
+          <div className="w-full max-w-sm rounded-2xl border border-[#2a2a2a] bg-[#161616] px-6 py-7 text-center shadow-2xl">
+            <h2 id="delete-order-title" className="text-lg font-semibold text-white">Are you sure you want to delete?</h2>
+            <p className="mt-2 text-sm leading-6 text-[#c8c8c8]">
+              {order.order_number || 'This order'} will be removed, including its items and shipment. This cannot be undone.
+            </p>
+            {deleteError && <p className="mt-3 text-sm text-[#ffb089]">{deleteError}</p>}
+            <div className="mt-5 flex justify-center gap-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={(event) => {
+                  event.preventDefault()
+                  void remove()
+                }}
+                className="rounded-lg bg-[#FF7900] px-5 py-2 text-sm font-semibold text-black disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete order'}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={(event) => {
+                  event.preventDefault()
+                  setAskDelete(false)
+                  setDeleteError(null)
+                }}
+                className="rounded-lg border border-[#3a3a3a] px-5 py-2 text-sm text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <form className={`mt-6 space-y-4 p-4 ${rbpPanel}`} onSubmit={save}>
         <label className="block text-xs uppercase tracking-[0.16em] text-rbp-cream">
           Payment
@@ -171,6 +266,52 @@ export function AdminOrderPage() {
         <p className="mt-3 text-sm text-rbp-accent">Total {formatPhp(order.total_cents)}</p>
       </div>
       <div className={`mt-4 p-4 ${rbpPanel}`}>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Payment screenshot</p>
+        <p className="mt-2 text-sm text-white/70">The screenshot and last 4 digits the client sent for this order.</p>
+        <ul className="mt-3 space-y-3">
+          {(order.payment_proofs ?? []).map((proof) => (
+            <li key={proof.id} className="text-sm">
+              <p className="text-white">Reference ending {proof.note || '—'}</p>
+              {proofUrls[proof.id] ? (
+                <a href={proofUrls[proof.id]} target="_blank" rel="noreferrer">
+                  <img src={proofUrls[proof.id]} alt="Client payment screenshot" className="mt-2 max-h-64 rounded-md border border-rbp-border object-contain" />
+                </a>
+              ) : (
+                <p className="mt-1 text-white/50">Screenshot saved. It will show after the payment proof migration is applied.</p>
+              )}
+            </li>
+          ))}
+        </ul>
+        <label className="mt-4 block text-xs uppercase tracking-[0.16em] text-rbp-cream">
+          Upload the client screenshot
+          <input
+            className="mt-2 block w-full text-sm normal-case tracking-normal"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) => setProofFile(event.target.files?.[0] ?? null)}
+          />
+        </label>
+        <label className="mt-3 block text-xs uppercase tracking-[0.16em] text-rbp-cream">
+          Last 4 digits
+          <input
+            className="mt-2 block w-full border border-rbp-border bg-black px-3 py-2 text-sm normal-case tracking-normal"
+            inputMode="numeric"
+            maxLength={4}
+            value={referenceLast4}
+            placeholder="1234"
+            onChange={(event) => setReferenceLast4(event.target.value.replace(/\D/g, '').slice(0, 4))}
+          />
+        </label>
+        <button
+          type="button"
+          disabled={proofSaving || !proofFile}
+          onClick={() => void uploadProof()}
+          className="mt-3 rounded-md bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black disabled:opacity-50"
+        >
+          {proofSaving ? 'Uploading' : 'Save payment screenshot'}
+        </button>
+      </div>
+      <div className={`mt-4 p-4 ${rbpPanel}`}>
         <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Shipment history</p>
         {shipment && (
           <p className="mt-2 text-sm text-white/80">
@@ -193,34 +334,18 @@ export function AdminOrderPage() {
         <p className="mt-2 text-sm text-white/70">
           Removes {order.order_number || 'this order'}, its items, and its shipment record. The customer will no longer see it.
         </p>
-        {confirmDelete ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => void remove()}
-              className="rounded-md bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black disabled:opacity-50"
-            >
-              Delete {order.order_number || 'order'}
-            </button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-md border border-rbp-border px-3 py-2 text-sm text-white disabled:opacity-50"
-            >
-              Keep it
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirmDelete(true)}
-            className="mt-3 rounded-md border border-[#ffb089] px-3 py-2 text-sm text-[#ffb089]"
-          >
-            Delete order
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setDeleteError(null)
+            setAskDelete(true)
+          }}
+          className="mt-3 rounded-md border border-[#ffb089] px-3 py-2 text-sm text-[#ffb089]"
+        >
+          Delete order
+        </button>
       </div>
     </div>
   )

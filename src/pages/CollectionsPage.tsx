@@ -195,7 +195,7 @@ export function CollectionsPage() {
           <div className="min-w-0 flex-1">
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="font-display text-[2.4rem] leading-none text-rbp-accent">All Collections</h2>
+                <h2 className="font-display text-[2.4rem] leading-none text-rbp-accent">All Products</h2>
                 <p className="mt-2 text-[13px] text-white/60">
                   {filtered.length === 0
                     ? '0 pieces'

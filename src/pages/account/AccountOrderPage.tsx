@@ -8,6 +8,7 @@ import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 import { formatPhp } from '../../lib/format.ts'
 import { courierLabel, formatWhen, fulfillmentLabel, paymentLabel } from '../../lib/orderStatus.ts'
+import { paymentProofUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 
 export function AccountOrderPage() {
@@ -16,6 +17,7 @@ export function AccountOrderPage() {
   const [order, setOrder] = useState<AccountOrder | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [proofUrls, setProofUrls] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!supabase || !user || !orderId) return
@@ -37,6 +39,18 @@ export function AccountOrderPage() {
       active = false
     }
   }, [orderId, user])
+
+  useEffect(() => {
+    const proofs = order?.payment_proofs ?? []
+    if (!proofs.length) return
+    let active = true
+    void Promise.all(proofs.map(async (proof) => [proof.id, await paymentProofUrl(proof.storage_path)] as const)).then((pairs) => {
+      if (active) setProofUrls(Object.fromEntries(pairs))
+    })
+    return () => {
+      active = false
+    }
+  }, [order])
 
   if (loading) return <LoadingScreen label="Loading order" />
   if (error || !order) return <p className="text-sm text-[#ffb089]">{friendlyError(error, 'This order is not on your account.')}</p>
@@ -84,6 +98,21 @@ export function AccountOrderPage() {
           <p className="flex justify-between text-rbp-accent"><span>Total</span><span>{formatPhp(order.total_cents)}</span></p>
         </div>
       </div>
+      {(order.payment_proofs ?? []).length > 0 && (
+        <div className={`mt-4 p-4 ${rbpPanel}`}>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Payment screenshot</p>
+          <ul className="mt-3 space-y-3">
+            {order.payment_proofs?.map((proof) => (
+              <li key={proof.id}>
+                <p className="text-sm text-white">Reference ending {proof.note || '—'}</p>
+                {proofUrls[proof.id] && (
+                  <img src={proofUrls[proof.id]} alt="Your payment screenshot" className="mt-2 max-h-64 rounded-md border border-rbp-border object-contain" />
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {address && (
         <div className={`mt-4 p-4 ${rbpPanel}`}>
           <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Ship to</p>

@@ -11,7 +11,7 @@ const SeoContext = createContext<(page: PageSeo | null) => void>(() => {})
 const PRIVATE = /^\/(admin|account|checkout|login|register|forgot-password|reset-password)(\/|$)/
 
 const PAGE_NAMES: Record<string, string> = {
-  '/collections': 'Collections',
+  '/collections': 'Products',
   '/events': 'Events',
   '/book': 'Book a Piercing',
   '/gallery': 'Gallery',

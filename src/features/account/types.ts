@@ -24,6 +24,14 @@ export type AccountShipment = {
   shipment_events: ShipmentEvent[]
 }
 
+export type PaymentProof = {
+  id: string
+  storage_path: string
+  note: string | null
+  status: string
+  created_at: string
+}
+
 export type AccountOrder = {
   id: string
   order_number: string | null
@@ -38,6 +46,7 @@ export type AccountOrder = {
   created_at: string
   order_items: AccountOrderItem[]
   shipments: AccountShipment[]
+  payment_proofs?: PaymentProof[]
 }
 
 export type CustomerAddress = {
@@ -58,6 +67,7 @@ export const ORDER_SELECT = `
   subtotal_cents, shipping_cents, total_cents, payment_method,
   shipping_address, created_at,
   order_items (id, product_name, variant_key, quantity, unit_price_cents),
+  payment_proofs (id, storage_path, note, status, created_at),
   shipments (
     id, courier, origin_city, destination_summary, tracking_number, status, booked_with_courier,
     shipment_events (id, status, note, created_at)

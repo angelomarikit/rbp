@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react'
 import type { CartLine, CheckoutForm } from '../data/types.ts'
 import { useAuth } from '../features/auth/AuthProvider.tsx'
 import { friendlyError } from '../lib/friendlyError.ts'
+import { uploadPaymentProof } from '../lib/media.ts'
 import { supabase, supabaseConfigured } from '../lib/supabase.ts'
 
 const SHIPPING_CENTS = { standard: 10000, express: 20000 } as const
@@ -64,11 +65,20 @@ export function useCheckout(lines: CartLine[]) {
     return null
   }, [form, lines.length])
 
-  const submitOrder = async (): Promise<{ ok: boolean; orderId?: string }> => {
+  const submitOrder = async (proof: { file: File | null; referenceLast4: string }): Promise<{ ok: boolean; orderId?: string; proofSaved?: boolean }> => {
     setError(null)
     const validationError = validate()
     if (validationError) {
       setError(validationError)
+      return { ok: false }
+    }
+    if (!proof.file) {
+      setError('Upload a screenshot of your payment.')
+      return { ok: false }
+    }
+    const referenceLast4 = proof.referenceLast4.trim()
+    if (!/^\d{4}$/.test(referenceLast4)) {
+      setError('Enter the last 4 digits of the reference number.')
       return { ok: false }
     }
 
@@ -111,9 +121,22 @@ export function useCheckout(lines: CartLine[]) {
 
       if (rpcError) throw rpcError
       const id = data as string
+      let proofSaved = true
+      try {
+        const path = await uploadPaymentProof(proof.file, id)
+        const { error: proofError } = await supabase.rpc('attach_payment_proof', {
+          p_order_id: id,
+          p_storage_path: path,
+          p_reference_last4: referenceLast4,
+        })
+        if (proofError) throw proofError
+      } catch (proofFailure) {
+        proofSaved = false
+        setError(friendlyError(proofFailure, 'The order was saved, but the payment screenshot was not attached.'))
+      }
       setOrderId(id)
       setStep(3)
-      return { ok: true, orderId: id }
+      return { ok: true, orderId: id, proofSaved }
     } catch (e) {
       setError(friendlyError(e, 'The order could not be placed. Please try again.'))
       return { ok: false }

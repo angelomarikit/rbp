@@ -267,7 +267,7 @@ export function ProductDetailPage() {
           </Link>
           <span>/</span>
           <Link to="/collections" className="hover:text-white">
-            Collections
+            Products
           </Link>
           <span>/</span>
           <Link to={`/collections?category=${encodeURIComponent(product.category)}`} className="hover:text-white">
