@@ -11,6 +11,10 @@ export type ProductChoice = {
 
 export type ChoiceGroup = { key: string; name: string; values: string[] }
 
+export type StoreDesign = { name: string; image: string }
+
+const DESIGN_KEYS = new Set(['design', 'design_image'])
+
 type VersionRow = { label?: string | null; price_cents?: number | null; options?: Record<string, string> | null }
 
 const SIZE_KEYS = new Set(['length', 'size', 'gauge'])
@@ -32,12 +36,12 @@ export function groupsFromVersions(rows: VersionRow[]): ChoiceGroup[] {
   const groups = new Map<string, string[]>()
   for (const row of rows) {
     const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
-    if (!options.length && row.label?.trim()) {
+    const choices = options.filter(([key]) => !DESIGN_KEYS.has(key))
+    if (!options.length && !choices.length && row.label?.trim()) {
       const current = groups.get('version') ?? []
       if (!current.includes(row.label.trim())) groups.set('version', [...current, row.label.trim()])
     }
-    for (const [key, value] of options) {
-      if (key === 'design_image') continue
+    for (const [key, value] of choices) {
       const current = groups.get(key) ?? []
       for (const part of valuesFor(key, value.trim())) {
         if (!current.includes(part)) current.push(part)
@@ -60,7 +64,7 @@ function versionAllows(row: VersionRow, selected: Record<string, string>) {
   const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
   if (!options.length) return false
   return options.every(([key, value]) => {
-    if (key === 'design_image') return true
+    if (DESIGN_KEYS.has(key)) return true
     const choices = valuesFor(key, value.trim())
     return !selected[key] || choices.includes(selected[key])
   })
@@ -82,20 +86,34 @@ export function describeSelection(selected: Record<string, string>, rows: Versio
   }
 }
 
-export function imageForDesign(rows: VersionRow[], design: string) {
-  const name = design.trim()
-  if (!name) return ''
-  return rows.find((row) => row.options?.design?.trim() === name && row.options?.design_image?.trim())?.options?.design_image?.trim() || ''
+export function designsFromSpecs(specs: unknown): StoreDesign[] {
+  const list = specs && typeof specs === 'object' ? (specs as { designs?: unknown }).designs : null
+  if (!Array.isArray(list)) return []
+  return list.flatMap((item) => {
+    if (!item || typeof item !== 'object') return []
+    const name = String((item as { name?: unknown }).name ?? '').trim()
+    const image = String((item as { image?: unknown }).image ?? '').trim()
+    return name ? [{ name, image }] : []
+  })
 }
 
-export function imageForSelection(rows: VersionRow[], selected: Record<string, string>) {
-  const design = selected.design?.trim() ?? ''
-  if (design) {
-    const sameDesign = rows.filter((row) => row.options?.design?.trim() === design && row.options?.design_image?.trim())
-    const exact = sameDesign.find((row) => versionAllows(row, selected))
-    return (exact ?? sameDesign[0])?.options?.design_image?.trim() || ''
+export function designsFromVersions(rows: VersionRow[]): StoreDesign[] {
+  const designs: StoreDesign[] = []
+  for (const row of rows) {
+    const name = row.options?.design?.trim()
+    if (!name || designs.some((design) => design.name === name)) continue
+    designs.push({ name, image: row.options?.design_image?.trim() || '' })
   }
-  return rows.find((row) => row.options?.design_image?.trim() && versionAllows(row, selected))?.options?.design_image?.trim() || ''
+  return designs
+}
+
+export function productDesigns(specs: unknown, rows: VersionRow[] = []): StoreDesign[] {
+  const saved = designsFromSpecs(specs)
+  return saved.length ? saved : designsFromVersions(rows)
+}
+
+export function imageForDesign(designs: StoreDesign[], design: string) {
+  return designs.find((item) => item.name === design.trim())?.image || ''
 }
 
 export function choiceFromVersions(rows: VersionRow[]): ProductChoice | null {
@@ -128,12 +146,15 @@ function rowsFromProduct(product: { material?: string | null; specs?: { material
 }
 
 export async function optionGroupsFor(productId: string) {
-  let rows = await versionRows(productId)
-  if (!groupsFromVersions(rows).length && supabase && productId) {
+  const versions = await versionRows(productId)
+  let rows = versions
+  let specs: unknown = null
+  if (supabase && productId) {
     const { data } = await supabase.from('products').select('material, specs').eq('id', productId).maybeSingle()
-    if (data) rows = rowsFromProduct(data)
+    specs = data?.specs
+    if (!groupsFromVersions(rows).length && data) rows = rowsFromProduct(data)
   }
-  return { groups: groupsFromVersions(rows), rows }
+  return { groups: groupsFromVersions(rows), rows, designs: productDesigns(specs, versions) }
 }
 
 export async function defaultChoiceFor(productId: string) {

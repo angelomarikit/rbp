@@ -14,7 +14,7 @@ import { useCart } from '../features/cart/CartProvider.tsx'
 import { rowToProduct, useProducts } from '../hooks/useProducts.ts'
 import { formatPhp } from '../lib/format.ts'
 import { publicMediaUrl } from '../lib/media.ts'
-import { defaultChoiceFor, imageForDesign, imageForSelection } from '../lib/productChoices.ts'
+import { defaultChoiceFor, productDesigns, type StoreDesign } from '../lib/productChoices.ts'
 import { supabase } from '../lib/supabase.ts'
 
 const GALLERY = [
@@ -50,12 +50,14 @@ function choiceValues(key: string, value: string) {
 
 function variantChoices(version: StoreVariant) {
   const choices: Record<string, string[]> = {}
-  for (const [key, value] of Object.entries(version.options)) {
-    if (key === 'design_image') continue
+  const entries = Object.entries(version.options).filter(([, value]) => value?.trim())
+  for (const [key, value] of entries) {
+    if (key === 'design' || key === 'design_image') continue
     const next = choiceValues(key, value)
     if (next.length) choices[key] = next
   }
-  if (!Object.keys(choices).length && version.label.trim()) choices.version = [version.label.trim()]
+  const onlyDesign = entries.length > 0 && entries.every(([key]) => key === 'design' || key === 'design_image')
+  if (!Object.keys(choices).length && version.label.trim() && !onlyDesign) choices.version = [version.label.trim()]
   return choices
 }
 
@@ -110,6 +112,8 @@ export function ProductDetailPage() {
   const [groups, setGroups] = useState<ChoiceGroup[]>([])
   const [selected, setSelected] = useState<Record<string, string>>({})
   const [sizes, setSizes] = useState<string[]>([])
+  const [designs, setDesigns] = useState<StoreDesign[]>([])
+  const [designName, setDesignName] = useState('')
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Description')
   const [hero, setHero] = useState(0)
   usePageSeo(
@@ -128,6 +132,8 @@ export function ProductDetailPage() {
     setGroups([])
     setSelected({})
     setSizes([])
+    setDesigns([])
+    setDesignName('')
     setActiveTab('Description')
     setReady(false)
     const known = getProductBySlug(slug)
@@ -171,7 +177,8 @@ export function ProductDetailPage() {
         for (const [key, value] of Object.entries(options ?? {})) if (value?.trim()) clean[key] = value.trim()
         return { label: (version.label as string) ?? '', priceCents: version.price_cents as number | null, options: clean }
       })
-      const nextGroups = choiceGroups(stored, names)
+      const nextGroups = choiceGroups(stored, names).filter((group) => group.key !== 'design')
+      const nextDesigns = productDesigns((data as { specs?: unknown }).specs, stored)
       setProduct(next)
       setVariants(stored)
       const initial = firstSelection(stored, nextGroups)
@@ -180,8 +187,13 @@ export function ProductDetailPage() {
       setGroups(nextGroups)
       setSelected(initial)
       setSizes(firstSize ? [firstSize] : [])
-      if (next.slug === FEATURED_PRODUCT_SLUG && paths.length <= 1) setGallery(GALLERY)
-      else setGallery(paths.length ? paths : next.imagePath ? [next.imagePath] : [])
+      setDesigns(nextDesigns)
+      setDesignName(nextDesigns[0]?.name ?? '')
+      const basePhotos = next.slug === FEATURED_PRODUCT_SLUG && paths.length <= 1 ? GALLERY : paths.length ? paths : next.imagePath ? [next.imagePath] : []
+      const designPhoto = nextDesigns[0]?.image
+      const photosWithDesign = designPhoto && !basePhotos.includes(designPhoto) ? [designPhoto, ...basePhotos] : basePhotos
+      setGallery(photosWithDesign)
+      setHero(designPhoto ? Math.max(photosWithDesign.indexOf(designPhoto), 0) : 0)
       setReady(true)
     })()
 
@@ -243,9 +255,18 @@ export function ProductDetailPage() {
     setSizes(list)
     setQty(list.length)
   }
+  const chooseDesign = (name: string) => {
+    setDesignName(name)
+    const image = designs.find((design) => design.name === name)?.image
+    if (!image) return
+    const nextPhotos = gallery.includes(image) ? gallery : [image, ...gallery]
+    if (nextPhotos !== gallery) setGallery(nextPhotos)
+    setHero(Math.max(nextPhotos.indexOf(image), 0))
+  }
   const sizeLabel = [activeSizes.join(', '), selected.gauge].filter(Boolean).join(' / ')
   const choiceKey = [
     sizeGroup ? `${sizeGroup.key}:${activeSizes.join('+')}` : '',
+    designName ? `design:${designName}` : '',
     ...groups.filter((group) => group.key !== sizeGroup?.key).map((group) => `${group.key}:${selected[group.key] ?? ''}`),
   ].filter(Boolean).join('|')
   const addCurrent = async () => {
@@ -260,8 +281,8 @@ export function ProductDetailPage() {
       color: selected.color,
       priceCents,
       material: selected.material || product.material,
-      imagePath: imageForSelection(variants, selected) || product.imagePath,
-      options: { ...Object.fromEntries(Object.entries(selected).filter(([, value]) => value)), ...(sizeGroup ? { [sizeGroup.key]: activeSizes[0] ?? '' } : {}) },
+      imagePath: designs.find((design) => design.name === designName)?.image || product.imagePath,
+      options: { ...Object.fromEntries(Object.entries(selected).filter(([, value]) => value)), ...(designName ? { design: designName } : {}), ...(sizeGroup ? { [sizeGroup.key]: activeSizes[0] ?? '' } : {}) },
       sizes: activeSizes,
     })
   }
@@ -270,7 +291,7 @@ export function ProductDetailPage() {
         ['Material', selected.material || product.specs.material],
         ['Thickness (Gauge)', selected.gauge || product.specs.gauge],
         ['Bar Length', activeSizes.join(', ') || selected.length || product.specs.barLength],
-        ['Design', selected.design],
+        ['Design', designName],
         ['Gem', product.specs.gem],
         ['Color / Finish', selected.color || product.specs.finish],
       ]
@@ -372,6 +393,29 @@ export function ProductDetailPage() {
               ))}
             </dl>
 
+            {designs.length > 0 && (
+              <div>
+                <p className="text-[13px] text-white/70">Design</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {designs.map((design) => {
+                    const active = designName === design.name
+                    return (
+                      <button
+                        key={design.name}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => chooseDesign(design.name)}
+                        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[14px] font-semibold ${active ? 'border-rbp-accent text-rbp-accent' : 'border-white/20 text-white/80 hover:border-rbp-accent'}`}
+                      >
+                        {design.image ? <img src={publicMediaUrl(design.image)} alt="" className="h-8 w-8 rounded-full object-cover" /> : null}
+                        {design.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {groups.length > 0 && (
               <div className="mt-6 space-y-4">
                 {groups.map((group) => group.key === sizeGroup?.key ? (
@@ -406,21 +450,6 @@ export function ProductDetailPage() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {group.values.map((value) => {
                         const active = selected[group.key] === value
-                        if (group.key === 'design') {
-                          const picture = imageForDesign(variants, value)
-                          return (
-                            <button
-                              key={value}
-                              type="button"
-                              aria-pressed={active}
-                              onClick={() => pick(group.key, value)}
-                              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[14px] font-semibold ${active ? 'border-rbp-accent text-rbp-accent' : 'border-white/20 text-white/80 hover:border-rbp-accent'}`}
-                            >
-                              {picture ? <img src={publicMediaUrl(picture)} alt="" className="h-8 w-8 rounded-full object-cover" /> : null}
-                              {value}
-                            </button>
-                          )
-                        }
                         if (group.key === 'color') {
                           const swatch = colorChoice(value)
                           return (

@@ -13,7 +13,7 @@ import { useCheckout } from '../hooks/useCheckout.ts'
 import { asset } from '../lib/assets.ts'
 import type { CartLine } from '../data/types.ts'
 import { formatPhpLabel } from '../lib/format.ts'
-import { describeSelection, imageForDesign, imageForSelection, optionGroupsFor, type ChoiceGroup } from '../lib/productChoices.ts'
+import { describeSelection, imageForDesign, optionGroupsFor, type ChoiceGroup, type StoreDesign } from '../lib/productChoices.ts'
 import { friendlyError } from '../lib/friendlyError.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
@@ -48,6 +48,7 @@ function checkedSizes(line: CartLine, group: ChoiceGroup) {
 function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: string, patch: Partial<CartLine>) => void }) {
   const [groups, setGroups] = useState<ChoiceGroup[]>([])
   const [rows, setRows] = useState<Awaited<ReturnType<typeof optionGroupsFor>>['rows']>([])
+  const [designs, setDesigns] = useState<StoreDesign[]>([])
   const [productImage, setProductImage] = useState(line.imagePath)
 
   useEffect(() => {
@@ -56,6 +57,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
       if (!active) return
       setGroups(result.groups)
       setRows(result.rows)
+      setDesigns(result.designs)
     })
     if (supabase) {
       void supabase.from('products').select('image_path').eq('id', line.productId).maybeSingle().then(({ data }) => {
@@ -68,14 +70,11 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
   }, [line.productId])
 
   useEffect(() => {
-    if (!rows.length || !groups.length) return
-    const selected = chosenOptions(line, groups)
-    if (!selected.design) return
-    const picture = imageForSelection(rows, selected)
+    const picture = imageForDesign(designs, line.options?.design ?? '')
     if (picture && picture !== line.imagePath) onChange(line.lineId, { imagePath: picture })
-  }, [rows, groups, line, onChange])
+  }, [designs, line, onChange])
 
-  if (!groups.length) {
+  if (!groups.length && !designs.length) {
     return (
       <>
         {line.material && <p className="text-[11px] text-white/55">Material: {line.material}</p>}
@@ -109,7 +108,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
       color: described.color,
       priceCents: described.priceCents ?? line.priceCents,
       variantLabel: sizeLabel,
-      imagePath: imageForSelection(rows, nextSelected) || productImage || line.imagePath,
+      imagePath: imageForDesign(designs, nextSelected.design ?? '') || productImage || line.imagePath,
     })
   }
   const chooseSizes = (next: string[]) => {
@@ -146,6 +145,26 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
           </div>
         </fieldset>
       )}
+      {designs.length > 0 && (
+        <fieldset className="text-[11px] text-white/55">
+          <legend>Design</legend>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+            {designs.map((design) => (
+              <label key={design.name} className="flex items-center gap-1.5 text-[12px] text-white">
+                <input
+                  type="radio"
+                  name={`${line.cartId ?? line.lineId}-design`}
+                  className="accent-[#FF7900]"
+                  checked={(selected.design || designs[0]?.name) === design.name}
+                  onChange={() => apply({ ...selected, design: design.name }, sizes)}
+                />
+                {design.image ? <img src={publicMediaUrl(design.image)} alt="" className="h-8 w-8 rounded object-cover" /> : null}
+                {design.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {groups.filter((group) => group.key !== sizeGroup?.key).map((group) => (
         <fieldset key={group.key} className="text-[11px] text-white/55">
           <legend>{group.name}</legend>
@@ -159,9 +178,6 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
                   checked={(selected[group.key] ?? group.values[0]) === value}
                   onChange={() => apply({ ...selected, [group.key]: value }, sizes)}
                 />
-                {group.key === 'design' && imageForDesign(rows, value) ? (
-                  <img src={publicMediaUrl(imageForDesign(rows, value))} alt="" className="h-8 w-8 rounded object-cover" />
-                ) : null}
                 {value}
               </label>
             ))}

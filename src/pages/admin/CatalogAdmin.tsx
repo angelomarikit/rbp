@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { GEM_VARIANTS, MATERIAL_CHOICES } from '../../data/products.ts'
+import { productDesigns } from '../../lib/productChoices.ts'
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { formatPhp } from '../../lib/format.ts'
@@ -125,6 +126,8 @@ export function ProductEditor() {
   const [collections, setCollections] = useState<Collection[]>([])
   const [options, setOptions] = useState<Option[]>([])
   const [variants, setVariants] = useState<Variant[]>([])
+  const [specs, setSpecs] = useState<Record<string, unknown>>({})
+  const [designs, setDesigns] = useState<{ name: string; image: string }[]>([])
   const [custom, setCustom] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
@@ -203,7 +206,7 @@ export function ProductEditor() {
       setOptions(nextOptions)
       if (isNew) return
       const [product, pics, links, vars] = await Promise.all([
-        supabase.from('products').select('name, description, price_cents, compare_at_price_cents, sku, inventory_qty, status, material, image_path').eq('id', productId).maybeSingle(),
+        supabase.from('products').select('name, description, price_cents, compare_at_price_cents, sku, inventory_qty, status, material, image_path, specs').eq('id', productId).maybeSingle(),
         supabase.from('product_images').select('storage_path, sort_order').eq('product_id', productId).order('sort_order'),
         supabase.from('product_collections').select('collection_id').eq('product_id', productId),
         supabase.from('product_variants').select('id, label, sku, price_cents, inventory_qty, options').eq('product_id', productId).order('sort_order'),
@@ -224,14 +227,18 @@ export function ProductEditor() {
       const stored = (pics.data ?? []).map((pic) => pic.storage_path as string)
       setImages(stored.length ? stored : product.data.image_path ? [product.data.image_path] : [])
       setCollectionIds((links.data ?? []).map((link) => link.collection_id as string))
-      setVariants((vars.data ?? []).map((variant) => ({
+      const storedSpecs = (product.data.specs as Record<string, unknown> | null) ?? {}
+      const nextVariants = (vars.data ?? []).map((variant) => ({
         id: variant.id as string,
         label: (variant.label as string) ?? '',
         price: pesos(variant.price_cents as number | null),
         sku: (variant.sku as string) ?? '',
         inventory: variant.inventory_qty == null ? '' : String(variant.inventory_qty),
         options: (variant.options as Record<string, string>) ?? {},
-      })))
+      }))
+      setSpecs(storedSpecs)
+      setDesigns(productDesigns(storedSpecs, nextVariants))
+      setVariants(nextVariants)
     })()
   }, [isNew, productId])
 
@@ -270,6 +277,10 @@ export function ProductEditor() {
       material,
       category: collection?.name ?? 'General',
       image_path: images[0] || 'products/product-01.jpg',
+      specs: {
+        ...specs,
+        designs: designs.map((design) => ({ name: design.name.trim(), image: design.image })).filter((design) => design.name),
+      },
     }
     if (sku.trim()) payload.sku = sku.trim()
     else if (isNew) payload.sku = `RBP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
@@ -294,7 +305,7 @@ export function ProductEditor() {
       : null
     const versionInsert = variants.length
       ? await supabase.from('product_variants').insert(variants.map((variant, index) => {
-        const choiceText = Object.entries(variant.options).filter(([key, value]) => key !== 'design_image' && value.trim()).map(([, value]) => value.trim())
+        const choiceText = Object.entries(variant.options).filter(([key, value]) => key !== 'design' && key !== 'design_image' && value.trim()).map(([, value]) => value.trim())
         return {
         product_id: id,
         label: variant.label || choiceText.join(' / ') || `Variant ${index + 1}`,
@@ -302,7 +313,7 @@ export function ProductEditor() {
         sku: variant.sku || null,
         price_cents: toCents(variant.price),
         inventory_qty: variant.inventory.trim() ? Number(variant.inventory) : null,
-        options: Object.fromEntries(Object.entries(variant.options).filter(([, value]) => value.trim())),
+        options: Object.fromEntries(Object.entries(variant.options).filter(([key, value]) => key !== 'design' && key !== 'design_image' && value.trim())),
         sort_order: index,
         status: 'active',
       }}))
@@ -354,6 +365,7 @@ export function ProductEditor() {
           ['details', '1. Name'],
           ['price', '2. Price'],
           ['photos', '3. Photos'],
+          ['designs', 'Designs'],
           ['versions', '4. Options'],
         ].map(([id, label]) => (
           <a key={id} href={`#${id}`} className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm text-[#e8e8e8] hover:border-[#FF7900]">
@@ -387,9 +399,54 @@ export function ProductEditor() {
               </div>
             </div>
           </Card>
+          <Card id="designs" className="scroll-mt-4 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <SectionHeading step="+" title="Designs" hint="Add a design name and choose its photo. These stay separate from lengths, sizes, and other versions." />
+              <QuietButton type="button" onClick={() => setDesigns([...designs, { name: '', image: '' }])}>Add a design</QuietButton>
+            </div>
+            {designs.length === 0 && <p className="rounded-lg bg-[#101010] px-3 py-3 text-sm text-[#b5b5b5]">No designs yet. A product can have several.</p>}
+            {designs.map((design, index) => (
+              <div key={index} className="flex flex-wrap items-end gap-3 rounded-xl border border-[#333] bg-[#101010] p-3">
+                <div className="min-w-[180px] flex-1">
+                  <TextField
+                    label="Design"
+                    hint="Example: Flower 03"
+                    value={design.name}
+                    onChange={(event) => setDesigns(designs.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item))}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-[#f0f0f0]">Photo</p>
+                  <p className="mt-0.5 text-xs text-[#8d8d8d]">Choose one of this product’s photos.</p>
+                  {images.length === 0 ? (
+                    <p className="mt-2 text-xs text-[#b5b5b5]">Add photos above first.</p>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {images.map((path) => {
+                        const chosen = design.image === path
+                        return (
+                          <button
+                            key={path}
+                            type="button"
+                            aria-pressed={chosen}
+                            aria-label={chosen ? 'Chosen photo' : 'Choose photo'}
+                            onClick={() => setDesigns(designs.map((item, itemIndex) => itemIndex === index ? { ...item, image: path } : item))}
+                            className={`h-12 w-12 overflow-hidden rounded-md border ${chosen ? 'border-[#FF7900]' : 'border-[#333] hover:border-[#FF7900]'}`}
+                          >
+                            <img src={publicMediaUrl(path)} alt="" className="h-full w-full object-cover" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+                <button type="button" className="mb-2 text-xs text-[#ffb089]" onClick={() => setDesigns(designs.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>
+              </div>
+            ))}
+          </Card>
           <Card id="versions" className="scroll-mt-4 space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <SectionHeading step="4" title="Different versions" hint="Use this only when one product has more than one length, color, size, or gauge. Skip it if every piece is the same." />
+              <SectionHeading step="4" title="Different versions" hint="Use this for length, color, size, or gauge. Designs are added in the section above." />
               <QuietButton type="button" onClick={() => setVariants([...variants, { label: '', price, sku: '', inventory: '', options: {} }])}>Add a version</QuietButton>
             </div>
             {variants.length === 0 && <p className="rounded-lg bg-[#101010] px-3 py-3 text-sm text-[#b5b5b5]">No extra versions yet. The price on the right is what customers pay.</p>}
@@ -398,40 +455,6 @@ export function ProductEditor() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold">Version {index + 1}</p>
                   <button type="button" className="text-xs text-[#ffb089]" onClick={() => setVariants(variants.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>
-                </div>
-                <TextField
-                  label="Design"
-                  hint="Type the design for this version, such as Butterfly or Plain."
-                  value={variant.options.design ?? ''}
-                  onChange={(event) => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design: event.target.value } } : item))}
-                />
-                <div>
-                  <p className="text-sm text-[#d4d4d4]">Design picture</p>
-                  <p className="mt-1 text-xs text-[#8a8a8a]">Choose one of the photos already added for this product. It shows on the order when the client chooses this design.</p>
-                  {variant.options.design_image && !images.includes(variant.options.design_image) ? (
-                    <p className="mt-3 text-xs text-[#b5b5b5]">This version still uses an older uploaded picture. Choose one of the product photos below to replace it.</p>
-                  ) : null}
-                  {images.length === 0 ? (
-                    <p className="mt-3 text-sm text-[#b5b5b5]">Add photos in the Photos section first.</p>
-                  ) : (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {images.map((path, photoIndex) => {
-                        const chosen = variant.options.design_image === path
-                        return (
-                          <button
-                            key={path}
-                            type="button"
-                            aria-pressed={chosen}
-                            onClick={() => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design_image: chosen ? '' : path } } : item))}
-                            className={`overflow-hidden rounded-lg border ${chosen ? 'border-[#FF7900]' : 'border-[#333] hover:border-[#FF7900]'}`}
-                          >
-                            <img src={publicMediaUrl(path)} alt="" className="h-24 w-20 object-cover" />
-                            <span className={`block px-1 py-1 text-[11px] ${chosen ? 'text-[#ffb067]' : 'text-[#b5b5b5]'}`}>{chosen ? 'Chosen' : photoIndex === 0 ? 'Main photo' : `Photo ${photoIndex + 1}`}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {options.filter((option) => option.key !== 'design').map((option) => (
