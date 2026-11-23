@@ -1,15 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import type { Product } from '../../data/types.ts'
-import { useCart } from '../../features/cart/CartProvider.tsx'
 import { publicMediaUrl } from '../../lib/media.ts'
-import { defaultChoiceFor } from '../../lib/productChoices.ts'
-import { formatPhp } from '../../lib/format.ts'
-import { IconCart } from '../ui/Icons.tsx'
 
 export function ProductCard({ product }: { product: Product }) {
-  const { addProduct } = useCart()
-  const navigate = useNavigate()
-
   return (
     <article className="group flex flex-col overflow-hidden rounded-rbp border border-rbp-border/80 bg-[#0a0a0a] transition duration-300 hover:-translate-y-1 hover:border-rbp-accent hover:shadow-[0_12px_32px_rgba(255,121,0,0.16)]">
       <Link to={`/products/${product.slug}`} className="relative flex aspect-[5/4] items-center justify-center overflow-hidden bg-[#111]">
@@ -35,31 +28,12 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name}
         </Link>
         <p className="mt-1 text-[12px] text-white/50">{product.material}</p>
-        <p className="mt-3 text-[22px] font-bold leading-none text-rbp-accent">{formatPhp(product.priceCents)}</p>
-        <div className="mt-4 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              void defaultChoiceFor(product.id).then((choice) => addProduct(product, 1, choice ? { ...choice, material: choice.material || product.material } : undefined))
-            }}
-            className="flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] px-3 text-[13px] font-semibold leading-none tracking-normal text-black"
-          >
-            <IconCart size={15} />
-            Add to Cart
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              void defaultChoiceFor(product.id).then((choice) => {
-                addProduct(product, 1, choice ? { ...choice, material: choice.material || product.material } : undefined)
-                navigate('/checkout')
-              })
-            }}
-            className="flex h-10 w-full items-center justify-center whitespace-nowrap rounded-md border border-rbp-accent px-3 text-[13px] font-semibold leading-none tracking-normal text-rbp-accent hover:bg-rbp-accent hover:text-black"
-          >
-            Buy Now
-          </button>
-        </div>
+        <Link
+          to={`/products/${product.slug}`}
+          className="mt-4 flex h-10 w-full items-center justify-center whitespace-nowrap rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] px-3 text-[13px] font-semibold leading-none tracking-normal text-black"
+        >
+          View Now
+        </Link>
       </div>
     </article>
   )
