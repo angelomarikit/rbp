@@ -49,7 +49,7 @@ export function AccountDashboardPage() {
         {profile?.full_name || 'Your dashboard'}
       </GothicHeading>
       <p className="mt-3 max-w-xl text-sm text-white/75">
-        Orders placed while you are signed in use this account. Payment and J&T updates from the studio appear on the same order.
+        Orders placed while you are signed in use this account. Payment and LBC updates from the studio appear on the same order.
       </p>
       {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">

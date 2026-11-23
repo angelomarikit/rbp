@@ -22,7 +22,12 @@ export function fulfillmentLabel(status: string) {
 }
 
 export function courierLabel(courier: string) {
-  return courier === 'jnt' ? 'J&T Express' : courier
+  if (courier === 'lbc' || courier === 'jnt') return 'LBC'
+  return courier
+}
+
+export function shipmentNote(note: string | null | undefined) {
+  return note?.replaceAll('J&T', 'LBC') ?? ''
 }
 
 export function formatWhen(value: string) {

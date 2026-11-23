@@ -8,7 +8,7 @@ import { PageTitle } from './ui.tsx'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
 import { formatPhp } from '../../lib/format.ts'
-import { courierLabel, formatWhen, fulfillmentLabel } from '../../lib/orderStatus.ts'
+import { courierLabel, formatWhen, fulfillmentLabel, shipmentNote } from '../../lib/orderStatus.ts'
 import { paymentProofUrl, publicMediaUrl, uploadPaymentProof } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 
@@ -81,7 +81,7 @@ export function AdminOrderPage() {
     const shipmentPayload = {
       status: fulfillment,
       tracking_number: tracking.trim() || null,
-      courier: 'jnt',
+      courier: 'lbc',
       origin_city: 'Taguig',
     }
     const shipmentResult = shipment
@@ -234,11 +234,11 @@ export function AdminOrderPage() {
           </select>
         </label>
         <label className="block text-xs uppercase tracking-[0.16em] text-rbp-cream">
-          J&T tracking number
+          LBC tracking number
           <input className="mt-2 block w-full border border-rbp-border bg-black px-3 py-2 text-sm normal-case tracking-normal" value={tracking} onChange={(event) => setTracking(event.target.value)} />
         </label>
         <p className="text-sm text-white/70">
-          Saving a tracking number records it on the J&T shipment from Taguig. It does not book the parcel with J&T.
+          Saving a tracking number records it on the LBC shipment from Taguig. It does not book the parcel with LBC.
         </p>
         <OrangeButton type="submit" disabled={saving}>
           {saving ? 'Saving' : 'Save order'}
@@ -325,7 +325,7 @@ export function AdminOrderPage() {
             <li key={event.id}>
               <p className="text-sm">{fulfillmentLabel(event.status)}</p>
               <p className="text-xs text-white/50">{formatWhen(event.created_at)}</p>
-              {event.note && <p className="text-sm text-white/75">{event.note}</p>}
+              {event.note && <p className="text-sm text-white/75">{shipmentNote(event.note)}</p>}
             </li>
           ))}
         </ol>

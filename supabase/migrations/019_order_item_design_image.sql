@@ -78,7 +78,7 @@ begin
   insert into public.shipments (order_id, courier, origin_city, destination_summary, status)
   values (
     v_order_id,
-    'jnt',
+    'lbc',
     'Taguig',
     concat_ws(', ', p_shipping_address->>'city', p_shipping_address->>'province'),
     'unfulfilled'

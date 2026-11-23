@@ -53,7 +53,7 @@ export function AdminOrdersPage() {
 
   return (
     <div>
-      <PageTitle title="Orders" subtitle="Review payment, fulfillment, and the J&T tracking number. A tracking number is recorded by hand and does not book a shipment." />
+      <PageTitle title="Orders" subtitle="Review payment, fulfillment, and the LBC tracking number. A tracking number is recorded by hand and does not book a shipment." />
       <div className="mt-6 flex flex-wrap gap-3">
         <input
           className="border border-rbp-border bg-black px-3 py-2 text-sm"

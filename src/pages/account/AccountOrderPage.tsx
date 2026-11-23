@@ -7,7 +7,7 @@ import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 import { formatPhp } from '../../lib/format.ts'
-import { courierLabel, formatWhen, fulfillmentLabel, paymentLabel } from '../../lib/orderStatus.ts'
+import { courierLabel, formatWhen, fulfillmentLabel, paymentLabel, shipmentNote } from '../../lib/orderStatus.ts'
 import { paymentProofUrl, publicMediaUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 
@@ -126,7 +126,7 @@ export function AccountOrderPage() {
         </div>
       )}
       <div className={`mt-4 p-4 ${rbpPanel}`}>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">J&T shipment</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">LBC shipment</p>
         {!shipment && <p className="mt-2 text-sm text-white/70">No shipment record is attached to this order yet.</p>}
         {shipment && (
           <>
@@ -148,7 +148,7 @@ export function AccountOrderPage() {
                 <li key={event.id}>
                   <p className="text-sm text-white">{fulfillmentLabel(event.status)}</p>
                   <p className="text-xs text-white/60">{formatWhen(event.created_at)}</p>
-                  {event.note && <p className="text-sm text-white/75">{event.note}</p>}
+                  {event.note && <p className="text-sm text-white/75">{shipmentNote(event.note)}</p>}
                 </li>
               ))}
             </ol>

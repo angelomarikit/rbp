@@ -405,15 +405,34 @@ export function ProductEditor() {
                   value={variant.options.design ?? ''}
                   onChange={(event) => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design: event.target.value } } : item))}
                 />
-                <MediaField
-                  label="Design picture"
-                  hint="This picture is shown on the order when the client chooses this design."
-                  folder="designs"
-                  accept="image/jpeg,image/png,image/webp"
-                  value={variant.options.design_image ?? ''}
-                  onChange={(path) => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design_image: path } } : item))}
-                  previewClassName="mt-3 h-24 w-24 rounded-lg object-cover"
-                />
+                <div>
+                  <p className="text-sm text-[#d4d4d4]">Design picture</p>
+                  <p className="mt-1 text-xs text-[#8a8a8a]">Choose one of the photos already added for this product. It shows on the order when the client chooses this design.</p>
+                  {variant.options.design_image && !images.includes(variant.options.design_image) ? (
+                    <p className="mt-3 text-xs text-[#b5b5b5]">This version still uses an older uploaded picture. Choose one of the product photos below to replace it.</p>
+                  ) : null}
+                  {images.length === 0 ? (
+                    <p className="mt-3 text-sm text-[#b5b5b5]">Add photos in the Photos section first.</p>
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {images.map((path, photoIndex) => {
+                        const chosen = variant.options.design_image === path
+                        return (
+                          <button
+                            key={path}
+                            type="button"
+                            aria-pressed={chosen}
+                            onClick={() => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design_image: chosen ? '' : path } } : item))}
+                            className={`overflow-hidden rounded-lg border ${chosen ? 'border-[#FF7900]' : 'border-[#333] hover:border-[#FF7900]'}`}
+                          >
+                            <img src={publicMediaUrl(path)} alt="" className="h-24 w-20 object-cover" />
+                            <span className={`block px-1 py-1 text-[11px] ${chosen ? 'text-[#ffb067]' : 'text-[#b5b5b5]'}`}>{chosen ? 'Chosen' : photoIndex === 0 ? 'Main photo' : `Photo ${photoIndex + 1}`}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {options.filter((option) => option.key !== 'design').map((option) => (
                     <label key={option.id} className="text-sm font-medium text-[#f0f0f0]">
