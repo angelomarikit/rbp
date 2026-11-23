@@ -37,6 +37,7 @@ export function groupsFromVersions(rows: VersionRow[]): ChoiceGroup[] {
       if (!current.includes(row.label.trim())) groups.set('version', [...current, row.label.trim()])
     }
     for (const [key, value] of options) {
+      if (key === 'design_image') continue
       const current = groups.get(key) ?? []
       for (const part of valuesFor(key, value.trim())) {
         if (!current.includes(part)) current.push(part)
@@ -59,6 +60,7 @@ function versionAllows(row: VersionRow, selected: Record<string, string>) {
   const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
   if (!options.length) return false
   return options.every(([key, value]) => {
+    if (key === 'design_image') return true
     const choices = valuesFor(key, value.trim())
     return !selected[key] || choices.includes(selected[key])
   })
@@ -78,6 +80,22 @@ export function describeSelection(selected: Record<string, string>, rows: Versio
     priceCents: priced?.price_cents ?? undefined,
     options: selected,
   }
+}
+
+export function imageForDesign(rows: VersionRow[], design: string) {
+  const name = design.trim()
+  if (!name) return ''
+  return rows.find((row) => row.options?.design?.trim() === name && row.options?.design_image?.trim())?.options?.design_image?.trim() || ''
+}
+
+export function imageForSelection(rows: VersionRow[], selected: Record<string, string>) {
+  const design = selected.design?.trim() ?? ''
+  if (design) {
+    const sameDesign = rows.filter((row) => row.options?.design?.trim() === design && row.options?.design_image?.trim())
+    const exact = sameDesign.find((row) => versionAllows(row, selected))
+    return (exact ?? sameDesign[0])?.options?.design_image?.trim() || ''
+  }
+  return rows.find((row) => row.options?.design_image?.trim() && versionAllows(row, selected))?.options?.design_image?.trim() || ''
 }
 
 export function choiceFromVersions(rows: VersionRow[]): ProductChoice | null {

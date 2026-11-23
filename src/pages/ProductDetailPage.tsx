@@ -14,7 +14,7 @@ import { useCart } from '../features/cart/CartProvider.tsx'
 import { rowToProduct, useProducts } from '../hooks/useProducts.ts'
 import { formatPhp } from '../lib/format.ts'
 import { publicMediaUrl } from '../lib/media.ts'
-import { defaultChoiceFor } from '../lib/productChoices.ts'
+import { defaultChoiceFor, imageForDesign, imageForSelection } from '../lib/productChoices.ts'
 import { supabase } from '../lib/supabase.ts'
 
 const GALLERY = [
@@ -51,6 +51,7 @@ function choiceValues(key: string, value: string) {
 function variantChoices(version: StoreVariant) {
   const choices: Record<string, string[]> = {}
   for (const [key, value] of Object.entries(version.options)) {
+    if (key === 'design_image') continue
     const next = choiceValues(key, value)
     if (next.length) choices[key] = next
   }
@@ -259,6 +260,7 @@ export function ProductDetailPage() {
       color: selected.color,
       priceCents,
       material: selected.material || product.material,
+      imagePath: imageForSelection(variants, selected) || product.imagePath,
       options: { ...Object.fromEntries(Object.entries(selected).filter(([, value]) => value)), ...(sizeGroup ? { [sizeGroup.key]: activeSizes[0] ?? '' } : {}) },
       sizes: activeSizes,
     })
@@ -404,6 +406,21 @@ export function ProductDetailPage() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {group.values.map((value) => {
                         const active = selected[group.key] === value
+                        if (group.key === 'design') {
+                          const picture = imageForDesign(variants, value)
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() => pick(group.key, value)}
+                              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[14px] font-semibold ${active ? 'border-rbp-accent text-rbp-accent' : 'border-white/20 text-white/80 hover:border-rbp-accent'}`}
+                            >
+                              {picture ? <img src={publicMediaUrl(picture)} alt="" className="h-8 w-8 rounded-full object-cover" /> : null}
+                              {value}
+                            </button>
+                          )
+                        }
                         if (group.key === 'color') {
                           const swatch = colorChoice(value)
                           return (

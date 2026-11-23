@@ -4,6 +4,7 @@ export type AccountOrderItem = {
   variant_key: string | null
   quantity: number
   unit_price_cents: number
+  image_path?: string | null
 }
 
 export type ShipmentEvent = {
@@ -66,7 +67,7 @@ export const ORDER_SELECT = `
   id, order_number, status, payment_status, fulfillment_status,
   subtotal_cents, shipping_cents, total_cents, payment_method,
   shipping_address, created_at,
-  order_items (id, product_name, variant_key, quantity, unit_price_cents),
+  order_items (id, product_name, variant_key, quantity, unit_price_cents, image_path),
   payment_proofs (id, storage_path, note, status, created_at),
   shipments (
     id, courier, origin_city, destination_summary, tracking_number, status, booked_with_courier,

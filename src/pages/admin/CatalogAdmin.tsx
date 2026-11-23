@@ -293,17 +293,19 @@ export function ProductEditor() {
       ? await supabase.from('product_images').insert(images.map((path, index) => ({ product_id: id, storage_path: path, sort_order: index })))
       : null
     const versionInsert = variants.length
-      ? await supabase.from('product_variants').insert(variants.map((variant, index) => ({
+      ? await supabase.from('product_variants').insert(variants.map((variant, index) => {
+        const choiceText = Object.entries(variant.options).filter(([key, value]) => key !== 'design_image' && value.trim()).map(([, value]) => value.trim())
+        return {
         product_id: id,
-        label: variant.label || Object.values(variant.options).filter(Boolean).join(' / ') || `Variant ${index + 1}`,
-        variant_key: `${Object.values(variant.options).filter(Boolean).join('-').toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'variant'}-${index + 1}`,
+        label: variant.label || choiceText.join(' / ') || `Variant ${index + 1}`,
+        variant_key: `${choiceText.join('-').toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'variant'}-${index + 1}`,
         sku: variant.sku || null,
         price_cents: toCents(variant.price),
         inventory_qty: variant.inventory.trim() ? Number(variant.inventory) : null,
-        options: variant.options,
+        options: Object.fromEntries(Object.entries(variant.options).filter(([, value]) => value.trim())),
         sort_order: index,
         status: 'active',
-      })))
+      }}))
       : null
     const extraError = links.error || pictures.error || versions.error || linkInsert?.error || pictureInsert?.error || versionInsert?.error
     setSaving(false)
@@ -402,6 +404,15 @@ export function ProductEditor() {
                   hint="Type the design for this version, such as Butterfly or Plain."
                   value={variant.options.design ?? ''}
                   onChange={(event) => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design: event.target.value } } : item))}
+                />
+                <MediaField
+                  label="Design picture"
+                  hint="This picture is shown on the order when the client chooses this design."
+                  folder="designs"
+                  accept="image/jpeg,image/png,image/webp"
+                  value={variant.options.design_image ?? ''}
+                  onChange={(path) => setVariants(variants.map((item, itemIndex) => itemIndex === index ? { ...item, options: { ...item.options, design_image: path } } : item))}
+                  previewClassName="mt-3 h-24 w-24 rounded-lg object-cover"
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                   {options.filter((option) => option.key !== 'design').map((option) => (

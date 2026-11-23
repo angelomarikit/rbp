@@ -8,7 +8,7 @@ import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 import { formatPhp } from '../../lib/format.ts'
 import { courierLabel, formatWhen, fulfillmentLabel, paymentLabel } from '../../lib/orderStatus.ts'
-import { paymentProofUrl } from '../../lib/media.ts'
+import { paymentProofUrl, publicMediaUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 
 export function AccountOrderPage() {
@@ -83,10 +83,12 @@ export function AccountOrderPage() {
         <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Items</p>
         <ul className="mt-3 space-y-2 text-sm">
           {order.order_items.map((item) => (
-            <li key={item.id} className="flex justify-between gap-3">
-              <span>
-                {item.product_name}
-                {item.variant_key ? ` · ${item.variant_key}` : ''} × {item.quantity}
+            <li key={item.id} className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-3">
+                {item.image_path ? <img src={publicMediaUrl(item.image_path)} alt="" className="h-14 w-14 shrink-0 rounded object-cover" /> : null}
+                <span>
+                  {item.product_name} × {item.quantity}
+                </span>
               </span>
               <span>{formatPhp(item.unit_price_cents * item.quantity)}</span>
             </li>
