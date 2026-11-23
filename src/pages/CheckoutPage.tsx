@@ -20,6 +20,7 @@ import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/pa
 
 function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
   const selected: Record<string, string> = { ...(line.options ?? {}) }
+  delete selected.version
   const parts = (line.sizeLabel ?? '').split(/[,/]/).map((part) => part.trim())
   for (const group of groups) {
     if (selected[group.key] && group.values.includes(selected[group.key])) continue
@@ -165,7 +166,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
           </div>
         </fieldset>
       )}
-      {groups.filter((group) => group.key !== sizeGroup?.key).map((group) => (
+      {groups.filter((group) => group.key !== sizeGroup?.key && group.key !== 'version').map((group) => (
         <fieldset key={group.key} className="text-[11px] text-white/55">
           <legend>{group.name}</legend>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">

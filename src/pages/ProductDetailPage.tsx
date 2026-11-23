@@ -52,12 +52,10 @@ function variantChoices(version: StoreVariant) {
   const choices: Record<string, string[]> = {}
   const entries = Object.entries(version.options).filter(([, value]) => value?.trim())
   for (const [key, value] of entries) {
-    if (key === 'design' || key === 'design_image') continue
+    if (key === 'design' || key === 'design_image' || key === 'version') continue
     const next = choiceValues(key, value)
     if (next.length) choices[key] = next
   }
-  const onlyDesign = entries.length > 0 && entries.every(([key]) => key === 'design' || key === 'design_image')
-  if (!Object.keys(choices).length && version.label.trim() && !onlyDesign) choices.version = [version.label.trim()]
   return choices
 }
 
@@ -177,7 +175,7 @@ export function ProductDetailPage() {
         for (const [key, value] of Object.entries(options ?? {})) if (value?.trim()) clean[key] = value.trim()
         return { label: (version.label as string) ?? '', priceCents: version.price_cents as number | null, options: clean }
       })
-      const nextGroups = choiceGroups(stored, names).filter((group) => group.key !== 'design')
+      const nextGroups = choiceGroups(stored, names).filter((group) => group.key !== 'design' && group.key !== 'version')
       const nextDesigns = productDesigns((data as { specs?: unknown }).specs, stored)
       setProduct(next)
       setVariants(stored)
@@ -267,7 +265,7 @@ export function ProductDetailPage() {
   const choiceKey = [
     sizeGroup ? `${sizeGroup.key}:${activeSizes.join('+')}` : '',
     designName ? `design:${designName}` : '',
-    ...groups.filter((group) => group.key !== sizeGroup?.key).map((group) => `${group.key}:${selected[group.key] ?? ''}`),
+    ...groups.filter((group) => group.key !== sizeGroup?.key && group.key !== 'version').map((group) => `${group.key}:${selected[group.key] ?? ''}`),
   ].filter(Boolean).join('|')
   const addCurrent = async () => {
     if (!groups.length) {
@@ -418,7 +416,7 @@ export function ProductDetailPage() {
 
             {groups.length > 0 && (
               <div className="mt-6 space-y-4">
-                {groups.map((group) => group.key === sizeGroup?.key ? (
+                {groups.filter((group) => group.key !== 'version').map((group) => group.key === sizeGroup?.key ? (
                   <fieldset key={group.key} className="text-[13px] text-white/70">
                     <legend>{group.name}</legend>
                     <label className="mt-3 flex items-center gap-2 text-[14px] text-white">

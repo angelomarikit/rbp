@@ -14,6 +14,7 @@ export type ChoiceGroup = { key: string; name: string; values: string[] }
 export type StoreDesign = { name: string; image: string }
 
 const DESIGN_KEYS = new Set(['design', 'design_image'])
+const HIDDEN_KEYS = new Set(['design', 'design_image', 'version'])
 
 type VersionRow = { label?: string | null; price_cents?: number | null; options?: Record<string, string> | null }
 
@@ -36,11 +37,7 @@ export function groupsFromVersions(rows: VersionRow[]): ChoiceGroup[] {
   const groups = new Map<string, string[]>()
   for (const row of rows) {
     const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
-    const choices = options.filter(([key]) => !DESIGN_KEYS.has(key))
-    if (!options.length && !choices.length && row.label?.trim()) {
-      const current = groups.get('version') ?? []
-      if (!current.includes(row.label.trim())) groups.set('version', [...current, row.label.trim()])
-    }
+    const choices = options.filter(([key]) => !HIDDEN_KEYS.has(key))
     for (const [key, value] of choices) {
       const current = groups.get(key) ?? []
       for (const part of valuesFor(key, value.trim())) {
@@ -64,7 +61,7 @@ function versionAllows(row: VersionRow, selected: Record<string, string>) {
   const options = Object.entries(row.options ?? {}).filter(([, value]) => value?.trim())
   if (!options.length) return false
   return options.every(([key, value]) => {
-    if (DESIGN_KEYS.has(key)) return true
+    if (HIDDEN_KEYS.has(key)) return true
     const choices = valuesFor(key, value.trim())
     return !selected[key] || choices.includes(selected[key])
   })
