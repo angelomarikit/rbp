@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabase.ts'
 
 export function AdminOrderPage() {
   const { orderId } = useParams()
+  const navigate = useNavigate()
   const [order, setOrder] = useState<AccountOrder | null>(null)
   const [payment, setPayment] = useState('pending')
   const [fulfillment, setFulfillment] = useState('unfulfilled')
@@ -20,6 +21,8 @@ export function AdminOrderPage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const load = async () => {
     if (!supabase || !orderId) return
@@ -80,6 +83,23 @@ export function AdminOrderPage() {
     await load()
   }
 
+  const remove = async () => {
+    if (!supabase || !order) return
+    setDeleting(true)
+    setError(null)
+    const { error: deleteError, count } = await supabase.from('orders').delete({ count: 'exact' }).eq('id', order.id)
+    setDeleting(false)
+    if (deleteError) {
+      setError(deleteError.message)
+      return
+    }
+    if (!count) {
+      setError('This order was not deleted. The database still needs the admin delete permission.')
+      return
+    }
+    navigate('/admin/orders')
+  }
+
   if (!order) {
     return error ? <p className="text-sm text-[#ffb089]">{friendlyError(error)}</p> : <LoadingScreen label="Loading order" />
   }
@@ -97,7 +117,7 @@ export function AdminOrderPage() {
       <p className="mt-2 text-sm text-white/70">{formatWhen(order.created_at)}</p>
       {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       {notice ? <SuccessModal message="The order was saved." onClose={() => setNotice(null)} /> : null}
-      {saving ? <LoadingScreen label="Saving" full /> : null}
+      {saving || deleting ? <LoadingScreen label={deleting ? 'Deleting' : 'Saving'} full /> : null}
       <form className={`mt-6 space-y-4 p-4 ${rbpPanel}`} onSubmit={save}>
         <label className="block text-xs uppercase tracking-[0.16em] text-rbp-cream">
           Payment
@@ -167,6 +187,40 @@ export function AdminOrderPage() {
             </li>
           ))}
         </ol>
+      </div>
+      <div className={`mt-4 p-4 ${rbpPanel}`}>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Delete order</p>
+        <p className="mt-2 text-sm text-white/70">
+          Removes {order.order_number || 'this order'}, its items, and its shipment record. The customer will no longer see it.
+        </p>
+        {confirmDelete ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => void remove()}
+              className="rounded-md bg-[#FF7900] px-3 py-2 text-sm font-semibold text-black disabled:opacity-50"
+            >
+              Delete {order.order_number || 'order'}
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-md border border-rbp-border px-3 py-2 text-sm text-white disabled:opacity-50"
+            >
+              Keep it
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="mt-3 rounded-md border border-[#ffb089] px-3 py-2 text-sm text-[#ffb089]"
+          >
+            Delete order
+          </button>
+        )}
       </div>
     </div>
   )
