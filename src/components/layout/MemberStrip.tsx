@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import '../../styles/rbp-blackletter.css'
 import {
-  affiliationFooterTitleLines,
+  affiliationFooterTitleParts,
   affiliationFromRow,
   associationHeroMarkPath,
+  associationHeroRbpPath,
   defaultAffiliation,
   isBodyPiercersAssociationLogo,
+  isRomellRbpLogo,
   type AffiliationContent,
   type AffiliationLogo,
 } from '../../lib/affiliation.ts'
@@ -13,7 +15,9 @@ import { publicMediaUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 
 function logoImagePath(logo: AffiliationLogo) {
-  return isBodyPiercersAssociationLogo(logo) ? associationHeroMarkPath(logo) : logo.path
+  if (isBodyPiercersAssociationLogo(logo)) return associationHeroMarkPath(logo)
+  if (isRomellRbpLogo(logo)) return associationHeroRbpPath(logo)
+  return logo.path
 }
 
 function LogoSet({ logos, copy }: { logos: AffiliationContent['logos']; copy: string }) {
@@ -48,25 +52,33 @@ export function MemberStrip() {
       })
   }, [])
 
-  const footerTitleLines = affiliationFooterTitleLines(content.title)
+  const footerTitleParts = affiliationFooterTitleParts(content.title)
 
   return (
     <section className="w-full border-t border-rbp-border/70 bg-black py-10" aria-label={content.eyebrow || 'Professional affiliation'}>
       <div className="mb-8 px-4 text-center">
-        {content.eyebrow && <p className="font-secondary text-[13px] font-semibold uppercase tracking-[0.28em] text-rbp-accent">{content.eyebrow}</p>}
+        {content.eyebrow && (
+          <p className="font-secondary text-[15px] font-semibold uppercase tracking-[0.28em] text-rbp-accent sm:text-[17px]">
+            {content.eyebrow}
+          </p>
+        )}
         {content.title && (
-          <p className="rbp-blackletter-text mx-auto mt-3 max-w-4xl text-[28px] leading-[1.05] text-white sm:text-[36px] lg:text-[42px]">
-            {footerTitleLines ? (
-              <>
-                <span className="block">{footerTitleLines[0]}</span>
-                <span className="block">{footerTitleLines[1]}</span>
-              </>
+          <p className="rbp-blackletter-text mx-auto mt-3 max-w-4xl text-[26px] leading-[1.08] sm:text-[34px] lg:text-[40px]">
+            {footerTitleParts ? (
+              <span className="block">
+                <span className="text-[1.28em] text-rbp-accent">{footerTitleParts.lead}</span>{' '}
+                <span className="text-[0.88em] text-rbp-accent">
+                  {footerTitleParts.middle} {footerTitleParts.country}
+                </span>
+              </span>
             ) : (
               content.title
             )}
           </p>
         )}
-        {content.tagline && <p className="font-secondary mt-2 text-[14px] text-white/70">{content.tagline}</p>}
+        {content.tagline && (
+          <p className="font-secondary mt-2 text-[16px] text-rbp-accent sm:text-[18px]">{content.tagline}</p>
+        )}
       </div>
       {content.logos.length > 0 && (
         <div className="overflow-hidden">

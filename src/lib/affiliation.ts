@@ -15,7 +15,7 @@ export const defaultAffiliation: AffiliationContent = {
     { path: 'branding/body-piercers-association-logo.png', alt: 'The Body Piercers Association of the Philippines' },
     { path: 'partners/dole-ncr.png', alt: 'Department of Labor and Employment, National Capital Region' },
     { path: 'partners/arzey.png', alt: 'Arzey Piercing Studio' },
-    { path: 'partners/rbp-logo.png', alt: 'Romell Body Piercing' },
+    { path: 'branding/rbp-association-hero-logo.png', alt: 'Romell Body Piercing' },
   ],
 }
 
@@ -43,6 +43,19 @@ export function associationHeroLogos(logos: AffiliationLogo[]) {
 }
 
 const ASSOCIATION_HERO_MARK = 'branding/body-piercers-association-logo.png'
+const ASSOCIATION_HERO_RBP_MARK = 'branding/rbp-association-hero-logo.png'
+
+export function isRomellRbpLogo(logo: AffiliationLogo) {
+  const hay = `${logo.path} ${logo.alt}`.toLowerCase()
+  if (isBodyPiercersAssociationLogo(logo)) return false
+  return /romell body piercing|\brbp\b|rbp-logo|partners\/rbp/i.test(hay)
+}
+
+/** Transparent circular RBP mark for the Association page hero (left). */
+export function associationHeroRbpPath(logo: AffiliationLogo) {
+  if (isRomellRbpLogo(logo)) return ASSOCIATION_HERO_RBP_MARK
+  return logo.path
+}
 
 export function isBodyPiercersAssociationLogo(logo: AffiliationLogo) {
   const hay = `${logo.path} ${logo.alt}`.toLowerCase()
@@ -53,6 +66,25 @@ export function isBodyPiercersAssociationLogo(logo: AffiliationLogo) {
 export function associationHeroMarkPath(logo: AffiliationLogo) {
   if (isBodyPiercersAssociationLogo(logo)) return ASSOCIATION_HERO_MARK
   return logo.path
+}
+
+export type AffiliationFooterTitleParts = {
+  lead: string
+  middle: string
+  country: string
+}
+
+/** Footer strip: “The Body Piercers” (accent) + “Association of the” / “Philippines” (slightly larger). */
+export function affiliationFooterTitleParts(title: string): AffiliationFooterTitleParts | null {
+  const flat = title.replace(/\s+/g, ' ').trim()
+  if (/^the body piercers\s+association of the\s+philippines$/i.test(flat)) {
+    return { lead: 'The Body Piercers', middle: 'Association of the', country: 'Philippines' }
+  }
+  const match = flat.match(/^the body piercers\s+(.+?)\s+philippines$/i)
+  if (match) {
+    return { lead: 'The Body Piercers', middle: match[1].trim(), country: 'Philippines' }
+  }
+  return null
 }
 
 /** Footer strip: line 1 ends with “…of the”, line 2 = “Philippines”. */

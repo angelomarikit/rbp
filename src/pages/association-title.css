@@ -13,6 +13,10 @@ h1.association-hero-title span.block:first-child {
   letter-spacing: 0.006em;
 }
 
+h1.association-hero-title .association-hero-title-philippines {
+  transform: translateX(70px);
+}
+
 @media (min-width: 1024px) {
   h1.association-hero-title span.block:first-child {
     white-space: nowrap;

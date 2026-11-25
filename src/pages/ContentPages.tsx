@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import './association-title.css'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
-import { useSiteLogo } from '../features/site/SiteBrandingProvider.tsx'
 import {
   affiliationFromRow,
   associationHeroLogos,
   associationHeroMarkPath,
+  associationHeroRbpPath,
   affiliationFooterTitleLines,
   defaultAffiliation,
 } from '../lib/affiliation.ts'
@@ -71,7 +71,6 @@ function AssociationHeroLogo({
 }
 
 export function AssociationPage() {
-  const { logoSrc: storeLogoSrc } = useSiteLogo()
   const [content, setContent] = useState(defaultAffiliation)
   const [items, setItems] = useState<GalleryItem[]>([])
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
@@ -118,7 +117,7 @@ export function AssociationPage() {
   }, [lightbox])
 
   const { rbpBadge, associationLogo } = associationHeroLogos(content.logos)
-  const rbpHeroSrc = storeLogoSrc || publicMediaUrl(rbpBadge.path)
+  const rbpHeroSrc = publicMediaUrl(associationHeroRbpPath(rbpBadge))
   const associationHeroSrc = publicMediaUrl(associationHeroMarkPath(associationLogo))
   const heroTitleLines = affiliationFooterTitleLines(content.title)
 
@@ -127,7 +126,7 @@ export function AssociationPage() {
       <div className="px-5 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-6xl">
           {content.eyebrow && (
-            <p className="text-center font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-accent">
+            <p className="text-center font-secondary text-[14px] font-semibold uppercase tracking-[0.32em] text-rbp-accent sm:text-[16px] lg:text-[17px]">
               {content.eyebrow}
             </p>
           )}
@@ -137,7 +136,7 @@ export function AssociationPage() {
               src={rbpHeroSrc}
               alt={rbpBadge.alt || 'Romell Body Piercing'}
               glow
-              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-end lg:-translate-x-4 xl:h-48 xl:w-48 xl:-translate-x-5"
+              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-end lg:-translate-x-[26px] xl:h-48 xl:w-48 xl:-translate-x-[30px]"
             />
 
             <div className="order-1 min-w-0 justify-self-center text-center lg:order-2 lg:px-2 lg:max-w-[36rem] xl:max-w-[40rem]">
@@ -145,7 +144,7 @@ export function AssociationPage() {
                 {heroTitleLines ? (
                   <>
                     <span className="block">{heroTitleLines[0]}</span>
-                    <span className="block">{heroTitleLines[1]}</span>
+                    <span className="association-hero-title-philippines block">{heroTitleLines[1]}</span>
                   </>
                 ) : (
                   content.title
@@ -153,14 +152,16 @@ export function AssociationPage() {
               </h1>
               <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
               {content.tagline && (
-                <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-rbp-accent">{content.tagline}</p>
+                <p className="font-secondary mx-auto mt-6 max-w-2xl text-[17px] leading-relaxed text-rbp-accent sm:text-[19px]">
+                  {content.tagline}
+                </p>
               )}
             </div>
 
             <AssociationHeroLogo
               src={associationHeroSrc}
               alt={associationLogo.alt || content.title}
-              className="association-bpap-logo order-3 h-40 w-52 max-w-none scale-105 sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] lg:scale-[1.12] lg:justify-self-end lg:translate-x-[100px] xl:h-60 xl:w-[20rem] xl:max-w-[22rem] xl:translate-x-[100px]"
+              className="association-bpap-logo order-3 h-40 w-52 max-w-none scale-105 sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] lg:scale-[1.12] lg:justify-self-end lg:translate-x-[185px] xl:h-60 xl:w-[20rem] xl:max-w-[22rem] xl:translate-x-[185px]"
             />
           </div>
         </div>
