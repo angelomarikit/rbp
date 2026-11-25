@@ -6,7 +6,7 @@ import {
   affiliationFromRow,
   associationHeroLogos,
   associationHeroMarkPath,
-  associationHeroTitleLines,
+  affiliationFooterTitleLines,
   defaultAffiliation,
 } from '../lib/affiliation.ts'
 import { isVideoGalleryItem, type GalleryItem } from '../lib/gallery.ts'
@@ -120,7 +120,7 @@ export function AssociationPage() {
   const { rbpBadge, associationLogo } = associationHeroLogos(content.logos)
   const rbpHeroSrc = storeLogoSrc || publicMediaUrl(rbpBadge.path)
   const associationHeroSrc = publicMediaUrl(associationHeroMarkPath(associationLogo))
-  const heroTitleLines = associationHeroTitleLines(content.title)
+  const heroTitleLines = affiliationFooterTitleLines(content.title)
 
   return (
     <div className="bg-black pb-16">
@@ -140,12 +140,12 @@ export function AssociationPage() {
               className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-end lg:-translate-x-4 xl:h-48 xl:w-48 xl:-translate-x-5"
             />
 
-            <div className="order-1 min-w-0 justify-self-center text-center lg:order-2 lg:px-2 lg:max-w-[32rem] xl:max-w-[34rem]">
+            <div className="order-1 min-w-0 justify-self-center text-center lg:order-2 lg:px-2 lg:max-w-[36rem] xl:max-w-[40rem]">
               <h1 className="association-hero-title text-[2.2rem] leading-[0.9] sm:text-[3.2rem] lg:text-[3.35rem] xl:text-[3.6rem]">
                 {heroTitleLines ? (
                   <>
                     <span className="block">{heroTitleLines[0]}</span>
-                    <span className="association-hero-title-line2 block">{heroTitleLines[1]}</span>
+                    <span className="block">{heroTitleLines[1]}</span>
                   </>
                 ) : (
                   content.title

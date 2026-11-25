@@ -83,6 +83,7 @@ export function MediaField({
   previewClassName = 'mt-3 h-32 w-full rounded-lg object-cover',
   previewSrc,
   fileFirst = false,
+  allowClear = true,
 }: {
   label: string
   hint: string
@@ -94,6 +95,8 @@ export function MediaField({
   /** When set, used for the preview (e.g. header logo with default fallback). */
   previewSrc?: string
   fileFirst?: boolean
+  /** Show “Remove file” when a path is saved (default true). */
+  allowClear?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -133,6 +136,15 @@ export function MediaField({
           <img src={preview} alt="" className={previewClassName} />
         ))}
       {fileFirst ? null : fileInput}
+      {allowClear && value.trim() ? (
+        <button
+          type="button"
+          className="mt-2 text-xs font-semibold text-[#ffb089] hover:text-[#ffc9a8]"
+          onClick={() => onChange('')}
+        >
+          Remove file
+        </button>
+      ) : null}
       {busy ? <LoadingScreen label="Uploading" /> : null}
       {error && <p className="mt-2 text-xs text-[#ffb089]">{error}</p>}
     </div>

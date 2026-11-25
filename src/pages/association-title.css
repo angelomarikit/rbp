@@ -8,17 +8,14 @@ h1.association-hero-title {
   letter-spacing: 0.01em;
 }
 
-h1.association-hero-title .association-hero-title-line2 {
-  display: block;
-  white-space: nowrap;
-  font-size: 0.9em;
-  letter-spacing: 0.005em;
+h1.association-hero-title span.block:first-child {
+  font-size: 0.88em;
+  letter-spacing: 0.006em;
 }
 
-@media (max-width: 639px) {
-  h1.association-hero-title .association-hero-title-line2 {
-    white-space: normal;
-    font-size: 0.82em;
+@media (min-width: 1024px) {
+  h1.association-hero-title span.block:first-child {
+    white-space: nowrap;
   }
 }
 

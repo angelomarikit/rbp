@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase.ts'
-import { publicMediaUrl } from '../../lib/media.ts'
+import { isVideoStoragePath, publicMediaUrl } from '../../lib/media.ts'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { Card, MediaField, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
 
@@ -184,26 +184,60 @@ export function HomepageEditor() {
             <TextArea label="Short description" hint="One or two sentences under the title." value={section.body} onChange={(event) => setSection({ ...section, body: event.target.value })} />
           </Card>
           <Card id="background" className="scroll-mt-4 space-y-4">
-            <HomeHeading step="3" title="Background photo or video" hint="Wide 1920×1080 for computers. Tall 1080×1920 for phones. A phone file is optional." />
+            <HomeHeading
+              step="3"
+              title="Background photo or video"
+              hint="Use Computer for laptops and desktop browsers (wide 1920×1080). Phone is optional and only overrides small screens."
+            />
+            {section.mobile_media_path.trim() &&
+            section.media_path.trim() &&
+            section.mobile_media_path.trim() !== section.media_path.trim() ? (
+              <p className="rounded-lg border border-[#ff7900]/40 bg-[#1a1208] px-3 py-2 text-xs leading-relaxed text-[#ffc899]">
+                Desktop visitors use the <strong className="font-semibold text-[#ff7900]">Computer</strong> file. The{' '}
+                <strong className="font-semibold text-[#ff7900]">Phone</strong> file plays only on mobile. If the video is under
+                Phone only, click &quot;Use phone file for Computer&quot; below so desktops get the same video.
+              </p>
+            ) : null}
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
               <MediaField
-                label="Computer"
-                hint="JPG, PNG, WebP, or MP4. Saves to the live site as soon as upload finishes."
+                label="Computer (desktop & laptop)"
+                hint="Upload MP4 or image here for the main homepage background. This is what most visitors see."
                 folder="hero"
                 accept="image/jpeg,image/png,image/webp,video/mp4"
                 value={section.media_path}
-                onChange={(path) => void updateHeroMedia({ media_path: path })}
+                onChange={(path) => void updateHeroMedia({ media_path: path || '' })}
                 previewClassName="mt-3 aspect-video w-full rounded-xl object-cover"
               />
-              <MediaField
-                label="Phone"
-                hint="Optional tall file for phones. Empty reuses the computer file."
-                folder="hero"
-                accept="image/jpeg,image/png,image/webp,video/mp4"
-                value={section.mobile_media_path}
-                onChange={(path) => void updateHeroMedia({ mobile_media_path: path })}
-                previewClassName="mt-3 aspect-[9/16] w-full rounded-xl object-cover"
-              />
+              <div className="space-y-2">
+                <MediaField
+                  label="Phone (mobile only)"
+                  hint="Optional tall file for phones. If Computer is empty, this is used everywhere."
+                  folder="hero"
+                  accept="image/jpeg,image/png,image/webp,video/mp4"
+                  value={section.mobile_media_path}
+                  onChange={(path) =>
+                    void updateHeroMedia(
+                      path
+                        ? {
+                            mobile_media_path: path,
+                            ...(!section.media_path.trim() ? { media_path: path } : {}),
+                          }
+                        : { mobile_media_path: '' },
+                    )
+                  }
+                  previewClassName="mt-3 aspect-[9/16] w-full rounded-xl object-cover"
+                />
+                {section.mobile_media_path.trim() &&
+                section.media_path.trim() !== section.mobile_media_path.trim() ? (
+                  <button
+                    type="button"
+                    className="w-full rounded-lg border border-[#FF7900] bg-[#1a1208] px-3 py-2 text-xs font-semibold text-[#ffb067] hover:bg-[#251808]"
+                    onClick={() => void updateHeroMedia({ media_path: section.mobile_media_path })}
+                  >
+                    Use phone file for Computer{isVideoStoragePath(section.mobile_media_path) ? ' (video)' : ''}
+                  </button>
+                ) : null}
+              </div>
             </div>
           </Card>
           <Card id="groups" className="scroll-mt-4 space-y-4">
