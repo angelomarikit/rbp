@@ -44,12 +44,14 @@ export function associationHeroLogos(logos: AffiliationLogo[]) {
 
 const ASSOCIATION_HERO_MARK = 'branding/body-piercers-association-logo.png'
 
-/** Prefer the transparent-friendly association mark on the Association hero (not the dark JPEG badge). */
-export function associationHeroMarkPath(logo: AffiliationLogo) {
+export function isBodyPiercersAssociationLogo(logo: AffiliationLogo) {
   const hay = `${logo.path} ${logo.alt}`.toLowerCase()
-  if (/body piercers|association of the philippines|bpap/i.test(hay) && /\.jpe?g$/i.test(logo.path)) {
-    return ASSOCIATION_HERO_MARK
-  }
+  return /body piercers|association of the philippines|bpap|body-piercers-association/i.test(hay)
+}
+
+/** Always use the bundled transparent association mark (not legacy JPEG uploads). */
+export function associationHeroMarkPath(logo: AffiliationLogo) {
+  if (isBodyPiercersAssociationLogo(logo)) return ASSOCIATION_HERO_MARK
   return logo.path
 }
 

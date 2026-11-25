@@ -151,7 +151,7 @@ export function AssociationPage() {
             <AssociationHeroLogo
               src={associationHeroSrc}
               alt={associationLogo.alt || content.title}
-              className="association-bpap-logo order-3 h-40 w-52 max-w-none sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] lg:justify-self-end lg:translate-x-6 xl:h-60 xl:w-[20rem] xl:max-w-[22rem] xl:translate-x-10"
+              className="association-bpap-logo order-3 h-40 w-52 max-w-none sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] lg:justify-self-end lg:-translate-x-10 xl:h-60 xl:w-[20rem] xl:max-w-[22rem] xl:-translate-x-8"
             />
           </div>
         </div>

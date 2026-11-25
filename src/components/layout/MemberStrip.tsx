@@ -1,15 +1,30 @@
 import { useEffect, useState } from 'react'
 import '../../styles/rbp-blackletter.css'
-import { affiliationFromRow, defaultAffiliation, type AffiliationContent } from '../../lib/affiliation.ts'
+import {
+  affiliationFromRow,
+  associationHeroMarkPath,
+  defaultAffiliation,
+  isBodyPiercersAssociationLogo,
+  type AffiliationContent,
+  type AffiliationLogo,
+} from '../../lib/affiliation.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
+
+function logoImagePath(logo: AffiliationLogo) {
+  return isBodyPiercersAssociationLogo(logo) ? associationHeroMarkPath(logo) : logo.path
+}
 
 function LogoSet({ logos, copy }: { logos: AffiliationContent['logos']; copy: string }) {
   return (
     <>
       {logos.map((logo) => (
         <div key={`${copy}-${logo.path}`} className="flex h-28 w-44 shrink-0 items-center justify-center px-4 sm:h-32 sm:w-56">
-          <img src={publicMediaUrl(logo.path)} alt={logo.alt} className="max-h-full max-w-full object-contain" />
+          <img
+            src={publicMediaUrl(logoImagePath(logo))}
+            alt={logo.alt}
+            className="max-h-full max-w-full object-contain"
+          />
         </div>
       ))}
     </>
