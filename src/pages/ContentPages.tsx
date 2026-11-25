@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
-import { affiliationFromRow, defaultAffiliation } from '../lib/affiliation.ts'
+import { useSiteLogo } from '../features/site/SiteBrandingProvider.tsx'
+import { affiliationFromRow, associationHeroLogos, defaultAffiliation } from '../lib/affiliation.ts'
 import { isVideoGalleryItem, type GalleryItem } from '../lib/gallery.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
@@ -40,7 +41,20 @@ function AssociationMediaTile({
   )
 }
 
+function AssociationHeroLogo({ src, alt, className = '' }: { src: string; alt: string; className?: string }) {
+  if (!src) return null
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`object-contain drop-shadow-[0_0_24px_rgba(255,121,0,0.15)] ${className}`}
+      loading="eager"
+    />
+  )
+}
+
 export function AssociationPage() {
+  const { logoSrc: storeLogoSrc } = useSiteLogo()
   const [content, setContent] = useState(defaultAffiliation)
   const [items, setItems] = useState<GalleryItem[]>([])
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
@@ -86,30 +100,47 @@ export function AssociationPage() {
     }
   }, [lightbox])
 
-  const mark =
-    content.logos.find((logo) => logo.alt.trim().toLowerCase() === content.title.trim().toLowerCase()) ?? content.logos[0]
+  const { rbpBadge, associationLogo } = associationHeroLogos(content.logos)
+  const rbpHeroSrc = storeLogoSrc || publicMediaUrl(rbpBadge.path)
+  const associationHeroSrc = publicMediaUrl(associationLogo.path)
 
   return (
     <div className="bg-black pb-16">
-      <div className="px-5 py-16 text-center sm:px-8 lg:py-20">
-        <div className="mx-auto max-w-4xl">
+      <div className="px-5 py-16 sm:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl">
           {content.eyebrow && (
-            <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">{content.eyebrow}</p>
+            <p className="text-center font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">
+              {content.eyebrow}
+            </p>
           )}
-          <GothicHeading as="h1" className="mt-3 text-[2.6rem] leading-[0.9] sm:text-[3.6rem]">
-            {content.title}
-          </GothicHeading>
-          <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
-          {content.tagline && (
-            <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
-          )}
-          {mark && (
-            <img
-              src={publicMediaUrl(mark.path)}
-              alt={mark.alt || content.title}
-              className="mx-auto mt-10 h-40 w-40 object-contain"
-            />
-          )}
+
+          <div className="mt-6 flex flex-col items-center gap-8 lg:mt-8 lg:flex-row lg:items-center lg:justify-center lg:gap-6 xl:gap-12">
+            <div className="flex w-full max-w-md items-center justify-center gap-6 lg:order-1 lg:w-auto lg:max-w-none lg:flex-1 lg:justify-end lg:pr-4">
+              <AssociationHeroLogo
+                src={rbpHeroSrc}
+                alt={rbpBadge.alt || 'Romell Body Piercing'}
+                className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 xl:h-36 xl:w-36"
+              />
+            </div>
+
+            <div className="order-first text-center lg:order-2 lg:max-w-3xl lg:flex-shrink-0">
+              <GothicHeading as="h1" className="text-[2.2rem] leading-[0.9] sm:text-[3.2rem] lg:text-[3.6rem]">
+                {content.title}
+              </GothicHeading>
+              <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
+              {content.tagline && (
+                <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
+              )}
+            </div>
+
+            <div className="flex w-full max-w-md items-center justify-center gap-6 lg:order-3 lg:w-auto lg:max-w-none lg:flex-1 lg:justify-start lg:pl-4">
+              <AssociationHeroLogo
+                src={associationHeroSrc}
+                alt={associationLogo.alt || content.title}
+                className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 xl:h-36 xl:w-36"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

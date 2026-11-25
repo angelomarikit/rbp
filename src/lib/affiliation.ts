@@ -19,6 +19,29 @@ export const defaultAffiliation: AffiliationContent = {
   ],
 }
 
+function matchAffiliationLogo(logos: AffiliationLogo[], patterns: RegExp[]) {
+  for (const logo of logos) {
+    const hay = `${logo.alt} ${logo.path}`.toLowerCase()
+    if (patterns.some((pattern) => pattern.test(hay))) return logo
+  }
+  return null
+}
+
+/** RBP (left) and Body Piercers Association (right) marks for the Association page hero. */
+export function associationHeroLogos(logos: AffiliationLogo[]) {
+  const list = logos.length ? logos : defaultAffiliation.logos
+  const association =
+    matchAffiliationLogo(list, [/body piercers association/, /association of the philippines/, /bpap/]) ??
+    list.find((logo) => /body-piercers|association/i.test(logo.path)) ??
+    defaultAffiliation.logos[0]
+  const rbpBadge =
+    matchAffiliationLogo(list, [/romell/, /\brbp\b/, /rbp-logo/]) ??
+    list.find((logo) => /rbp-logo|romell/i.test(logo.path)) ??
+    defaultAffiliation.logos.find((logo) => /rbp/i.test(logo.path)) ??
+    defaultAffiliation.logos[3]
+  return { rbpBadge, associationLogo: association }
+}
+
 export function affiliationFromRow(row: { subtitle: string | null; title: string | null; body: string | null; extra: unknown } | null): AffiliationContent {
   if (!row) return defaultAffiliation
   const extra = row.extra as { logos?: unknown } | null
