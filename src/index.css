@@ -35,22 +35,32 @@
     box-shadow: 0 0 14px rgba(255, 121, 0, 0.85);
   }
 
-  .member-track {
-    animation: member-slide 80s linear infinite;
-  }
+}
+
+.member-track-css {
+  animation: member-slide 28s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 @keyframes member-slide {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (min-width: 768px) {
+  .member-track-css {
+    animation-duration: 80s;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .member-track {
+  .member-track-css {
     animation: none;
   }
 }

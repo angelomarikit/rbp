@@ -13,6 +13,7 @@ import {
 } from '../../lib/affiliation.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
+import { MemberStripMarquee } from './MemberStripMarquee.tsx'
 
 function logoImagePath(logo: AffiliationLogo) {
   if (isBodyPiercersAssociationLogo(logo)) return associationHeroMarkPath(logo)
@@ -81,11 +82,11 @@ export function MemberStrip() {
         )}
       </div>
       {content.logos.length > 0 && (
-        <div className="overflow-hidden">
-          <div className="member-track flex w-max items-center">
+        <div className="relative isolate w-full overflow-hidden [touch-action:pan-y]">
+          <MemberStripMarquee trackKey={content.logos.map((l) => l.path).join('|')}>
             <LogoSet logos={content.logos} copy="a" />
             <LogoSet logos={content.logos} copy="b" />
-          </div>
+          </MemberStripMarquee>
         </div>
       )}
     </section>
