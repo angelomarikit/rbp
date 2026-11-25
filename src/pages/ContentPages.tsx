@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { useSiteLogo } from '../features/site/SiteBrandingProvider.tsx'
-import { affiliationFromRow, associationHeroLogos, defaultAffiliation } from '../lib/affiliation.ts'
+import {
+  affiliationFromRow,
+  associationHeroLogos,
+  associationHeroMarkPath,
+  defaultAffiliation,
+} from '../lib/affiliation.ts'
 import { isVideoGalleryItem, type GalleryItem } from '../lib/gallery.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
@@ -60,6 +65,10 @@ export function AssociationPage() {
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
   useEffect(() => {
+    void import('./association-title.css')
+  }, [])
+
+  useEffect(() => {
     if (!supabase) return
     void Promise.all([
       supabase
@@ -102,44 +111,40 @@ export function AssociationPage() {
 
   const { rbpBadge, associationLogo } = associationHeroLogos(content.logos)
   const rbpHeroSrc = storeLogoSrc || publicMediaUrl(rbpBadge.path)
-  const associationHeroSrc = publicMediaUrl(associationLogo.path)
+  const associationHeroSrc = publicMediaUrl(associationHeroMarkPath(associationLogo))
 
   return (
     <div className="bg-black pb-16">
       <div className="px-5 py-16 sm:px-8 lg:py-20">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           {content.eyebrow && (
             <p className="text-center font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">
               {content.eyebrow}
             </p>
           )}
 
-          <div className="mt-6 flex flex-col items-center gap-8 lg:mt-8 lg:flex-row lg:items-center lg:justify-center lg:gap-6 xl:gap-12">
-            <div className="flex w-full max-w-md items-center justify-center gap-6 lg:order-1 lg:w-auto lg:max-w-none lg:flex-1 lg:justify-end lg:pr-4">
-              <AssociationHeroLogo
-                src={rbpHeroSrc}
-                alt={rbpBadge.alt || 'Romell Body Piercing'}
-                className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 xl:h-36 xl:w-36"
-              />
-            </div>
+          <div className="mt-6 grid w-full grid-cols-1 place-items-center gap-6 sm:mt-8 lg:grid-cols-[minmax(10rem,12.5rem)_minmax(0,26rem)_minmax(10rem,12.5rem)] lg:items-center lg:gap-x-1 xl:grid-cols-[minmax(12rem,14rem)_minmax(0,30rem)_minmax(12rem,14rem)] xl:gap-x-3">
+            <AssociationHeroLogo
+              src={rbpHeroSrc}
+              alt={rbpBadge.alt || 'Romell Body Piercing'}
+              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 xl:h-52 xl:w-52"
+            />
 
-            <div className="order-first text-center lg:order-2 lg:max-w-3xl lg:flex-shrink-0">
-              <GothicHeading as="h1" className="text-[2.2rem] leading-[0.9] sm:text-[3.2rem] lg:text-[3.6rem]">
+            <div className="order-1 text-center lg:order-2 lg:px-1">
+              <h1 className="association-hero-title text-[2.2rem] leading-[0.9] text-rbp-accent sm:text-[3.2rem] lg:text-[3.35rem] xl:text-[3.6rem]">
                 {content.title}
-              </GothicHeading>
+              </h1>
               <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
               {content.tagline && (
                 <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
               )}
             </div>
 
-            <div className="flex w-full max-w-md items-center justify-center gap-6 lg:order-3 lg:w-auto lg:max-w-none lg:flex-1 lg:justify-start lg:pl-4">
-              <AssociationHeroLogo
-                src={associationHeroSrc}
-                alt={associationLogo.alt || content.title}
-                className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 xl:h-36 xl:w-36"
-              />
-            </div>
+            <AssociationHeroLogo
+              src={associationHeroSrc}
+              alt={associationLogo.alt || content.title}
+              className="association-bpap-logo order-3 h-32 w-32 sm:h-40 sm:w-40 lg:h-44 lg:w-44 xl:h-52 xl:w-52"
+            />
           </div>
         </div>
       </div>

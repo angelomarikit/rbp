@@ -12,7 +12,7 @@ export const defaultAffiliation: AffiliationContent = {
   title: 'The Body Piercers Association of the Philippines',
   tagline: 'Committed to Professionalism, Safety & Excellence',
   logos: [
-    { path: 'partners/body-piercers-association.jpg', alt: 'The Body Piercers Association of the Philippines' },
+    { path: 'branding/body-piercers-association-logo.png', alt: 'The Body Piercers Association of the Philippines' },
     { path: 'partners/dole-ncr.png', alt: 'Department of Labor and Employment, National Capital Region' },
     { path: 'partners/arzey.png', alt: 'Arzey Piercing Studio' },
     { path: 'partners/rbp-logo.png', alt: 'Romell Body Piercing' },
@@ -40,6 +40,17 @@ export function associationHeroLogos(logos: AffiliationLogo[]) {
     defaultAffiliation.logos.find((logo) => /rbp/i.test(logo.path)) ??
     defaultAffiliation.logos[3]
   return { rbpBadge, associationLogo: association }
+}
+
+const ASSOCIATION_HERO_MARK = 'branding/body-piercers-association-logo.png'
+
+/** Prefer the transparent-friendly association mark on the Association hero (not the dark JPEG badge). */
+export function associationHeroMarkPath(logo: AffiliationLogo) {
+  const hay = `${logo.path} ${logo.alt}`.toLowerCase()
+  if (/body piercers|association of the philippines|bpap/i.test(hay) && /\.jpe?g$/i.test(logo.path)) {
+    return ASSOCIATION_HERO_MARK
+  }
+  return logo.path
 }
 
 export function affiliationFromRow(row: { subtitle: string | null; title: string | null; body: string | null; extra: unknown } | null): AffiliationContent {
