@@ -76,18 +76,6 @@ export function AssociationPage() {
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
   useEffect(() => {
-    const href = '/assets/fonts/blackletter-ds/blackletter-ds.ttf'
-    if (document.querySelector(`link[rel="preload"][href="${href}"]`)) return
-    const link = document.createElement('link')
-    link.rel = 'preload'
-    link.as = 'font'
-    link.type = 'font/ttf'
-    link.href = href
-    link.crossOrigin = 'anonymous'
-    document.head.appendChild(link)
-  }, [])
-
-  useEffect(() => {
     if (!supabase) return
     void Promise.all([
       supabase
@@ -137,7 +125,7 @@ export function AssociationPage() {
       <div className="px-5 py-16 sm:px-8 lg:py-20">
         <div className="mx-auto max-w-6xl">
           {content.eyebrow && (
-            <p className="text-center font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">
+            <p className="text-center font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-accent">
               {content.eyebrow}
             </p>
           )}
@@ -151,12 +139,12 @@ export function AssociationPage() {
             />
 
             <div className="order-1 justify-self-center text-center lg:order-2 lg:px-1">
-              <h1 className="association-hero-title text-[2.2rem] leading-[0.9] text-rbp-accent sm:text-[3.2rem] lg:text-[3.35rem] xl:text-[3.6rem]">
+              <h1 className="association-hero-title text-[2.2rem] leading-[0.9] sm:text-[3.2rem] lg:text-[3.35rem] xl:text-[3.6rem]">
                 {content.title}
               </h1>
               <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
               {content.tagline && (
-                <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
+                <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-rbp-accent">{content.tagline}</p>
               )}
             </div>
 

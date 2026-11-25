@@ -1,0 +1,14 @@
+@font-face {
+  font-family: RBPAssociationTitle;
+  src: url('../assets/fonts/BLACEB__.TTF') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+.rbp-blackletter-text {
+  font-family: RBPAssociationTitle, 'Blackletter DS', 'Old English Text MT', serif !important;
+  font-weight: 400 !important;
+  font-synthesis: none;
+  letter-spacing: 0.01em;
+}
