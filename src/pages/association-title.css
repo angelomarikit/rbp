@@ -1,17 +1,17 @@
 @font-face {
-  font-family: 'Avalen Rekas';
+  font-family: 'Blackletter DS';
   src:
-    url('/assets/fonts/avalen-rekas/Avalen%20Rekas.otf') format('opentype'),
-    url('/assets/fonts/avalen-rekas/Avalen%20Rekas.ttf') format('truetype');
+    url('/assets/fonts/blackletter-ds/BLACEB__.TTF') format('truetype'),
+    url('/assets/fonts/blackletter-ds/Blacklettersh.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 .association-hero-title {
-  font-family: 'Avalen Rekas', serif;
+  font-family: 'Blackletter DS', serif;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 /* Transparent PNG — no glow outline in CSS. */

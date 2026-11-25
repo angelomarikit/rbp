@@ -138,7 +138,7 @@ export function AssociationPage() {
               src={rbpHeroSrc}
               alt={rbpBadge.alt || 'Romell Body Piercing'}
               glow
-              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-start lg:-translate-x-6 xl:h-48 xl:w-48 xl:-translate-x-10"
+              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-end lg:translate-x-2 xl:h-48 xl:w-48 xl:translate-x-3"
             />
 
             <div className="order-1 justify-self-center text-center lg:order-2 lg:px-1">
