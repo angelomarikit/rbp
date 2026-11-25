@@ -35,7 +35,12 @@ type AuthContextValue = {
   signIn: (
     email: string,
     password: string,
-  ) => Promise<{ error: string | null; role: AccountRole | null; resellerStatus: string | null }>
+  ) => Promise<{
+    error: string | null
+    role: AccountRole | null
+    resellerStatus: string | null
+    hasResellerPortal: boolean
+  }>
   signUp: (input: {
     fullName: string
     email: string
@@ -59,9 +64,21 @@ export function destinationForRole(role: AccountRole, resellerStatus?: string | 
   return '/account/dashboard'
 }
 
-export function accountHomeForUser(profile: Profile | null, reseller: ResellerRecord | null) {
+export function hasResellerPortal(profile: Profile | null, reseller: ResellerRecord | null) {
+  return profile?.role === 'reseller' || Boolean(reseller)
+}
+
+export function portalPathForUser(profile: Profile | null, reseller: ResellerRecord | null) {
   if (!profile) return '/login'
-  return destinationForRole(profile.role, reseller?.status)
+  if (profile.role === 'admin') return '/admin/dashboard'
+  if (hasResellerPortal(profile, reseller)) {
+    return destinationForRole('reseller', reseller?.status)
+  }
+  return '/account/dashboard'
+}
+
+export function accountHomeForUser(profile: Profile | null, reseller: ResellerRecord | null) {
+  return portalPathForUser(profile, reseller)
 }
 
 async function fetchProfile(user: User): Promise<{ profile: Profile | null; error: string | null }> {
@@ -129,15 +146,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfileError(null)
       return null
     }
-    const result = await fetchProfile(user)
-    setProfile(result.profile)
-    setProfileError(result.error)
-    if (result.profile?.role === 'reseller') {
-      setReseller(await fetchReseller(user.id))
-    } else {
-      setReseller(null)
+    if (supabase) {
+      await supabase.rpc('heal_reseller_profile_role')
     }
-    return result.profile
+    let result = await fetchProfile(user)
+    setProfileError(result.error)
+    const resellerRow = await fetchReseller(user.id)
+    setReseller(resellerRow)
+    let profile = result.profile
+    if (profile && resellerRow && profile.role === 'customer') {
+      profile = { ...profile, role: 'reseller' }
+    }
+    setProfile(profile)
+    return profile
   }, [])
 
   useEffect(() => {
@@ -178,21 +199,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileError,
       refreshProfile,
       async signIn(email, password) {
-        if (!supabase) return { error: 'Sign-in is not available right now.', role: null, resellerStatus: null }
+        if (!supabase) {
+          return { error: 'Sign-in is not available right now.', role: null, resellerStatus: null, hasResellerPortal: false }
+        }
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         })
         if (error || !data.user) {
-          return { error: friendlyError(error, 'Sign in failed. Check the email and password.'), role: null, resellerStatus: null }
+          return {
+            error: friendlyError(error, 'Sign in failed. Check the email and password.'),
+            role: null,
+            resellerStatus: null,
+            hasResellerPortal: false,
+          }
         }
         const next = await applyUser(data.user)
-        const resellerStatus =
-          next?.role === 'reseller' && data.user ? ((await fetchReseller(data.user.id))?.status ?? null) : null
+        const resellerRow = await fetchReseller(data.user.id)
+        const hasResellerPortal = next?.role === 'reseller' || Boolean(resellerRow)
         return {
           error: next ? null : 'Signed in, but the account could not be opened.',
           role: next?.role ?? null,
-          resellerStatus,
+          resellerStatus: resellerRow?.status ?? null,
+          hasResellerPortal,
         }
       },
       async signUp(input) {

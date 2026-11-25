@@ -11,9 +11,14 @@ function safeNext(value: unknown) {
   return value
 }
 
-function destinationAfterLogin(role: 'admin' | 'customer' | 'reseller', resellerStatus: string | null, requested: string | null) {
+function destinationAfterLogin(
+  role: 'admin' | 'customer' | 'reseller',
+  resellerStatus: string | null,
+  requested: string | null,
+  resellerAttached: boolean,
+) {
   if (role === 'admin') return '/admin/dashboard'
-  if (role === 'reseller') {
+  if (role === 'reseller' || resellerAttached) {
     if (requested?.startsWith('/reseller')) return requested
     return destinationForRole('reseller', resellerStatus)
   }
@@ -34,7 +39,12 @@ export function LoginPage() {
 
   if (user && profile) {
     const requested = safeNext((location.state as { from?: string } | null)?.from)
-    return <Navigate to={destinationAfterLogin(profile.role, reseller?.status ?? null, requested)} replace />
+    return (
+      <Navigate
+        to={destinationAfterLogin(profile.role, reseller?.status ?? null, requested, Boolean(reseller))}
+        replace
+      />
+    )
   }
 
   const submit = async (event: React.FormEvent) => {
@@ -52,7 +62,15 @@ export function LoginPage() {
       return
     }
     const requested = safeNext((location.state as { from?: string } | null)?.from)
-    navigate(destinationAfterLogin(result.role ?? 'customer', result.resellerStatus, requested), { replace: true })
+    navigate(
+      destinationAfterLogin(
+        result.role ?? 'customer',
+        result.resellerStatus,
+        requested,
+        result.hasResellerPortal,
+      ),
+      { replace: true },
+    )
   }
 
   return (

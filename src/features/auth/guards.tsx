@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { friendlyError } from '../../lib/friendlyError.ts'
-import { destinationForRole, useAuth } from './AuthProvider.tsx'
+import { hasResellerPortal, portalPathForUser, useAuth } from './AuthProvider.tsx'
 
 export function RequireAuth() {
   const { loading, user, profile, profileError, configured } = useAuth()
@@ -42,8 +42,8 @@ export function RequireCustomer() {
     return <LoadingScreen label="Loading" full />
   }
   if (profile?.role === 'admin') return <Navigate to="/admin/dashboard" replace />
-  if (profile?.role === 'reseller') {
-    return <Navigate to={destinationForRole('reseller', reseller?.status)} replace />
+  if (hasResellerPortal(profile, reseller)) {
+    return <Navigate to={portalPathForUser(profile, reseller)} replace />
   }
   return <Outlet />
 }
@@ -54,8 +54,8 @@ export function RequireReseller() {
     return <LoadingScreen label="Loading" full />
   }
   if (!profile) return <Navigate to="/login" replace />
-  if (profile.role !== 'reseller') {
-    return <Navigate to={destinationForRole(profile.role, reseller?.status)} replace />
+  if (!hasResellerPortal(profile, reseller)) {
+    return <Navigate to={portalPathForUser(profile, reseller)} replace />
   }
   return <Outlet />
 }
@@ -75,6 +75,6 @@ export function RequireAdmin() {
     return <LoadingScreen label="Loading" full />
   }
   if (!profile) return <Navigate to="/login" replace />
-  if (profile.role !== 'admin') return <Navigate to={destinationForRole(profile.role, reseller?.status)} replace />
+  if (profile.role !== 'admin') return <Navigate to={portalPathForUser(profile, reseller)} replace />
   return <Outlet />
 }

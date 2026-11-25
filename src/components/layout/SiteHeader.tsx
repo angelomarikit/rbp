@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '../../features/auth/AuthProvider.tsx'
+import { portalPathForUser, useAuth } from '../../features/auth/AuthProvider.tsx'
 import { useCart } from '../../features/cart/CartProvider.tsx'
 import { LOGO } from '../../lib/assets.ts'
 import { IconCart, IconSearch, IconUser } from '../ui/Icons.tsx'
@@ -89,15 +89,7 @@ function NavRow({
 
 function Actions({ itemCount }: { itemCount: number }) {
   const { user, profile, reseller } = useAuth()
-  const accountTo = !user
-    ? '/login'
-  : profile?.role === 'admin'
-      ? '/admin/dashboard'
-      : profile?.role === 'reseller'
-        ? reseller?.status === 'approved'
-          ? '/reseller/dashboard'
-          : '/reseller/pending'
-        : '/account/dashboard'
+  const accountTo = !user ? '/login' : portalPathForUser(profile, reseller)
 
   return (
     <div className="flex shrink-0 items-center gap-3.5 text-rbp-accent">
