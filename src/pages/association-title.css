@@ -8,14 +8,20 @@ h1.association-hero-title {
   letter-spacing: 0.01em;
 }
 
-/* Transparent PNG; slight lift so the mark reads on black. */
-.association-bpap-logo {
-  transform: scale(1.05);
-  transform-origin: center;
+h1.association-hero-title .association-hero-title-line2 {
+  display: block;
+  white-space: nowrap;
+  font-size: 0.9em;
+  letter-spacing: 0.005em;
 }
 
-@media (min-width: 1024px) {
-  .association-bpap-logo {
-    transform: scale(1.12);
+@media (max-width: 639px) {
+  h1.association-hero-title .association-hero-title-line2 {
+    white-space: normal;
+    font-size: 0.82em;
   }
+}
+
+.association-bpap-logo {
+  transform-origin: center;
 }

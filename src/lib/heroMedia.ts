@@ -1,10 +1,24 @@
 import { asset } from './assets.ts'
-import { publicMediaUrl } from './media.ts'
+import { isVideoMediaUrl, isVideoStoragePath, publicMediaUrl } from './media.ts'
 
 const DEFAULT_HERO_PATH = 'video/homepage-hero.mp4'
 
 export function isHeroVideoUrl(url: string) {
-  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url)
+  return isVideoMediaUrl(url)
+}
+
+export function isHeroVideoPath(path: string | null | undefined) {
+  return isVideoStoragePath(path)
+}
+
+export function heroUsesVideo(
+  mediaPath: string | null | undefined,
+  mobilePath: string | null | undefined,
+  useMobileLayout: boolean,
+) {
+  const picked = pickHeroStoragePath(mediaPath, mobilePath, useMobileLayout)
+  if (picked) return isVideoStoragePath(picked)
+  return isVideoStoragePath(DEFAULT_HERO_PATH)
 }
 
 /** Public URL for hero background; optional cacheKey busts browser/CDN after CMS updates. */

@@ -57,7 +57,8 @@ export function associationHeroMarkPath(logo: AffiliationLogo) {
 
 /** Association hero: line 1 = “The Body Piercers”, line 2 = remainder (e.g. “Association of the Philippines”). */
 export function associationHeroTitleLines(title: string): [string, string] | null {
-  const match = title.trim().match(/^the body piercers\s+(.+)$/i)
+  const flat = title.replace(/\s+/g, ' ').trim()
+  const match = flat.match(/^the body piercers\s+(.+)$/i)
   if (!match) return null
   return ['The Body Piercers', match[1].trim()]
 }

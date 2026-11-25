@@ -132,20 +132,20 @@ export function AssociationPage() {
             </p>
           )}
 
-          <div className="mt-6 grid w-full grid-cols-1 place-items-center gap-6 sm:mt-8 lg:grid-cols-[minmax(11rem,1fr)_minmax(0,26rem)_minmax(15rem,1fr)] lg:items-center lg:gap-x-0 xl:grid-cols-[minmax(12rem,1fr)_minmax(0,30rem)_minmax(17rem,1fr)]">
+          <div className="mt-6 grid w-full grid-cols-1 place-items-center gap-6 sm:mt-8 lg:grid-cols-[minmax(9rem,1fr)_minmax(0,32rem)_minmax(14rem,1.1fr)] lg:items-center lg:gap-x-3 xl:grid-cols-[minmax(9.5rem,1fr)_minmax(0,34rem)_minmax(15rem,1.15fr)] xl:gap-x-4">
             <AssociationHeroLogo
               src={rbpHeroSrc}
               alt={rbpBadge.alt || 'Romell Body Piercing'}
               glow
-              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-end lg:-translate-x-2 xl:h-48 xl:w-48 xl:-translate-x-1"
+              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 lg:justify-self-end lg:-translate-x-4 xl:h-48 xl:w-48 xl:-translate-x-5"
             />
 
-            <div className="order-1 justify-self-center text-center lg:order-2 lg:px-1">
+            <div className="order-1 min-w-0 justify-self-center text-center lg:order-2 lg:px-2 lg:max-w-[32rem] xl:max-w-[34rem]">
               <h1 className="association-hero-title text-[2.2rem] leading-[0.9] sm:text-[3.2rem] lg:text-[3.35rem] xl:text-[3.6rem]">
                 {heroTitleLines ? (
                   <>
                     <span className="block">{heroTitleLines[0]}</span>
-                    <span className="block">{heroTitleLines[1]}</span>
+                    <span className="association-hero-title-line2 block">{heroTitleLines[1]}</span>
                   </>
                 ) : (
                   content.title
@@ -160,7 +160,7 @@ export function AssociationPage() {
             <AssociationHeroLogo
               src={associationHeroSrc}
               alt={associationLogo.alt || content.title}
-              className="association-bpap-logo order-3 h-40 w-52 max-w-none sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] lg:justify-self-end lg:-translate-x-10 xl:h-60 xl:w-[20rem] xl:max-w-[22rem] xl:-translate-x-8"
+              className="association-bpap-logo order-3 h-40 w-52 max-w-none scale-105 sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] lg:scale-[1.12] lg:justify-self-end lg:translate-x-[100px] xl:h-60 xl:w-[20rem] xl:max-w-[22rem] xl:translate-x-[100px]"
             />
           </div>
         </div>

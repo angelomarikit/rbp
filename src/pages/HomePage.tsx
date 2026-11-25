@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AutoplayVideo } from '../components/media/AutoplayVideo.tsx'
 import { Link } from 'react-router-dom'
 import { CollectionCard } from '../components/commerce/CollectionCard.tsx'
 import { OrangeLink } from '../components/ui/Buttons.tsx'
@@ -6,7 +7,7 @@ import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCalendar, IconCalendarLight, IconCart, IconPin } from '../components/ui/Icons.tsx'
 import { FEATURED_EVENTS } from '../data/events.ts'
 import { asset } from '../lib/assets.ts'
-import { isHeroVideoUrl, resolveHeroMedia } from '../lib/heroMedia.ts'
+import { heroUsesVideo, resolveHeroMedia } from '../lib/heroMedia.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
 
@@ -124,23 +125,14 @@ export function HomePage() {
   const heroMedia = heroLoaded
     ? resolveHeroMedia(hero.mediaPath, hero.mobileMediaPath, useMobileHero, hero.mediaVersion)
     : ''
-  const heroIsVideo = heroMedia ? isHeroVideoUrl(heroMedia) : false
+  const heroIsVideo = heroUsesVideo(hero.mediaPath, hero.mobileMediaPath, useMobileHero)
 
   return (
     <div className="w-full bg-black">
       <section className="relative min-h-[70vh] w-full overflow-hidden lg:min-h-[78vh]">
         {heroLoaded && heroMedia ? (
           heroIsVideo ? (
-            <video
-              key={heroMedia}
-              className="absolute inset-0 h-full w-full object-cover"
-              src={heroMedia}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-            />
+            <AutoplayVideo src={heroMedia} className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <img key={heroMedia} className="absolute inset-0 h-full w-full object-cover" src={heroMedia} alt="" />
           )

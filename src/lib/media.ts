@@ -1,6 +1,40 @@
 import { asset } from './assets.ts'
 import { supabase } from './supabase.ts'
 
+export function isVideoStoragePath(path: string | null | undefined) {
+  const p = path?.trim() ?? ''
+  if (!p) return false
+  return /\.(mp4|webm|mov|m4v)$/i.test(p)
+}
+
+export function isVideoMediaUrl(url: string) {
+  return /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url)
+}
+
+function uploadContentType(file: File): string | undefined {
+  const type = file.type?.trim()
+  if (type && type !== 'application/octet-stream') return type
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'mp4':
+    case 'm4v':
+      return 'video/mp4'
+    case 'webm':
+      return 'video/webm'
+    case 'mov':
+      return 'video/quicktime'
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg'
+    case 'png':
+      return 'image/png'
+    case 'webp':
+      return 'image/webp'
+    default:
+      return undefined
+  }
+}
+
 export function publicMediaUrl(path: string | null | undefined) {
   if (!path) return ''
   if (path.startsWith('http') || path.startsWith('/')) return path
@@ -38,7 +72,7 @@ export async function uploadMedia(file: File, folder: string) {
   const path = `uploads/${folder}/${crypto.randomUUID()}-${safe}`
   const { error } = await supabase.storage.from('storefront-media').upload(path, file, {
     cacheControl: '3600',
-    contentType: file.type || undefined,
+    contentType: uploadContentType(file),
   })
   if (error) throw error
   return path

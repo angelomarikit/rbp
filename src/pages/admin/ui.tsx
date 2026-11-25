@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { SuccessModal } from '../../components/ui/SuccessModal.tsx'
 import { friendlyError } from '../../lib/friendlyError.ts'
-import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
+import { isVideoMediaUrl, isVideoStoragePath, publicMediaUrl, uploadMedia } from '../../lib/media.ts'
+import { AutoplayVideo } from '../../components/media/AutoplayVideo.tsx'
 
 export const fieldClass =
   'mt-1.5 w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-[#f5f5f5] outline-none focus:border-[#FF7900]'
@@ -97,7 +98,7 @@ export function MediaField({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const preview = previewSrc?.trim() || (value ? publicMediaUrl(value) : '')
-  const video = Boolean(preview && (value.endsWith('.mp4') || (preview.includes('.mp4') && accept.includes('video'))))
+  const video = Boolean(value && (isVideoStoragePath(value) || (preview && isVideoMediaUrl(preview))))
   const fileInput = (
     <input
       type="file"
@@ -125,11 +126,12 @@ export function MediaField({
       <p className="text-sm text-[#d4d4d4]">{label}</p>
       <p className="mt-1 text-xs text-[#8a8a8a]">{hint}</p>
       {fileFirst ? fileInput : null}
-      {preview && (video && value.endsWith('.mp4') ? (
-        <video src={preview} className={previewClassName} muted />
-      ) : (
-        <img src={preview} alt="" className={previewClassName} />
-      ))}
+      {preview &&
+        (video ? (
+          <AutoplayVideo src={preview} className={previewClassName} />
+        ) : (
+          <img src={preview} alt="" className={previewClassName} />
+        ))}
       {fileFirst ? null : fileInput}
       {busy ? <LoadingScreen label="Uploading" /> : null}
       {error && <p className="mt-2 text-xs text-[#ffb089]">{error}</p>}
