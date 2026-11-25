@@ -37,7 +37,7 @@ export function MemberStrip() {
       <div className="mb-8 px-4 text-center">
         {content.eyebrow && <p className="font-secondary text-[13px] font-semibold uppercase tracking-[0.28em] text-rbp-accent">{content.eyebrow}</p>}
         {content.title && (
-          <p className="rbp-blackletter-text mt-3 text-[22px] leading-tight text-white sm:text-[28px]">{content.title}</p>
+          <p className="rbp-blackletter-text mt-3 text-[33px] leading-tight text-white sm:text-[42px]">{content.title}</p>
         )}
         {content.tagline && <p className="font-secondary mt-2 text-[14px] text-white/70">{content.tagline}</p>}
       </div>
