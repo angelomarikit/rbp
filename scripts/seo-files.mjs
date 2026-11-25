@@ -1,4 +1,4 @@
-const PUBLIC_PATHS = ['/', '/collections', '/events', '/book', '/gallery', '/about', '/contact']
+const PUBLIC_PATHS = ['/', '/collections', '/events', '/book', '/association', '/about', '/contact']
 
 function escapeXml(value) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')

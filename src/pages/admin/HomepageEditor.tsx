@@ -238,7 +238,7 @@ const buttonPlaces = [
   { label: 'Booking page', to: '/book' },
   { label: 'Shop', to: '/collections' },
   { label: 'Events', to: '/events' },
-  { label: 'Gallery', to: '/gallery' },
+  { label: 'Association', to: '/association' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ]

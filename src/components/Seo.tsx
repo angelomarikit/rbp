@@ -14,7 +14,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/collections': 'Products',
   '/events': 'Events',
   '/book': 'Book a Piercing',
-  '/gallery': 'Gallery',
+  '/association': 'Association',
   '/about': 'About',
   '/contact': 'Contact',
 }

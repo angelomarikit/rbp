@@ -19,7 +19,7 @@ export function BookPage() {
     notes: '',
   })
   const [error, setError] = useState<string | null>(null)
-  const [successId, setSuccessId] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const submit = async (e: React.FormEvent) => {
@@ -35,20 +35,22 @@ export function BookPage() {
     }
     setSubmitting(true)
     try {
-      const { data, error: dbError } = await supabase
-        .from('booking_requests')
-        .insert({
-          full_name: form.fullName,
-          email: form.email,
-          phone: form.phone,
-          preferred_date: form.preferredDate || null,
-          piercing_type: form.piercingType || null,
-          notes: form.notes || null,
-        })
-        .select('id')
-        .single()
+      const details = [
+        'Piercing appointment request',
+        `Name: ${form.fullName.trim()}`,
+        form.preferredDate ? `Preferred date: ${form.preferredDate}` : '',
+        form.piercingType.trim() ? `Placement: ${form.piercingType.trim()}` : '',
+        form.notes.trim() ? `Notes: ${form.notes.trim()}` : '',
+      ].filter(Boolean).join('\n')
+      const { error: dbError } = await supabase.from('inquiries').insert({
+        question: details,
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        status: 'open',
+        source: 'appointment',
+      })
       if (dbError) throw dbError
-      setSuccessId(data.id as string)
+      setSubmitted(true)
     } catch (err) {
       setError(friendlyError(err, 'The booking could not be sent. Please try again.'))
     } finally {
@@ -56,17 +58,16 @@ export function BookPage() {
     }
   }
 
-  if (successId) {
+  if (submitted) {
     return (
       <div className="flex w-full justify-center bg-black px-5 py-20">
         <div className={`w-full max-w-xl px-8 py-12 text-center ${rbpPanel}`}>
-          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.28em] text-rbp-cream">Piercing Services</p>
+          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.28em] text-rbp-cream">Piercing Appointment</p>
           <GothicHeading as="h1" className="mt-3 text-[3rem] leading-[0.9]">
             Request Received
           </GothicHeading>
           <p className="font-secondary mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/80">
-            Reference <span className="text-rbp-accent">{successId}</span>. Our team will contact you to confirm your
-            appointment, aftercare guidance, and studio policies.
+            The studio has your request and will contact you to confirm the appointment, aftercare guidance, and studio policies.
           </p>
           <Link to="/" className="mt-8 inline-block text-[14px] font-semibold text-rbp-accent">
             Return Home
@@ -80,7 +81,7 @@ export function BookPage() {
     <div className="w-full bg-black px-5 py-14 sm:px-8 lg:py-20">
       {submitting ? <LoadingScreen label="Sending your request" full /> : null}
       <div className="mx-auto max-w-3xl text-center">
-        <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Piercing Services</p>
+        <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">Piercing Appointment</p>
         <GothicHeading as="h1" className="mt-3 text-[3.6rem] leading-[0.85] sm:text-[4.6rem]">
           Book a Piercing
         </GothicHeading>

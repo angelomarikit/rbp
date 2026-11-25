@@ -27,8 +27,8 @@ export function GalleryAdmin() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Gallery</h1>
-          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Square photos, like an Instagram grid. Choose several files at once. They are stored here, not as outside links.</p>
+          <h1 className="text-2xl font-semibold text-white">Association</h1>
+          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Photos for the Association page. Choose several files at once. They are stored here, not as outside links.</p>
         </div>
         <label className="cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
           {busy ? 'Uploading…' : 'Add photos'}
@@ -340,7 +340,7 @@ export function SettingsAdmin() {
             page: 'site',
             section_key: 'payment',
             title: 'Payment QR',
-            extra: { gcash_qr: paymentQrs.gcash || null, maya_qr: paymentQrs.maya || null },
+            extra: { gcash_qr: paymentQrs.gcash || null, bpi_qr: paymentQrs.bpi || null },
             visible: true,
             sort_order: 2,
           }, { onConflict: 'page,section_key' }),
@@ -352,7 +352,7 @@ export function SettingsAdmin() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-white">Settings</h1>
-          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Social links, the footer, the Google text, the store logo, the affiliation strip, the GCash and Maya QR codes, and the website font.</p>
+          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Social links, the footer, the Google text, the store logo, the affiliation strip, the GCash and BPI QR codes, and the website font.</p>
         </div>
         <PrimaryButton type="submit">Save settings</PrimaryButton>
       </div>
@@ -525,11 +525,11 @@ export function SettingsAdmin() {
       <Card id="payment" className="scroll-mt-4 space-y-4">
         <div>
           <h2 className="text-base font-semibold">Payment QR codes</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Upload the QR from the GCash app and the Maya app. At checkout, the customer sees the QR for the method they pick and sends the order total there.</p>
+          <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Upload the GCash QR and the BPI QR. Checkout shows these two choices, and the customer sees the QR for the one they pick.</p>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <MediaField label="GCash QR" hint="A square picture of the GCash QR. PNG or JPG." folder="payments" accept="image/png,image/jpeg,image/webp" value={paymentQrs.gcash} onChange={(path) => setPaymentQrs({ ...paymentQrs, gcash: path })} previewClassName="mt-3 aspect-square w-full max-w-[240px] rounded-xl bg-white object-contain p-3" />
-          <MediaField label="Maya QR" hint="A square picture of the Maya QR. PNG or JPG." folder="payments" accept="image/png,image/jpeg,image/webp" value={paymentQrs.maya} onChange={(path) => setPaymentQrs({ ...paymentQrs, maya: path })} previewClassName="mt-3 aspect-square w-full max-w-[240px] rounded-xl bg-white object-contain p-3" />
+        <div className="grid items-start gap-5 sm:grid-cols-2">
+          <MediaField fileFirst label="GCash QR" hint="A square picture of the GCash QR. PNG or JPG." folder="payments" accept="image/png,image/jpeg,image/webp" value={paymentQrs.gcash} onChange={(path) => setPaymentQrs({ ...paymentQrs, gcash: path })} previewClassName="mt-3 aspect-square w-full max-w-[240px] rounded-xl bg-white object-contain p-3" />
+          <MediaField fileFirst label="BPI QR" hint="A square picture of the BPI QR. PNG or JPG." folder="payments" accept="image/png,image/jpeg,image/webp" value={paymentQrs.bpi} onChange={(path) => setPaymentQrs({ ...paymentQrs, bpi: path })} previewClassName="mt-3 aspect-square w-full max-w-[240px] rounded-xl bg-white object-contain p-3" />
         </div>
       </Card>
     </form>

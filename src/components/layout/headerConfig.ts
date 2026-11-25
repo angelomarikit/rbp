@@ -9,9 +9,9 @@ export type NavItem = {
 export const NAV_HOME: NavItem[] = [
   { label: 'Home', to: '/', match: ['/'] },
   { label: 'Products', to: '/collections', match: ['/collections'] },
-  { label: 'Piercing Services', to: '/book', match: ['/book'] },
+  { label: 'Piercing Appointment', to: '/book', match: ['/book'] },
   { label: 'Events', to: '/events', match: ['/events'] },
-  { label: 'Gallery', to: '/gallery', match: ['/gallery'] },
+  { label: 'Association', to: '/association', match: ['/association'] },
   { label: 'About', to: '/about', match: ['/about'] },
   { label: 'Contact', to: '/contact', match: ['/contact'] },
 ]
@@ -27,7 +27,7 @@ export const NAV_COLLECTIONS: NavItem[] = [
 export const NAV_PRODUCT: NavItem[] = [
   { label: 'HOME', to: '/' },
   { label: 'Products', to: '/collections', match: ['/collections'] },
-  { label: 'PIERCING SERVICES', to: '/book', match: ['/book'] },
+  { label: 'Piercing Appointment', to: '/book', match: ['/book'] },
   { label: 'EVENTS', to: '/events' },
   { label: 'ABOUT', to: '/events' },
   { label: 'CONTACT', to: '/book', match: ['/contact'] },

@@ -80,6 +80,7 @@ export function MediaField({
   value,
   onChange,
   previewClassName = 'mt-3 h-32 w-full rounded-lg object-cover',
+  fileFirst = false,
 }: {
   label: string
   hint: string
@@ -88,40 +89,45 @@ export function MediaField({
   value: string
   onChange: (path: string) => void
   previewClassName?: string
+  fileFirst?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const preview = publicMediaUrl(value)
   const video = value.endsWith('.mp4') || accept.includes('video')
+  const fileInput = (
+    <input
+      type="file"
+      accept={accept}
+      className="mt-3 block text-sm text-[#cfcfcf]"
+      onChange={async (event) => {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file) return
+        setBusy(true)
+        setError(null)
+        try {
+          onChange(await uploadMedia(file, folder))
+        } catch (err) {
+          setError(friendlyError(err, 'That file could not be uploaded.'))
+        } finally {
+          setBusy(false)
+        }
+      }}
+    />
+  )
 
   return (
     <div>
       <p className="text-sm text-[#d4d4d4]">{label}</p>
       <p className="mt-1 text-xs text-[#8a8a8a]">{hint}</p>
+      {fileFirst ? fileInput : null}
       {preview && (video && value.endsWith('.mp4') ? (
         <video src={preview} className={previewClassName} muted />
       ) : (
         <img src={preview} alt="" className={previewClassName} />
       ))}
-      <input
-        type="file"
-        accept={accept}
-        className="mt-3 block text-sm text-[#cfcfcf]"
-        onChange={async (event) => {
-          const file = event.target.files?.[0]
-          event.target.value = ''
-          if (!file) return
-          setBusy(true)
-          setError(null)
-          try {
-            onChange(await uploadMedia(file, folder))
-          } catch (err) {
-            setError(friendlyError(err, 'That file could not be uploaded.'))
-          } finally {
-            setBusy(false)
-          }
-        }}
-      />
+      {fileFirst ? null : fileInput}
       {busy ? <LoadingScreen label="Uploading" /> : null}
       {error && <p className="mt-2 text-xs text-[#ffb089]">{error}</p>}
     </div>

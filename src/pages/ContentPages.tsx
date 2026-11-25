@@ -3,7 +3,7 @@ import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
 
-export function GalleryPage() {
+export function AssociationPage() {
   const [items, setItems] = useState<{ id: string; storage_path: string; caption: string | null }[]>([])
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export function GalleryPage() {
 
   return (
     <div className="bg-black px-5 py-14 sm:px-8">
-      <GothicHeading as="h1" className="text-center text-[3rem]">Gallery</GothicHeading>
+      <GothicHeading as="h1" className="text-center text-[3rem]">Association</GothicHeading>
       <div className="mx-auto mt-10 grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3">
         {items.map((item) => (
           <figure key={item.id}>
@@ -24,7 +24,7 @@ export function GalleryPage() {
           </figure>
         ))}
       </div>
-      {items.length === 0 && <p className="mt-8 text-center text-sm text-white/70">Photos added in the admin gallery appear here.</p>}
+      {items.length === 0 && <p className="mt-8 text-center text-sm text-white/70">Association photos added in the admin appear here.</p>}
     </div>
   )
 }

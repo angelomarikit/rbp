@@ -16,7 +16,7 @@ import { formatPhpLabel } from '../lib/format.ts'
 import { describeSelection, imageForDesign, optionGroupsFor, type ChoiceGroup, type StoreDesign } from '../lib/productChoices.ts'
 import { friendlyError } from '../lib/friendlyError.ts'
 import { publicMediaUrl } from '../lib/media.ts'
-import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
+import { emptyPaymentQrs, paymentMethodLabel, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
 
 function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
   const selected: Record<string, string> = { ...(line.options ?? {}) }
@@ -238,7 +238,7 @@ export function CheckoutPage() {
           Your order is saved. The studio confirms the payment screenshot and reference number. It is not checked automatically.
         </p>
         {error && <p className="mx-auto mt-3 max-w-xl text-sm text-red-400">{friendlyError(error)}</p>}
-        <PaymentQr method={form.paymentMethod === 'maya' ? 'Maya' : 'GCash'} path={form.paymentMethod === 'maya' ? paymentQrs.maya : paymentQrs.gcash} />
+        <PaymentQr method={paymentMethodLabel(form.paymentMethod)} path={form.paymentMethod === 'bpi' ? paymentQrs.bpi : paymentQrs.gcash} />
         {user && (
           <Link to={`/account/orders/${orderId}`} className="mt-8 block text-rbp-accent">
             View this order in your account
@@ -415,10 +415,10 @@ function CheckoutFormPanel({
 }) {
   const payments = [
     { id: 'gcash' as const, label: 'GCash' },
-    { id: 'maya' as const, label: 'Maya' },
+    { id: 'bpi' as const, label: 'BPI' },
   ]
   const selected = payments.find((method) => method.id === form.paymentMethod) ?? payments[0]
-  const qrPath = selected.id === 'maya' ? paymentQrs.maya : paymentQrs.gcash
+  const qrPath = selected.id === 'bpi' ? paymentQrs.bpi : paymentQrs.gcash
   const proofPreview = useMemo(() => (proofFile ? URL.createObjectURL(proofFile) : ''), [proofFile])
   useEffect(() => () => {
     if (proofPreview) URL.revokeObjectURL(proofPreview)

@@ -16,7 +16,7 @@ const FAQS: Faq[] = [
     question: 'How do I book a piercing?',
     keywords: ['book', 'booking', 'appointment', 'schedule', 'reserve', 'piercing service'],
     answer:
-      'Open Piercing Services and send a booking request with your name, email, and phone. That form is for appointments, not jewelry checkout. The studio confirms the time with you.',
+      'Open Piercing Appointment and send a booking request with your name, email, and phone. That form is for appointments, not jewelry checkout. The studio confirms the time with you.',
   },
   {
     question: 'Where do I buy jewelry?',
@@ -38,9 +38,9 @@ const FAQS: Faq[] = [
   },
   {
     question: 'How can I pay?',
-    keywords: ['pay', 'payment', 'gcash', 'maya', 'qr', 'cash'],
+    keywords: ['pay', 'payment', 'gcash', 'bpi', 'qr', 'cash'],
     answer:
-      'Checkout accepts GCash and Maya. Scan the QR shown at checkout and send the order total. The studio confirms the payment. It is not verified automatically.',
+      'Checkout accepts GCash and BPI. Scan the QR shown at checkout and send the order total. The studio confirms the payment. It is not verified automatically.',
   },
   {
     question: 'Where are your events?',
@@ -97,8 +97,8 @@ export function HelpWidget() {
         if (!data?.length) return
         setFaqs(data.map((row) => ({
           question: row.question as string,
-          answer: row.answer as string,
-          keywords: (row.keywords as string[] | null) ?? [],
+          answer: (row.answer as string).replaceAll('GCash and Maya', 'GCash and BPI').replaceAll('Piercing Services', 'Piercing Appointment'),
+          keywords: ((row.keywords as string[] | null) ?? []).map((word) => (word === 'maya' ? 'bpi' : word)),
         })))
       })
   }, [open])
@@ -257,7 +257,7 @@ export function HelpWidget() {
           )}
 
           <p className="mt-3 text-[12px] text-white/45">
-            Prefer to book? <Link to="/book" className="text-rbp-accent">Piercing Services</Link>
+            Prefer to book? <Link to="/book" className="text-rbp-accent">Piercing Appointment</Link>
           </p>
         </section>
       )}

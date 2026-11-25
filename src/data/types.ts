@@ -46,7 +46,7 @@ export type CartLine = {
 
 export type ShippingMethod = 'standard' | 'express'
 
-export type PaymentMethod = 'gcash' | 'maya'
+export type PaymentMethod = 'gcash' | 'bpi'
 
 export type CheckoutForm = {
   fullName: string

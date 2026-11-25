@@ -22,7 +22,7 @@ const groups = [
     items: [
       { to: '/admin/homepage', label: 'Homepage' },
       { to: '/admin/events', label: 'Events' },
-      { to: '/admin/gallery', label: 'Gallery' },
+      { to: '/admin/gallery', label: 'Association' },
       { to: '/admin/about', label: 'About' },
       { to: '/admin/contact', label: 'Contact' },
     ],

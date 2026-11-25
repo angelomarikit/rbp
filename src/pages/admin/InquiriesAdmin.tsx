@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase.ts'
 import { Card, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
 
-type Inquiry = { id: string; question: string; email: string; phone: string; status: string; response: string | null; created_at: string }
+type Inquiry = { id: string; question: string; email: string; phone: string; status: string; response: string | null; source: string; created_at: string }
 type Faq = { id: string; question: string; answer: string; keywords: string[] | null; published: boolean }
 
 export function InquiriesAdmin() {
@@ -14,7 +14,7 @@ export function InquiriesAdmin() {
 
   const load = async () => {
     const [inquiryResult, faqResult] = await Promise.all([
-      supabase!.from('inquiries').select('id, question, email, phone, status, response, created_at').order('created_at', { ascending: false }),
+      supabase!.from('inquiries').select('id, question, email, phone, status, response, source, created_at').order('created_at', { ascending: false }),
       supabase!.from('faqs').select('id, question, answer, keywords, published').order('sort_order'),
     ])
     if (inquiryResult.error || faqResult.error) setError(inquiryResult.error?.message || faqResult.error?.message || '')
@@ -30,7 +30,7 @@ export function InquiriesAdmin() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div>
         <h1 className="text-2xl font-semibold text-white">Inquiries</h1>
-        <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">When the chat cannot answer, the question lands here. Answers you publish below are what the chat tries first.</p>
+        <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Piercing appointment requests and questions the chat could not answer land here. Answers you publish below are what the chat tries first.</p>
       </div>
       <nav className="flex flex-wrap gap-2">
         <a href="#inbox" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">1. Questions{openCount ? ` · ${openCount} waiting` : ''}</a>
@@ -39,18 +39,21 @@ export function InquiriesAdmin() {
       <Notice error={error} ok={ok} />
       <section id="inbox" className="scroll-mt-4 space-y-3">
         <div>
-          <h2 className="text-base font-semibold">Questions from the chat</h2>
+          <h2 className="text-base font-semibold">Inbox</h2>
           <p className="text-sm text-[#9a9a9a]">Each one includes an email and a phone number. Click a status, then write a reply.</p>
         </div>
         {rows.length === 0 && (
           <div className="rounded-xl border border-dashed border-[#444] px-4 py-8 text-sm text-[#9a9a9a]">
-            No one has asked yet. When the chat cannot answer, the question shows up here.
+            Nothing is waiting. A piercing appointment request or an unanswered chat question shows up here.
           </div>
         )}
         {rows.map((row) => (
           <article key={row.id} className="rounded-xl border border-[#2a2a2a] bg-[#161616] p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <p className="text-sm font-medium text-white">{row.question}</p>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.14em] text-[#ffb067]">{row.source === 'appointment' ? 'Piercing appointment' : 'Chat'}</p>
+                <p className="mt-1 whitespace-pre-line text-sm font-medium text-white">{row.question}</p>
+              </div>
               <p className="text-xs text-[#8d8d8d]">{new Date(row.created_at).toLocaleDateString()}</p>
             </div>
             <p className="mt-1 text-xs text-[#9a9a9a]">{row.email} · {row.phone}</p>

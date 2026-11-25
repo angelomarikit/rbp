@@ -9,6 +9,7 @@ import { useAuth } from '../../features/auth/AuthProvider.tsx'
 import { formatPhp } from '../../lib/format.ts'
 import { courierLabel, formatWhen, fulfillmentLabel, paymentLabel, shipmentNote } from '../../lib/orderStatus.ts'
 import { paymentProofUrl, publicMediaUrl } from '../../lib/media.ts'
+import { paymentMethodLabel } from '../../lib/paymentQr.ts'
 import { supabase } from '../../lib/supabase.ts'
 
 export function AccountOrderPage() {
@@ -72,7 +73,7 @@ export function AccountOrderPage() {
         <div className={`p-4 ${rbpPanel}`}>
           <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Payment</p>
           <p className="mt-2 text-white">{paymentLabel(order.payment_status)}</p>
-          <p className="mt-1 text-sm capitalize text-white/70">{order.payment_method}</p>
+          <p className="mt-1 text-sm text-white/70">{paymentMethodLabel(order.payment_method)}</p>
         </div>
         <div className={`p-4 ${rbpPanel}`}>
           <p className="text-[11px] uppercase tracking-[0.18em] text-rbp-cream">Fulfillment</p>

@@ -26,7 +26,7 @@ import { CollectionsPage } from '../pages/CollectionsPage.tsx'
 import { BookPage } from '../pages/BookPage.tsx'
 import { EventDetailPage } from '../pages/EventDetailPage.tsx'
 import { EventsPage } from '../pages/EventsPage.tsx'
-import { AboutPage, ContactPage, GalleryPage } from '../pages/ContentPages.tsx'
+import { AboutPage, AssociationPage, ContactPage } from '../pages/ContentPages.tsx'
 import { HomePage } from '../pages/HomePage.tsx'
 import { NotFoundPage } from '../pages/NotFoundPage.tsx'
 import { ProductDetailPage } from '../pages/ProductDetailPage.tsx'
@@ -42,7 +42,8 @@ export default function App() {
         <Route path="events" element={<EventsPage />} />
         <Route path="events/:slug" element={<EventDetailPage />} />
         <Route path="book" element={<BookPage />} />
-        <Route path="gallery" element={<GalleryPage />} />
+        <Route path="association" element={<AssociationPage />} />
+        <Route path="gallery" element={<Navigate to="/association" replace />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="login" element={<LoginPage />} />
