@@ -146,12 +146,8 @@ export function HomePage() {
             {designedTitle ? (
               <>
                 <span className="block text-rbp-accent">Professional</span>
-                <span className="block text-rbp-accent">
-                  Body <span className="text-rbp-pierce">Piercing</span>
-                </span>
-                <span className="block text-rbp-accent">
-                  & <span className="text-rbp-pierce">Jewelry</span>
-                </span>
+                <span className="block text-rbp-accent">Body Piercing</span>
+                <span className="block text-rbp-accent">&amp; Jewelry</span>
               </>
             ) : (
               <span className="block text-rbp-accent">{hero.title}</span>
