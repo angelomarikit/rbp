@@ -6,6 +6,7 @@ import {
   affiliationFromRow,
   associationHeroLogos,
   associationHeroMarkPath,
+  associationHeroTitleLines,
   defaultAffiliation,
 } from '../lib/affiliation.ts'
 import { isVideoGalleryItem, type GalleryItem } from '../lib/gallery.ts'
@@ -119,6 +120,7 @@ export function AssociationPage() {
   const { rbpBadge, associationLogo } = associationHeroLogos(content.logos)
   const rbpHeroSrc = storeLogoSrc || publicMediaUrl(rbpBadge.path)
   const associationHeroSrc = publicMediaUrl(associationHeroMarkPath(associationLogo))
+  const heroTitleLines = associationHeroTitleLines(content.title)
 
   return (
     <div className="bg-black pb-16">
@@ -140,7 +142,14 @@ export function AssociationPage() {
 
             <div className="order-1 justify-self-center text-center lg:order-2 lg:px-1">
               <h1 className="association-hero-title text-[2.2rem] leading-[0.9] sm:text-[3.2rem] lg:text-[3.35rem] xl:text-[3.6rem]">
-                {content.title}
+                {heroTitleLines ? (
+                  <>
+                    <span className="block">{heroTitleLines[0]}</span>
+                    <span className="block">{heroTitleLines[1]}</span>
+                  </>
+                ) : (
+                  content.title
+                )}
               </h1>
               <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
               {content.tagline && (

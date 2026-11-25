@@ -55,6 +55,13 @@ export function associationHeroMarkPath(logo: AffiliationLogo) {
   return logo.path
 }
 
+/** Association hero: line 1 = “The Body Piercers”, line 2 = remainder (e.g. “Association of the Philippines”). */
+export function associationHeroTitleLines(title: string): [string, string] | null {
+  const match = title.trim().match(/^the body piercers\s+(.+)$/i)
+  if (!match) return null
+  return ['The Body Piercers', match[1].trim()]
+}
+
 export function affiliationFromRow(row: { subtitle: string | null; title: string | null; body: string | null; extra: unknown } | null): AffiliationContent {
   if (!row) return defaultAffiliation
   const extra = row.extra as { logos?: unknown } | null
