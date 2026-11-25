@@ -10,6 +10,9 @@ export type GalleryItem = {
   media_kind: GalleryMediaKind
 }
 
+/** Association page grid tile size (1:1). Photos are normalized to this on upload. */
+export const ASSOCIATION_GALLERY_PHOTO_SIZE = 1080
+
 export const GALLERY_CATEGORIES = [
   { value: 'logo', label: 'Logo' },
   { value: 'members', label: 'Members' },

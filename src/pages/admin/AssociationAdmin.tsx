@@ -6,6 +6,11 @@ import {
   mediaKindForFile,
   type GalleryItem,
 } from '../../lib/gallery.ts'
+import {
+  ASSOCIATION_UPLOAD_GUIDE,
+  normalizeAssociationGalleryImage,
+  validateAssociationGalleryUpload,
+} from '../../lib/associationGalleryImage.ts'
 import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
 import { Card, Notice, PrimaryButton, TextField } from './ui.tsx'
@@ -110,8 +115,10 @@ export function AssociationAdmin() {
               setOk(null)
               try {
                 for (const [index, file] of files.entries()) {
-                  const path = await uploadMedia(file, 'gallery')
+                  validateAssociationGalleryUpload(file)
                   const kind = mediaKindForFile(file)
+                  const uploadFile = kind === 'image' ? await normalizeAssociationGalleryImage(file) : file
+                  const path = await uploadMedia(uploadFile, 'gallery')
                   const { error: insertError } = await supabase.from('gallery_items').insert({
                     storage_path: path,
                     media_kind: kind,
@@ -135,6 +142,40 @@ export function AssociationAdmin() {
 
       {busy ? <LoadingScreen label="Uploading" full /> : null}
       <Notice error={error} ok={ok} />
+
+      <Card className="space-y-3">
+        <h2 className="text-base font-semibold text-white">Upload sizes (Association grid)</h2>
+        <p className="text-sm text-[#9a9a9a]">{ASSOCIATION_UPLOAD_GUIDE.grid}</p>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[320px] border-collapse text-left text-sm text-[#d0d0d0]">
+            <thead>
+              <tr className="border-b border-[#333] text-[11px] uppercase tracking-wide text-[#8d8d8d]">
+                <th className="py-2 pr-4 font-medium">Type</th>
+                <th className="py-2 pr-4 font-medium">Size</th>
+                <th className="py-2 pr-4 font-medium">Format</th>
+                <th className="py-2 font-medium">Max file</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-[#2a2a2a]">
+                <td className="py-2.5 pr-4">Photos</td>
+                <td className="py-2.5 pr-4 font-mono text-[13px]">{ASSOCIATION_UPLOAD_GUIDE.photo.pixels}</td>
+                <td className="py-2.5 pr-4">{ASSOCIATION_UPLOAD_GUIDE.photo.formats}</td>
+                <td className="py-2.5">{ASSOCIATION_UPLOAD_GUIDE.photo.maxMb} MB</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 pr-4">Videos</td>
+                <td className="py-2.5 pr-4 font-mono text-[13px]">{ASSOCIATION_UPLOAD_GUIDE.video.pixels}</td>
+                <td className="py-2.5 pr-4">{ASSOCIATION_UPLOAD_GUIDE.video.formats}</td>
+                <td className="py-2.5">{ASSOCIATION_UPLOAD_GUIDE.video.maxMb} MB</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-[#8d8d8d]">
+          {ASSOCIATION_UPLOAD_GUIDE.photo.note} {ASSOCIATION_UPLOAD_GUIDE.video.note}
+        </p>
+      </Card>
 
       <Card className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -165,14 +206,10 @@ export function AssociationAdmin() {
         </div>
       </Card>
 
-      <p className="text-xs text-[#8d8d8d]">
-        Best photos: square, at least 1080×1080. Videos: MP4 or WebM, under 50 MB. Pick a type for each tile (logo,
-        members, seminar).
-      </p>
-
       {items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[#444] px-4 py-16 text-center text-sm text-[#9a9a9a]">
-          No media yet. Use &ldquo;Add photos or videos&rdquo; to build the grid.
+          No media yet. Upload square {ASSOCIATION_UPLOAD_GUIDE.photo.pixels} photos or videos with{' '}
+          &ldquo;Add photos or videos&rdquo;.
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
