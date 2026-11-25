@@ -7,6 +7,11 @@ import { supabase, supabaseConfigured } from '../lib/supabase.ts'
 
 const SHIPPING_CENTS = { standard: 10000, express: 20000 } as const
 
+export type AppliedDiscount = {
+  code: string
+  percent: number
+}
+
 function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
@@ -18,6 +23,11 @@ export function useCheckout(lines: CartLine[]) {
   const [orderId, setOrderId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const submitLock = useRef(false)
+
+  const [discountInput, setDiscountInput] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null)
+  const [discountMessage, setDiscountMessage] = useState<string | null>(null)
+  const [discountLoading, setDiscountLoading] = useState(false)
 
   const [form, setForm] = useState<CheckoutForm>({
     fullName: '',
@@ -32,12 +42,13 @@ export function useCheckout(lines: CartLine[]) {
     shippingMethod: 'standard',
   })
 
-  const subtotalCents = lines.reduce(
-    (n, l) => n + l.priceCents * l.quantity,
-    0,
-  )
+  const subtotalCents = lines.reduce((n, l) => n + l.priceCents * l.quantity, 0)
   const shippingCents = lines.length === 0 ? 0 : SHIPPING_CENTS[form.shippingMethod]
-  const totalCents = subtotalCents + shippingCents
+  const discountCents = appliedDiscount
+    ? Math.max(0, Math.round((subtotalCents * appliedDiscount.percent) / 100))
+    : 0
+  const discountedSubtotalCents = subtotalCents - discountCents
+  const totalCents = discountedSubtotalCents + shippingCents
 
   useEffect(() => {
     setForm((prev) => ({
@@ -64,6 +75,42 @@ export function useCheckout(lines: CartLine[]) {
     if (!form.address.trim()) return 'Complete address is required.'
     return null
   }, [form, lines.length])
+
+  const applyDiscountCode = async () => {
+    setDiscountMessage(null)
+    const code = discountInput.trim()
+    if (!code) {
+      setAppliedDiscount(null)
+      return
+    }
+    if (!supabaseConfigured || !supabase) {
+      setDiscountMessage('Discount codes are not available right now.')
+      return
+    }
+    setDiscountLoading(true)
+    const { data, error: rpcError } = await supabase.rpc('validate_discount_code', { p_code: code })
+    setDiscountLoading(false)
+    if (rpcError) {
+      setDiscountMessage(friendlyError(rpcError, 'Could not check that code.'))
+      setAppliedDiscount(null)
+      return
+    }
+    const payload = data as { valid?: boolean; code?: string; percent?: number }
+    if (!payload?.valid || !payload.percent) {
+      setAppliedDiscount(null)
+      setDiscountMessage('That code is invalid or inactive.')
+      return
+    }
+    setAppliedDiscount({ code: payload.code ?? code.toUpperCase(), percent: payload.percent })
+    setDiscountInput(payload.code ?? code.toUpperCase())
+    setDiscountMessage(`${payload.percent}% off subtotal applied.`)
+  }
+
+  const clearDiscount = () => {
+    setAppliedDiscount(null)
+    setDiscountInput('')
+    setDiscountMessage(null)
+  }
 
   const submitOrder = async (proof: { file: File | null; referenceLast4: string }): Promise<{ ok: boolean; orderId?: string; proofSaved?: boolean }> => {
     setError(null)
@@ -118,6 +165,7 @@ export function useCheckout(lines: CartLine[]) {
           shippingMethod: form.shippingMethod,
         },
         p_items: items,
+        p_discount_code: appliedDiscount?.code ?? null,
       })
 
       if (rpcError) throw rpcError
@@ -154,7 +202,16 @@ export function useCheckout(lines: CartLine[]) {
     setStep,
     subtotalCents,
     shippingCents,
+    discountCents,
+    appliedDiscount,
+    discountedSubtotalCents,
     totalCents,
+    discountInput,
+    setDiscountInput,
+    applyDiscountCode,
+    clearDiscount,
+    discountMessage,
+    discountLoading,
     submitOrder,
     submitting,
     orderId,

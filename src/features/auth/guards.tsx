@@ -37,20 +37,44 @@ export function RequireAuth() {
 }
 
 export function RequireCustomer() {
-  const { loading, profile } = useAuth()
+  const { loading, profile, reseller } = useAuth()
   if (loading) {
     return <LoadingScreen label="Loading" full />
   }
   if (profile?.role === 'admin') return <Navigate to="/admin/dashboard" replace />
+  if (profile?.role === 'reseller') {
+    return <Navigate to={destinationForRole('reseller', reseller?.status)} replace />
+  }
   return <Outlet />
 }
 
-export function RequireAdmin() {
-  const { loading, profile } = useAuth()
+export function RequireReseller() {
+  const { loading, profile, reseller } = useAuth()
   if (loading) {
     return <LoadingScreen label="Loading" full />
   }
   if (!profile) return <Navigate to="/login" replace />
-  if (profile.role !== 'admin') return <Navigate to={destinationForRole(profile.role)} replace />
+  if (profile.role !== 'reseller') {
+    return <Navigate to={destinationForRole(profile.role, reseller?.status)} replace />
+  }
+  return <Outlet />
+}
+
+export function RequireApprovedReseller() {
+  const { loading, reseller } = useAuth()
+  if (loading) {
+    return <LoadingScreen label="Loading" full />
+  }
+  if (reseller?.status !== 'approved') return <Navigate to="/reseller/pending" replace />
+  return <Outlet />
+}
+
+export function RequireAdmin() {
+  const { loading, profile, reseller } = useAuth()
+  if (loading) {
+    return <LoadingScreen label="Loading" full />
+  }
+  if (!profile) return <Navigate to="/login" replace />
+  if (profile.role !== 'admin') return <Navigate to={destinationForRole(profile.role, reseller?.status)} replace />
   return <Outlet />
 }

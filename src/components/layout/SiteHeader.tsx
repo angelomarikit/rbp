@@ -88,8 +88,16 @@ function NavRow({
 }
 
 function Actions({ itemCount }: { itemCount: number }) {
-  const { user, profile } = useAuth()
-  const accountTo = !user ? '/login' : profile?.role === 'admin' ? '/admin/dashboard' : '/account/dashboard'
+  const { user, profile, reseller } = useAuth()
+  const accountTo = !user
+    ? '/login'
+  : profile?.role === 'admin'
+      ? '/admin/dashboard'
+      : profile?.role === 'reseller'
+        ? reseller?.status === 'approved'
+          ? '/reseller/dashboard'
+          : '/reseller/pending'
+        : '/account/dashboard'
 
   return (
     <div className="flex shrink-0 items-center gap-3.5 text-rbp-accent">

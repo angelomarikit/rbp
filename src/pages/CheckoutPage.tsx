@@ -190,7 +190,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
 }
 
 export function CheckoutPage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { lines, updateQuantity, updateLine, removeLine, clearCart, itemCount } = useCart()
   const {
     form,
@@ -198,6 +198,14 @@ export function CheckoutPage() {
     step,
     subtotalCents,
     shippingCents,
+    discountCents,
+    appliedDiscount,
+    discountInput,
+    setDiscountInput,
+    applyDiscountCode,
+    clearDiscount,
+    discountMessage,
+    discountLoading,
     totalCents,
     submitOrder,
     submitting,
@@ -239,8 +247,20 @@ export function CheckoutPage() {
         </p>
         {error && <p className="mx-auto mt-3 max-w-xl text-sm text-red-400">{friendlyError(error)}</p>}
         <PaymentQr method={paymentMethodLabel(form.paymentMethod)} path={form.paymentMethod === 'bpi' ? paymentQrs.bpi : paymentQrs.gcash} />
+        {appliedDiscount && (
+          <p className="mx-auto mt-4 max-w-xl text-sm text-rbp-muted">
+            Discount code <span className="text-rbp-accent">{appliedDiscount.code}</span> ({appliedDiscount.percent}% off subtotal)
+          </p>
+        )}
         {user && (
-          <Link to={`/account/orders/${orderId}`} className="mt-8 block text-rbp-accent">
+          <Link
+            to={
+              profile?.role === 'reseller'
+                ? `/reseller/orders/${orderId}`
+                : `/account/orders/${orderId}`
+            }
+            className="mt-8 block text-rbp-accent"
+          >
             View this order in your account
           </Link>
         )}
@@ -349,11 +369,45 @@ export function CheckoutPage() {
             </div>
             <div className="rounded-rbp border border-rbp-border bg-black p-4 text-[13px]">
               <p className="text-center text-[16px] font-bold">Order Summary</p>
+              <div className="mt-3 space-y-2 border-b border-white/10 pb-3">
+                <label className="block text-[11px] uppercase tracking-[0.12em] text-white/60">
+                  Reseller / discount code
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      className={`${rbpField} h-9 flex-1 text-[13px]`}
+                      value={discountInput}
+                      placeholder="e.g. RBP15"
+                      onChange={(e) => setDiscountInput(e.target.value)}
+                      onBlur={() => void applyDiscountCode()}
+                    />
+                    <OrangeButton
+                      type="button"
+                      className="h-9 shrink-0 px-3 text-[12px]"
+                      disabled={discountLoading || !discountInput.trim()}
+                      onClick={() => void applyDiscountCode()}
+                    >
+                      {discountLoading ? '…' : 'Apply'}
+                    </OrangeButton>
+                  </div>
+                </label>
+                {discountMessage && <p className="text-[12px] text-rbp-cream">{discountMessage}</p>}
+                {appliedDiscount && (
+                  <button type="button" className="text-[12px] text-rbp-accent-gold" onClick={clearDiscount}>
+                    Remove code
+                  </button>
+                )}
+              </div>
               <div className="mt-3 space-y-1 text-white/75">
                 <div className="flex justify-between">
                   <span>Subtotal ({itemCount} Items)</span>
                   <span className="text-white">{formatPhpLabel(subtotalCents)}</span>
                 </div>
+                {discountCents > 0 && (
+                  <div className="flex justify-between text-rbp-accent-gold">
+                    <span>Discount ({appliedDiscount?.percent}%)</span>
+                    <span>-{formatPhpLabel(discountCents)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span className="text-white">{formatPhpLabel(shippingCents)}</span>

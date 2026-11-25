@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
-import { type AccountRole, useAuth } from '../../features/auth/AuthProvider.tsx'
+import { destinationForRole, useAuth } from '../../features/auth/AuthProvider.tsx'
 import { AuthError, AuthLink, AuthShell, authField } from './AuthShell.tsx'
 
 function safeNext(value: unknown) {
@@ -11,14 +11,18 @@ function safeNext(value: unknown) {
   return value
 }
 
-function destinationAfterLogin(role: AccountRole, requested: string | null) {
+function destinationAfterLogin(role: 'admin' | 'customer' | 'reseller', resellerStatus: string | null, requested: string | null) {
   if (role === 'admin') return '/admin/dashboard'
+  if (role === 'reseller') {
+    if (requested?.startsWith('/reseller')) return requested
+    return destinationForRole('reseller', resellerStatus)
+  }
   if (requested?.startsWith('/account')) return requested
   return '/account/dashboard'
 }
 
 export function LoginPage() {
-  const { configured, signIn, user, profile, loading } = useAuth()
+  const { configured, signIn, user, profile, reseller, loading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
@@ -30,7 +34,7 @@ export function LoginPage() {
 
   if (user && profile) {
     const requested = safeNext((location.state as { from?: string } | null)?.from)
-    return <Navigate to={destinationAfterLogin(profile.role, requested)} replace />
+    return <Navigate to={destinationAfterLogin(profile.role, reseller?.status ?? null, requested)} replace />
   }
 
   const submit = async (event: React.FormEvent) => {
@@ -48,7 +52,7 @@ export function LoginPage() {
       return
     }
     const requested = safeNext((location.state as { from?: string } | null)?.from)
-    navigate(destinationAfterLogin(result.role, requested), { replace: true })
+    navigate(destinationAfterLogin(result.role ?? 'customer', result.resellerStatus, requested), { replace: true })
   }
 
   return (

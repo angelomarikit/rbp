@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase.ts'
 import { AuthError, AuthLink, AuthShell, authField } from './AuthShell.tsx'
 
 export function ResetPasswordPage() {
-  const { updatePassword, profile } = useAuth()
+  const { updatePassword, profile, reseller } = useAuth()
   const navigate = useNavigate()
   const [ready, setReady] = useState(false)
   const [password, setPassword] = useState('')
@@ -44,7 +44,7 @@ export function ResetPasswordPage() {
       setError(result.error)
       return
     }
-    navigate(profile ? destinationForRole(profile.role) : '/account/dashboard', { replace: true })
+    navigate(profile ? destinationForRole(profile.role, reseller?.status) : '/account/dashboard', { replace: true })
   }
 
   if (submitting) return <LoadingScreen label="Saving" full />

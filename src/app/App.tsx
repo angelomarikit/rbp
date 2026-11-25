@@ -1,6 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { SiteLayout } from '../components/layout/SiteLayout.tsx'
-import { RequireAdmin, RequireAuth, RequireCustomer } from '../features/auth/guards.tsx'
+import {
+  RequireAdmin,
+  RequireApprovedReseller,
+  RequireAuth,
+  RequireCustomer,
+  RequireReseller,
+} from '../features/auth/guards.tsx'
 import { AccountAddressesPage } from '../pages/account/AccountAddressesPage.tsx'
 import { AccountDashboardPage } from '../pages/account/AccountDashboardPage.tsx'
 import { AccountLayout } from '../pages/account/AccountLayout.tsx'
@@ -30,6 +36,17 @@ import { AboutPage, AssociationPage, ContactPage } from '../pages/ContentPages.t
 import { HomePage } from '../pages/HomePage.tsx'
 import { NotFoundPage } from '../pages/NotFoundPage.tsx'
 import { ProductDetailPage } from '../pages/ProductDetailPage.tsx'
+import { ResellerDashboardPage } from '../pages/reseller/ResellerDashboardPage.tsx'
+import { ResellerHomeRedirect } from '../pages/reseller/ResellerHomeRedirect.tsx'
+import { ResellerLayout } from '../pages/reseller/ResellerLayout.tsx'
+import { ResellerOrderPage } from '../pages/reseller/ResellerOrderPage.tsx'
+import { ResellerOrdersPage } from '../pages/reseller/ResellerOrdersPage.tsx'
+import { ResellerPendingPage } from '../pages/reseller/ResellerPendingPage.tsx'
+import { ResellerRankingPage } from '../pages/reseller/ResellerRankingPage.tsx'
+import { ResellerRegisterPage } from '../pages/reseller/ResellerRegisterPage.tsx'
+import { ResellerSettingsPage } from '../pages/reseller/ResellerSettingsPage.tsx'
+import { ResellersAdmin } from '../pages/admin/ResellersAdmin.tsx'
+import { ResellerRankingAdmin } from '../pages/admin/ResellerRankingAdmin.tsx'
 
 export default function App() {
   return (
@@ -48,6 +65,7 @@ export default function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="reseller/register" element={<ResellerRegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -61,6 +79,19 @@ export default function App() {
               <Route path="orders" element={<AccountOrdersPage />} />
               <Route path="orders/:orderId" element={<AccountOrderPage />} />
               <Route path="settings" element={<AccountSettingsPage />} />
+            </Route>
+          </Route>
+          <Route element={<RequireReseller />}>
+            <Route path="reseller" element={<ResellerLayout />}>
+              <Route index element={<ResellerHomeRedirect />} />
+              <Route path="pending" element={<ResellerPendingPage />} />
+              <Route element={<RequireApprovedReseller />}>
+                <Route path="dashboard" element={<ResellerDashboardPage />} />
+                <Route path="orders" element={<ResellerOrdersPage />} />
+                <Route path="orders/:orderId" element={<ResellerOrderPage />} />
+                <Route path="ranking" element={<ResellerRankingPage />} />
+                <Route path="settings" element={<ResellerSettingsPage />} />
+              </Route>
             </Route>
           </Route>
         </Route>
@@ -82,6 +113,8 @@ export default function App() {
             <Route path="about" element={<AboutAdmin />} />
             <Route path="contact" element={<ContactAdmin />} />
             <Route path="inquiries" element={<InquiriesAdmin />} />
+            <Route path="resellers" element={<ResellersAdmin />} />
+            <Route path="reseller-ranking" element={<ResellerRankingAdmin />} />
             <Route path="settings" element={<SettingsAdmin />} />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Route>

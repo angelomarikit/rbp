@@ -12,6 +12,7 @@ export const NAV_HOME: NavItem[] = [
   { label: 'Piercing Appointment', to: '/book', match: ['/book'] },
   { label: 'Events', to: '/events', match: ['/events'] },
   { label: 'Association', to: '/association', match: ['/association'] },
+  { label: 'Resellers', to: '/reseller/register', match: ['/reseller'] },
   { label: 'About', to: '/about', match: ['/about'] },
   { label: 'Contact', to: '/contact', match: ['/contact'] },
 ]
