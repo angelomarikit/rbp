@@ -2,6 +2,6 @@
   "rewrites": [
     { "source": "/robots.txt", "destination": "/api/crawl?file=robots" },
     { "source": "/sitemap.xml", "destination": "/api/crawl?file=sitemap" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }

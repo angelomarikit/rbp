@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import './association-title.css'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { useSiteLogo } from '../features/site/SiteBrandingProvider.tsx'
 import {
@@ -75,7 +76,15 @@ export function AssociationPage() {
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
   useEffect(() => {
-    void import('./association-title.css')
+    const href = '/assets/fonts/blackletter-ds/blackletter-ds.ttf'
+    if (document.querySelector(`link[rel="preload"][href="${href}"]`)) return
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'font'
+    link.type = 'font/ttf'
+    link.href = href
+    link.crossOrigin = 'anonymous'
+    document.head.appendChild(link)
   }, [])
 
   useEffect(() => {

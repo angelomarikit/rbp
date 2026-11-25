@@ -1,3 +1,4 @@
 /robots.txt    /.netlify/functions/crawl?file=robots    200
 /sitemap.xml   /.netlify/functions/crawl?file=sitemap   200
+/assets/*      /assets/:splat                           200
 /*             /index.html                              200
