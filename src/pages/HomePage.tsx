@@ -6,6 +6,7 @@ import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCalendar, IconCalendarLight, IconCart, IconPin } from '../components/ui/Icons.tsx'
 import { FEATURED_EVENTS } from '../data/events.ts'
 import { asset } from '../lib/assets.ts'
+import { isHeroVideoUrl, resolveHeroMedia } from '../lib/heroMedia.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
 
@@ -42,31 +43,51 @@ export function HomePage() {
     title: defaultHeroTitle,
     subtitle: 'Romell Body Piercing',
     body: 'Expert piercing services, premium body jewelry, and a trusted name in the Philippine piercing community.',
-    media: asset('video/homepage-hero.mp4'),
+    mediaPath: null as string | null,
+    mobileMediaPath: null as string | null,
+    mediaVersion: null as string | null,
     buttons: [
       { label: 'Book a Piercing', to: '/book' },
       { label: 'Shop Jewelry', to: '/collections' },
     ],
   })
+  const [heroLoaded, setHeroLoaded] = useState(!supabase)
+  const [useMobileHero, setUseMobileHero] = useState(false)
 
   useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setUseMobileHero(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const loadHome = () => {
     if (!supabase) return
     void Promise.all([
-      supabase.from('content_sections').select('title, subtitle, body, media_path, buttons').eq('page', 'home').eq('section_key', 'hero').maybeSingle(),
+      supabase
+        .from('content_sections')
+        .select('title, subtitle, body, media_path, mobile_media_path, buttons, updated_at')
+        .eq('page', 'home')
+        .eq('section_key', 'hero')
+        .maybeSingle(),
       supabase.from('collections').select('name, image_path, featured').eq('status', 'active').order('featured', { ascending: false }).order('sort_order'),
       supabase.from('showcase_items').select('storage_path, placement').eq('published', true).in('placement', ['home', 'both']).order('sort_order'),
       supabase.from('events').select('slug, title, image_path, event_date, location').eq('kind', 'featured').eq('published', true).order('sort_order'),
     ]).then(([heroRow, collectionRows, shotRows, eventRows]) => {
       if (heroRow.data) {
-        const buttons = Array.isArray(heroRow.data.buttons) ? heroRow.data.buttons as { label: string; to: string }[] : hero.buttons
+        const buttons = Array.isArray(heroRow.data.buttons) ? (heroRow.data.buttons as { label: string; to: string }[]) : hero.buttons
         setHero({
           title: heroRow.data.title || defaultHeroTitle,
           subtitle: heroRow.data.subtitle || 'Romell Body Piercing',
           body: heroRow.data.body || hero.body,
-          media: publicMediaUrl(heroRow.data.media_path || 'video/homepage-hero.mp4'),
+          mediaPath: (heroRow.data.media_path as string | null) ?? null,
+          mobileMediaPath: (heroRow.data.mobile_media_path as string | null) ?? null,
+          mediaVersion: (heroRow.data.updated_at as string | null) ?? null,
           buttons: [buttons[0] ?? hero.buttons[0], buttons[1] ?? hero.buttons[1]],
         })
       }
+      setHeroLoaded(true)
       if (collectionRows.data?.length) {
         const seen = new Set<string>()
         setCollectionCards(collectionRows.data.flatMap((row) => {
@@ -88,18 +109,43 @@ export function HomePage() {
         })))
       }
     })
+  }
+
+  useEffect(() => {
+    loadHome()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadHome()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   const designedTitle = hero.title === defaultHeroTitle
-  const heroIsVideo = hero.media.endsWith('.mp4')
+  const heroMedia = heroLoaded
+    ? resolveHeroMedia(hero.mediaPath, hero.mobileMediaPath, useMobileHero, hero.mediaVersion)
+    : ''
+  const heroIsVideo = heroMedia ? isHeroVideoUrl(heroMedia) : false
 
   return (
     <div className="w-full bg-black">
       <section className="relative min-h-[70vh] w-full overflow-hidden lg:min-h-[78vh]">
-        {heroIsVideo ? (
-          <video className="absolute inset-0 h-full w-full object-cover" src={hero.media} autoPlay muted loop playsInline />
+        {heroLoaded && heroMedia ? (
+          heroIsVideo ? (
+            <video
+              key={heroMedia}
+              className="absolute inset-0 h-full w-full object-cover"
+              src={heroMedia}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+            />
+          ) : (
+            <img key={heroMedia} className="absolute inset-0 h-full w-full object-cover" src={heroMedia} alt="" />
+          )
         ) : (
-          <img className="absolute inset-0 h-full w-full object-cover" src={hero.media} alt="" />
+          <div className="absolute inset-0 bg-black" aria-hidden />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/20" />
         <div className="relative z-10 flex min-h-[70vh] flex-col justify-center px-6 py-16 sm:px-12 lg:min-h-[78vh] lg:max-w-[720px] lg:px-20">

@@ -66,8 +66,8 @@ export function HomepageEditor() {
     void load()
   }, [])
 
-  const saveHero = async () => {
-    if (!supabase) return
+  const persistHero = async (next: Section, message: string) => {
+    if (!supabase) return false
     setSaving(true)
     setError(null)
     setOk(null)
@@ -75,20 +75,34 @@ export function HomepageEditor() {
       {
         page: 'home',
         section_key: 'hero',
-        title: section.title,
-        subtitle: section.subtitle,
-        body: section.body,
-        media_path: section.media_path || null,
-        mobile_media_path: section.mobile_media_path || null,
-        buttons: section.buttons,
+        title: next.title,
+        subtitle: next.subtitle,
+        body: next.body,
+        media_path: next.media_path?.trim() || null,
+        mobile_media_path: next.mobile_media_path?.trim() || null,
+        buttons: next.buttons,
         visible: true,
         sort_order: 1,
       },
       { onConflict: 'page,section_key' },
     )
     setSaving(false)
-    if (saveError) setError(saveError.message)
-    else setOk('Homepage hero saved. The same text and media are what the storefront reads.')
+    if (saveError) {
+      setError(saveError.message)
+      return false
+    }
+    setOk(message)
+    return true
+  }
+
+  const saveHero = async () => {
+    await persistHero(section, 'Homepage hero saved. The storefront will show this background on the next visit.')
+  }
+
+  const updateHeroMedia = async (patch: Partial<Pick<Section, 'media_path' | 'mobile_media_path'>>) => {
+    const next = { ...section, ...patch }
+    setSection(next)
+    await persistHero(next, 'Background saved to the live homepage.')
   }
 
   const saveCollections = async () => {
@@ -172,8 +186,24 @@ export function HomepageEditor() {
           <Card id="background" className="scroll-mt-4 space-y-4">
             <HomeHeading step="3" title="Background photo or video" hint="Wide 1920×1080 for computers. Tall 1080×1920 for phones. A phone file is optional." />
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
-              <MediaField label="Computer" hint="JPG, PNG, WebP, or MP4." folder="hero" accept="image/jpeg,image/png,image/webp,video/mp4" value={section.media_path} onChange={(path) => setSection({ ...section, media_path: path })} previewClassName="mt-3 aspect-video w-full rounded-xl object-cover" />
-              <MediaField label="Phone" hint="Leave this empty to reuse the computer file." folder="hero" accept="image/jpeg,image/png,image/webp,video/mp4" value={section.mobile_media_path} onChange={(path) => setSection({ ...section, mobile_media_path: path })} previewClassName="mt-3 aspect-[9/16] w-full rounded-xl object-cover" />
+              <MediaField
+                label="Computer"
+                hint="JPG, PNG, WebP, or MP4. Saves to the live site as soon as upload finishes."
+                folder="hero"
+                accept="image/jpeg,image/png,image/webp,video/mp4"
+                value={section.media_path}
+                onChange={(path) => void updateHeroMedia({ media_path: path })}
+                previewClassName="mt-3 aspect-video w-full rounded-xl object-cover"
+              />
+              <MediaField
+                label="Phone"
+                hint="Optional tall file for phones. Empty reuses the computer file."
+                folder="hero"
+                accept="image/jpeg,image/png,image/webp,video/mp4"
+                value={section.mobile_media_path}
+                onChange={(path) => void updateHeroMedia({ mobile_media_path: path })}
+                previewClassName="mt-3 aspect-[9/16] w-full rounded-xl object-cover"
+              />
             </div>
           </Card>
           <Card id="groups" className="scroll-mt-4 space-y-4">
@@ -226,8 +256,8 @@ export function HomepageEditor() {
           <HomeHeading step="2" title="The two buttons" hint="Pick where each button goes. The orange one is the first button." />
           <ButtonFields title="First button" button={section.buttons[0]} onChange={(patch) => setButton(0, patch)} />
           <ButtonFields title="Second button" button={section.buttons[1]} onChange={(patch) => setButton(1, patch)} />
-          <PrimaryButton type="button" disabled={saving} onClick={() => void saveHero()}>{saving ? 'Saving…' : 'Save homepage text'}</PrimaryButton>
-          <p className="text-xs text-[#8d8d8d]">This saves the words, the buttons, and the background together.</p>
+          <PrimaryButton type="button" disabled={saving} onClick={() => void saveHero()}>{saving ? 'Saving…' : 'Save text & buttons'}</PrimaryButton>
+          <p className="text-xs text-[#8d8d8d]">Background photo or video saves automatically when you upload. Use this button for the title, description, and buttons.</p>
         </Card>
       </div>
     </div>
