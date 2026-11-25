@@ -1,8 +1,30 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Product } from '../../data/types.ts'
+import { useCart } from '../../features/cart/CartProvider.tsx'
+import { defaultChoiceFor } from '../../lib/productChoices.ts'
 import { publicMediaUrl } from '../../lib/media.ts'
 
 export function ProductCard({ product }: { product: Product }) {
+  const navigate = useNavigate()
+  const { addProduct } = useCart()
+  const [buying, setBuying] = useState(false)
+
+  const buyNow = async () => {
+    setBuying(true)
+    try {
+      const choice = await defaultChoiceFor(product.id)
+      addProduct(
+        product,
+        1,
+        choice ? { ...choice, material: choice.material || product.material } : undefined,
+      )
+      navigate('/checkout')
+    } finally {
+      setBuying(false)
+    }
+  }
+
   return (
     <article className="group flex flex-col overflow-hidden rounded-rbp border border-rbp-border/80 bg-[#0a0a0a] transition duration-300 hover:-translate-y-1 hover:border-rbp-accent hover:shadow-[0_12px_32px_rgba(255,121,0,0.16)]">
       <Link to={`/products/${product.slug}`} className="relative flex aspect-[5/4] items-center justify-center overflow-hidden bg-[#111]">
@@ -28,12 +50,14 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name}
         </Link>
         <p className="mt-1 text-[12px] text-white/50">{product.material}</p>
-        <Link
-          to={`/products/${product.slug}`}
-          className="mt-4 flex h-10 w-full items-center justify-center whitespace-nowrap rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] px-3 text-[13px] font-semibold leading-none tracking-normal text-black"
+        <button
+          type="button"
+          disabled={buying}
+          onClick={() => void buyNow()}
+          className="mt-4 flex h-10 w-full items-center justify-center whitespace-nowrap rounded-md bg-gradient-to-b from-[#ffb000] to-[#e85d00] px-3 text-[13px] font-semibold leading-none tracking-normal text-black disabled:opacity-70"
         >
-          View Now
-        </Link>
+          {buying ? 'Adding…' : 'Buy Now'}
+        </button>
       </div>
     </article>
   )

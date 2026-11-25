@@ -326,8 +326,12 @@ export function CheckoutPage() {
                 key={line.cartId ?? line.lineId}
                 className="grid grid-cols-[1.6fr_70px_110px_70px_24px] items-start gap-2 border-b border-white/10 py-3 text-[13px]"
               >
-                <div className="flex min-w-0 gap-3">
-                  <img src={cartLineImage(line)} alt="" className="h-[64px] w-[72px] rounded object-cover" />
+                <div className="flex min-w-0 gap-4">
+                  <img
+                    src={cartLineImage(line)}
+                    alt=""
+                    className="h-48 w-52 shrink-0 rounded border border-white/10 bg-[#111] object-contain sm:h-56 sm:w-60 md:h-64 md:w-72"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-white">{line.name}</p>
                     <CartChoices line={line} onChange={updateLine} />
