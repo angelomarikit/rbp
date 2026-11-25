@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { portalPathForUser, useAuth } from '../../features/auth/AuthProvider.tsx'
 import { useCart } from '../../features/cart/CartProvider.tsx'
-import { LOGO } from '../../lib/assets.ts'
+import { useSiteLogo } from '../../features/site/SiteBrandingProvider.tsx'
 import { IconCart, IconSearch, IconUser } from '../ui/Icons.tsx'
 import { NAV_HOME, type HeaderVariant, type NavItem } from './headerConfig.ts'
 import { MobileNav } from './MobileNav.tsx'
@@ -40,10 +40,11 @@ export function SiteHeader({ variant: _variant }: { variant: HeaderVariant }) {
 }
 
 function LogoMark({ size = 78 }: { size?: number }) {
+  const { logoSrc } = useSiteLogo()
   return (
     <Link to="/" className="shrink-0" aria-label="Romell Body Piercing home">
       <img
-        src={LOGO}
+        src={logoSrc}
         alt="Romell Body Piercing"
         width={size}
         height={size}

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useSiteLogo } from '../../features/site/SiteBrandingProvider.tsx'
 import { affiliationFromRow, defaultAffiliation, type AffiliationContent } from '../../lib/affiliation.ts'
+import { isCustomStoreLogo, storeLogoSrc } from '../../lib/storeLogo.ts'
 import { applySiteFont, fontFromZip, siteFontFromExtra, type SiteFontSet } from '../../lib/siteFont.ts'
 import { friendlyError } from '../../lib/friendlyError.ts'
 import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../../lib/paymentQr.ts'
@@ -132,6 +134,7 @@ export function ContactAdmin() {
 }
 
 export function SettingsAdmin() {
+  const { refreshLogo } = useSiteLogo()
   const [form, setForm] = useState({ facebook_url: '', instagram_url: '', whatsapp: '', viber: '', footer_text: '', seo_title: '', seo_description: '', logo_path: '' })
   const [affiliation, setAffiliation] = useState<AffiliationContent>(defaultAffiliation)
   const [paymentQrs, setPaymentQrs] = useState<PaymentQrs>(emptyPaymentQrs)
@@ -269,7 +272,10 @@ export function SettingsAdmin() {
           }, { onConflict: 'page,section_key' }),
         ])
         if (settings.error || section.error || payment.error) setError(settings.error?.message || section.error?.message || payment.error?.message || '')
-        else setOk('Settings saved.')
+        else {
+          setOk('Settings saved.')
+          await refreshLogo()
+        }
       }}
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -327,8 +333,32 @@ export function SettingsAdmin() {
           <div>
             <h2 className="text-base font-semibold">Store logo</h2>
             <p className="mt-1 text-sm text-[#9a9a9a]">A square picture, at least 512×512. PNG with a clear background looks best.</p>
+            <p className="mt-1 text-xs text-[#8d8d8d]">Same image as the site header.</p>
           </div>
-          <MediaField label="Logo file" hint="PNG, WebP, or JPG." folder="branding" accept="image/png,image/webp,image/jpeg" value={form.logo_path} onChange={(path) => setForm({ ...form, logo_path: path })} />
+          <MediaField
+            label="Logo file"
+            hint="PNG, WebP, or JPG."
+            folder="branding"
+            accept="image/png,image/webp,image/jpeg"
+            value={form.logo_path}
+            previewSrc={storeLogoSrc(form.logo_path)}
+            onChange={(path) => setForm({ ...form, logo_path: path })}
+            previewClassName="mt-3 mx-auto aspect-square w-full max-w-[220px] rounded-xl border border-[#333] bg-black object-contain p-4"
+          />
+          {form.logo_path && !isCustomStoreLogo(form.logo_path) ? (
+            <p className="text-xs text-[#ffb089]">
+              The saved file is not used in the header until you upload a logo here, or clear the old path.
+            </p>
+          ) : null}
+          {form.logo_path ? (
+            <button
+              type="button"
+              className="text-sm text-[#ffb089]"
+              onClick={() => setForm({ ...form, logo_path: '' })}
+            >
+              Use default Romell logo
+            </button>
+          ) : null}
         </Card>
       </div>
       <Card id="affiliation" className="scroll-mt-4 space-y-4">

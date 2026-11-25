@@ -80,6 +80,7 @@ export function MediaField({
   value,
   onChange,
   previewClassName = 'mt-3 h-32 w-full rounded-lg object-cover',
+  previewSrc,
   fileFirst = false,
 }: {
   label: string
@@ -89,12 +90,14 @@ export function MediaField({
   value: string
   onChange: (path: string) => void
   previewClassName?: string
+  /** When set, used for the preview (e.g. header logo with default fallback). */
+  previewSrc?: string
   fileFirst?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const preview = publicMediaUrl(value)
-  const video = value.endsWith('.mp4') || accept.includes('video')
+  const preview = previewSrc?.trim() || (value ? publicMediaUrl(value) : '')
+  const video = Boolean(preview && (value.endsWith('.mp4') || (preview.includes('.mp4') && accept.includes('video'))))
   const fileInput = (
     <input
       type="file"

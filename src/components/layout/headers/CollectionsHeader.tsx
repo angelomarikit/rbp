@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../../../features/cart/CartProvider.tsx'
-import { LOGO } from '../../../lib/assets.ts'
+import { useSiteLogo } from '../../../features/site/SiteBrandingProvider.tsx'
 import { IconCart, IconSearch, IconUser } from '../../ui/Icons.tsx'
 import { OrangeBorderDivider } from '../../ui/OrangeDivider.tsx'
 import { NAV_COLLECTIONS, type NavItem } from '../headerConfig.ts'
@@ -16,6 +16,7 @@ function isActive(item: NavItem, pathname: string) {
 export function CollectionsHeader() {
   const { pathname } = useLocation()
   const { itemCount } = useCart()
+  const { logoSrc } = useSiteLogo()
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -23,7 +24,7 @@ export function CollectionsHeader() {
       <header className="relative min-h-[111px] w-full bg-rbp-bg pb-px">
         <div className="flex w-full items-stretch gap-0 px-4 pt-2 lg:px-8">
           <Link to="/" className="shrink-0 py-1">
-            <img src={LOGO} alt="Romell Body Piercing" className="h-[75px] w-[75px] object-contain lg:ml-6" />
+            <img src={logoSrc} alt="Romell Body Piercing" className="h-[75px] w-[75px] object-contain lg:ml-6" />
           </Link>
           <span className="hidden w-px shrink-0 self-stretch bg-rbp-border lg:mx-4 lg:block" aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col justify-center py-1">
