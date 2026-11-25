@@ -57,28 +57,35 @@ export function MemberStrip() {
 
   return (
     <section className="w-full border-t border-rbp-border/70 bg-black py-10" aria-label={content.eyebrow || 'Professional affiliation'}>
-      <div className="mb-8 px-4 text-center">
+      <div className="mb-8 px-3 text-center sm:px-4">
         {content.eyebrow && (
-          <p className="font-secondary text-[15px] font-semibold uppercase tracking-[0.28em] text-rbp-accent sm:text-[17px]">
+          <p className="font-secondary text-[13px] font-semibold uppercase tracking-[0.22em] text-rbp-accent sm:text-[15px] sm:tracking-[0.28em] md:text-[17px]">
             {content.eyebrow}
           </p>
         )}
         {content.title && (
-          <p className="rbp-blackletter-text mx-auto mt-3 max-w-4xl text-[26px] leading-[1.08] sm:text-[34px] lg:text-[40px]">
+          <p className="rbp-blackletter-text mx-auto mt-3 w-full max-w-4xl text-[22px] leading-[1.12] sm:text-[30px] md:text-[34px] lg:text-[40px]">
             {footerTitleParts ? (
-              <span className="block">
-                <span className="text-[1.28em] text-rbp-accent">{footerTitleParts.lead}</span>{' '}
-                <span className="text-[0.88em] text-rbp-accent">
-                  {footerTitleParts.middle} {footerTitleParts.country}
+              <>
+                <span className="hidden text-rbp-accent md:block">
+                  {footerTitleParts.lead} {footerTitleParts.middle} {footerTitleParts.country}
                 </span>
-              </span>
+                <span className="block text-rbp-accent md:hidden">
+                  <span className="block leading-[1.05]">{footerTitleParts.lead}</span>
+                  <span className="mt-1 block leading-[1.08]">
+                    {footerTitleParts.middle} {footerTitleParts.country}
+                  </span>
+                </span>
+              </>
             ) : (
               content.title
             )}
           </p>
         )}
         {content.tagline && (
-          <p className="font-secondary mt-2 text-[16px] text-rbp-accent sm:text-[18px]">{content.tagline}</p>
+          <p className="font-secondary mx-auto mt-2 max-w-md px-1 text-[14px] leading-snug text-rbp-accent sm:max-w-xl sm:text-[16px] md:text-[18px]">
+            {content.tagline}
+          </p>
         )}
       </div>
       {content.logos.length > 0 && (

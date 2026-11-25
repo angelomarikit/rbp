@@ -14,12 +14,18 @@ h1.association-hero-title span.block:first-child {
 }
 
 h1.association-hero-title .association-hero-title-philippines {
-  transform: translateX(70px);
+  display: block;
+  margin-top: 0.45em;
+  text-align: center;
 }
 
 @media (min-width: 1024px) {
   h1.association-hero-title span.block:first-child {
     white-space: nowrap;
+  }
+
+  h1.association-hero-title .association-hero-title-philippines {
+    margin-top: 0.5em;
   }
 }
 

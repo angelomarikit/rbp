@@ -141,7 +141,9 @@ export function HomePage() {
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/20" />
         <div className="relative z-10 flex min-h-[70vh] flex-col justify-center px-6 py-16 sm:px-12 lg:min-h-[78vh] lg:max-w-[720px] lg:px-20">
-          <p className="font-secondary mb-8 text-[12px] font-medium uppercase tracking-[0.32em] text-rbp-cream">{hero.subtitle}</p>
+          <p className="font-secondary mb-8 text-[15px] font-semibold uppercase tracking-[0.28em] text-rbp-cream sm:text-[16px] sm:tracking-[0.32em] md:text-[17px]">
+            {hero.subtitle}
+          </p>
           <GothicHeading as="h1" className="text-[3.1rem] leading-[0.78] sm:text-[4.2rem] xl:text-[5rem]">
             {designedTitle ? (
               <>
