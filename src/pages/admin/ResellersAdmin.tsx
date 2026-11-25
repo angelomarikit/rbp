@@ -53,17 +53,61 @@ export function ResellersAdmin() {
     const { data, error: rpcError } = await supabase.rpc('admin_list_resellers')
     setLoading(false)
     if (rpcError) {
+      const message = rpcError.message ?? ''
+      if (message.includes('Admin only')) {
+        setError('Sign in with an admin studio account to view wholesaler applications.')
+        setRows([])
+        return
+      }
+      const { data: tableData, error: tableError } = await supabase
+        .from('resellers')
+        .select(
+          `id, profile_id, status, discount_code, discount_percent, province, city, barangay, postal_code, address_line, admin_note, created_at,
+          profiles (full_name, email, phone)`,
+        )
+        .order('created_at', { ascending: false })
+      if (tableError) {
+        setError(
+          friendlyError(
+            tableError,
+            'Could not load wholesalers. Run Supabase migrations 023–026 on your project.',
+          ),
+        )
+        setRows([])
+        return
+      }
+      const list = (tableData ?? []).map((row) => ({
+        ...(row as Omit<ResellerAdminRow, 'full_name' | 'email' | 'phone'>),
+        full_name:
+          (Array.isArray(row.profiles) ? row.profiles[0]?.full_name : (row.profiles as { full_name?: string } | null)?.full_name) ??
+          '',
+        email:
+          (Array.isArray(row.profiles) ? row.profiles[0]?.email : (row.profiles as { email?: string } | null)?.email) ?? '',
+        phone:
+          (Array.isArray(row.profiles) ? row.profiles[0]?.phone : (row.profiles as { phone?: string } | null)?.phone) ?? null,
+      })) as ResellerAdminRow[]
       setError(
-        friendlyError(
-          rpcError,
-          'Could not load wholesalers. Run Supabase migrations through 024_reseller_registration_fix.sql on your project.',
-        ),
+        list.length
+          ? null
+          : 'No wholesaler applications in the database yet. Applicants must submit the form at /wholesaler/register while signed in.',
       )
-      setRows([])
+      setRows(list)
+      setDrafts((prev) => {
+        const next = { ...prev }
+        for (const row of list) {
+          if (!next[row.id]) next[row.id] = emptyDraft(row)
+        }
+        return next
+      })
       return
     }
     setError(null)
     const list = (data ?? []) as ResellerAdminRow[]
+    if (!list.length) {
+      setError(
+        'No wholesaler applications yet. Each applicant must complete /wholesaler/register while signed in (verify email first if required).',
+      )
+    }
     setRows(list)
     setDrafts((prev) => {
       const next = { ...prev }

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { affiliationFromRow, defaultAffiliation, type AffiliationContent } from '../../lib/affiliation.ts'
 import { applySiteFont, fontFromZip, siteFontFromExtra, type SiteFontSet } from '../../lib/siteFont.ts'
 import { friendlyError } from '../../lib/friendlyError.ts'
@@ -7,82 +6,6 @@ import { emptyPaymentQrs, paymentQrsFromExtra, type PaymentQrs } from '../../lib
 import { supabase } from '../../lib/supabase.ts'
 import { publicMediaUrl, uploadMedia } from '../../lib/media.ts'
 import { Card, MediaField, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
-
-type GalleryItem = { id: string; storage_path: string; caption: string | null; category: string | null; published: boolean; sort_order: number }
-
-export function GalleryAdmin() {
-  const [items, setItems] = useState<GalleryItem[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-
-  const load = async () => {
-    const { data, error: queryError } = await supabase!.from('gallery_items').select('id, storage_path, caption, category, published, sort_order').order('sort_order')
-    if (queryError) setError(queryError.message)
-    else setItems((data ?? []) as GalleryItem[])
-  }
-
-  useEffect(() => { void load() }, [])
-
-  return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Association</h1>
-          <p className="mt-1 max-w-xl text-sm text-[#9a9a9a]">Photos for the Association page. Choose several files at once. They are stored here, not as outside links.</p>
-        </div>
-        <label className="cursor-pointer rounded-lg bg-[#FF7900] px-4 py-2 text-sm font-semibold text-black">
-          {busy ? 'Uploading…' : 'Add photos'}
-          <input
-            className="hidden"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            disabled={busy}
-            onChange={async (event) => {
-              const files = [...(event.target.files ?? [])]
-              event.target.value = ''
-              if (!supabase || files.length === 0) return
-              setBusy(true)
-              setError(null)
-              try {
-                for (const [index, file] of files.entries()) {
-                  const path = await uploadMedia(file, 'gallery')
-                  const { error: insertError } = await supabase.from('gallery_items').insert({
-                    storage_path: path,
-                    published: true,
-                    sort_order: items.length + index + 1,
-                  })
-                  if (insertError) throw insertError
-                }
-                await load()
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'Upload failed')
-              } finally {
-                setBusy(false)
-              }
-            }}
-          />
-        </label>
-      </div>
-      <p className="text-xs text-[#8d8d8d]">Best size 1080×1080, a square. JPG, PNG, or WebP.</p>
-      {busy ? <LoadingScreen label="Uploading" full /> : null}
-      <Notice error={error} />
-      {items.length === 0 && <div className="rounded-xl border border-dashed border-[#444] px-4 py-16 text-center text-sm text-[#9a9a9a]">No photos yet. Use Add photos.</div>}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {items.map((item) => (
-          <article key={item.id} className="overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#161616]">
-            <img src={publicMediaUrl(item.storage_path)} alt="" className="aspect-square w-full object-cover" />
-            <div className="space-y-2 p-3">
-              <input className="w-full rounded-lg border border-[#333] bg-[#111] px-2 py-1.5 text-sm" placeholder="Caption" defaultValue={item.caption ?? ''} onBlur={async (event) => { await supabase?.from('gallery_items').update({ caption: event.target.value }).eq('id', item.id) }} />
-              <input className="w-full rounded-lg border border-[#333] bg-[#111] px-2 py-1.5 text-xs text-[#cfcfcf]" placeholder="Group, such as Ears" defaultValue={item.category ?? ''} onBlur={async (event) => { await supabase?.from('gallery_items').update({ category: event.target.value }).eq('id', item.id) }} />
-              <button type="button" className="text-xs text-[#ffb089]" onClick={async () => { await supabase?.from('gallery_items').delete().eq('id', item.id); await load() }}>Remove</button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 export function AboutAdmin() {
   const [title, setTitle] = useState('About')
@@ -412,7 +335,10 @@ export function SettingsAdmin() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">Affiliation strip</h2>
-            <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">The Association page and the strip at the bottom of the site. The name, the line under it, and the organization badges.</p>
+            <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">
+              Footer affiliation strip and organization badges. Photos, member shots, and videos for the Association page
+              are under Online store → Association.
+            </p>
           </div>
         </div>
         <div className="grid gap-4 lg:grid-cols-3">

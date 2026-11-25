@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { destinationForRole, useAuth } from '../../features/auth/AuthProvider.tsx'
@@ -31,6 +31,7 @@ export function LoginPage() {
   const { configured, signIn, user, profile, reseller, loading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +40,8 @@ export function LoginPage() {
   if (loading || submitting) return <LoadingScreen label={submitting ? 'Signing in' : 'Loading'} full />
 
   if (user && profile) {
-    const requested = safeNext((location.state as { from?: string } | null)?.from)
+    const requested =
+      safeNext(searchParams.get('next')) ?? safeNext((location.state as { from?: string } | null)?.from)
     return (
       <Navigate
         to={destinationAfterLogin(profile.role, reseller?.status ?? null, requested, Boolean(reseller))}
@@ -62,7 +64,8 @@ export function LoginPage() {
       setError(result.error ?? 'Sign in failed.')
       return
     }
-    const requested = safeNext((location.state as { from?: string } | null)?.from)
+    const requested =
+      safeNext(searchParams.get('next')) ?? safeNext((location.state as { from?: string } | null)?.from)
     navigate(
       destinationAfterLogin(
         result.role ?? 'customer',

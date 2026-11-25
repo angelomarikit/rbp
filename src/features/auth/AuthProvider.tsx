@@ -11,6 +11,11 @@ import type { Session, User } from '@supabase/supabase-js'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { friendlyError } from '../../lib/friendlyError.ts'
 import { RESELLER_SELECT, type ResellerRecord } from '../reseller/types.ts'
+import {
+  clearWholesalerApplicationDraft,
+  readWholesalerApplicationDraft,
+} from '../wholesaler/applicationDraft.ts'
+import { submitWholesalerApplication } from '../wholesaler/submitApplication.ts'
 import { supabase, supabaseConfigured } from '../../lib/supabase.ts'
 
 export type AccountRole = 'admin' | 'customer' | 'reseller'
@@ -41,12 +46,15 @@ type AuthContextValue = {
     resellerStatus: string | null
     hasResellerPortal: boolean
   }>
-  signUp: (input: {
-    fullName: string
-    email: string
-    password: string
-    phone: string
-  }) => Promise<{ error: string | null; needsVerification: boolean; role: AccountRole | null }>
+  signUp: (
+    input: {
+      fullName: string
+      email: string
+      password: string
+      phone: string
+    },
+    options?: { wholesalerApplication?: boolean },
+  ) => Promise<{ error: string | null; needsVerification: boolean; role: AccountRole | null }>
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>
   updatePassword: (password: string) => Promise<{ error: string | null }>
   updateEmail: (email: string) => Promise<{ error: string | null }>
@@ -123,12 +131,27 @@ async function fetchProfile(user: User): Promise<{ profile: Profile | null; erro
 
 async function fetchReseller(userId: string): Promise<ResellerRecord | null> {
   if (!supabase) return null
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('resellers')
     .select(RESELLER_SELECT)
     .eq('profile_id', userId)
     .maybeSingle()
+  if (error) return null
   return (data as ResellerRecord | null) ?? null
+}
+
+async function maybeCompleteWholesalerDraft(user: User) {
+  if (!supabase) return
+  const existing = await fetchReseller(user.id)
+  if (existing) {
+    clearWholesalerApplicationDraft()
+    return
+  }
+  const draft = readWholesalerApplicationDraft()
+  const email = (user.email ?? '').trim().toLowerCase()
+  if (!draft || draft.email.trim().toLowerCase() !== email) return
+  const result = await submitWholesalerApplication(draft)
+  if (!result.error) clearWholesalerApplicationDraft()
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -148,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (supabase) {
       await supabase.rpc('heal_reseller_profile_role')
+      await maybeCompleteWholesalerDraft(user)
     }
     let result = await fetchProfile(user)
     setProfileError(result.error)
@@ -224,14 +248,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasResellerPortal,
         }
       },
-      async signUp(input) {
+      async signUp(input, options) {
         if (!supabase) return { error: 'Registration is not available right now.', needsVerification: false, role: null }
         const { data, error } = await supabase.auth.signUp({
           email: input.email.trim(),
           password: input.password,
           options: {
-            data: { full_name: input.fullName.trim(), phone: input.phone.trim() },
-            emailRedirectTo: `${window.location.origin}/login`,
+            data: {
+              full_name: input.fullName.trim(),
+              phone: input.phone.trim(),
+              ...(options?.wholesalerApplication ? { wholesaler_application: 'pending' } : {}),
+            },
+            emailRedirectTo: `${window.location.origin}/login?next=${encodeURIComponent('/wholesaler/register')}`,
           },
         })
         if (error || !data.user) {

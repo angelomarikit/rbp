@@ -3,32 +3,12 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { OrangeButton } from '../../components/ui/Buttons.tsx'
 import { LoadingScreen } from '../../components/ui/LoadingScreen.tsx'
 import { destinationForRole, useAuth } from '../../features/auth/AuthProvider.tsx'
-import { friendlyError } from '../../lib/friendlyError.ts'
-import { supabase } from '../../lib/supabase.ts'
+import { saveWholesalerApplicationDraft } from '../../features/wholesaler/applicationDraft.ts'
+import { submitWholesalerApplication } from '../../features/wholesaler/submitApplication.ts'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { AuthError, AuthLink, authField } from '../auth/AuthShell.tsx'
 import { ResellerProgramInfo } from './ResellerProgramInfo.tsx'
-
-async function submitResellerApplication(input: {
-  province: string
-  city: string
-  barangay: string
-  postalCode: string
-  address: string
-  phone: string
-}) {
-  if (!supabase) return { error: 'Accounts are not available right now.' }
-  const { error } = await supabase.rpc('register_reseller_profile', {
-    p_province: input.province.trim(),
-    p_city: input.city.trim(),
-    p_barangay: input.barangay.trim(),
-    p_postal_code: input.postalCode.trim(),
-    p_address_line: input.address.trim(),
-    p_phone: input.phone.trim(),
-  })
-  return { error: error ? friendlyError(error, 'The application could not be submitted.') : null }
-}
 
 export function ResellerRegisterPage() {
   const { configured, signUp, user, profile, reseller, refreshProfile } = useAuth()
@@ -73,7 +53,7 @@ export function ResellerRegisterPage() {
       setError('Sign in to submit your wholesaler application.')
       return false
     }
-    const result = await submitResellerApplication({ province, city, barangay, postalCode, address, phone })
+    const result = await submitWholesalerApplication({ province, city, barangay, postalCode, address, phone })
     if (result.error) {
       setError(result.error)
       return false
@@ -131,13 +111,22 @@ export function ResellerRegisterPage() {
       return
     }
 
-    const signup = await signUp({ fullName, email, password, phone })
+    const signup = await signUp({ fullName, email, password, phone }, { wholesalerApplication: true })
     if (signup.error) {
       setError(signup.error)
       setSubmitting(false)
       return
     }
     if (signup.needsVerification) {
+      saveWholesalerApplicationDraft({
+        email: email.trim(),
+        province,
+        city,
+        barangay,
+        postalCode,
+        address,
+        phone,
+      })
       setSubmitting(false)
       setSent(true)
       return

@@ -1,5 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { useAuth } from '../../features/auth/AuthProvider.tsx'
+import { NavLink, Navigate, Outlet } from 'react-router-dom'
+import { hasResellerPortal, portalPathForUser, useAuth } from '../../features/auth/AuthProvider.tsx'
 
 const links = [
   { to: '/account/dashboard', label: 'Dashboard' },
@@ -10,7 +10,11 @@ const links = [
 ]
 
 export function AccountLayout() {
-  const { profile, signOut } = useAuth()
+  const { profile, reseller, signOut } = useAuth()
+
+  if (hasResellerPortal(profile, reseller)) {
+    return <Navigate to={portalPathForUser(profile, reseller)} replace />
+  }
 
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-12 lg:grid-cols-[220px_minmax(0,1fr)] lg:px-8">

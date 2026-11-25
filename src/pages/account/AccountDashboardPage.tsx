@@ -4,13 +4,19 @@ import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
 import { friendlyError } from '../../lib/friendlyError.ts'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { ORDER_SELECT, type AccountOrder } from '../../features/account/types.ts'
-import { useAuth } from '../../features/auth/AuthProvider.tsx'
+import { hasResellerPortal, useAuth } from '../../features/auth/AuthProvider.tsx'
+import { readWholesalerApplicationDraft } from '../../features/wholesaler/applicationDraft.ts'
 import { formatPhp } from '../../lib/format.ts'
 import { formatWhen, fulfillmentLabel, paymentLabel } from '../../lib/orderStatus.ts'
 import { supabase } from '../../lib/supabase.ts'
 
 export function AccountDashboardPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, reseller } = useAuth()
+  const draft = readWholesalerApplicationDraft()
+  const showWholesalerPrompt =
+    !hasResellerPortal(profile, reseller) &&
+    (user?.user_metadata?.wholesaler_application === 'pending' ||
+      (draft && draft.email.trim().toLowerCase() === (profile?.email ?? user?.email ?? '').trim().toLowerCase()))
   const [orders, setOrders] = useState<AccountOrder[]>([])
   const [orderCount, setOrderCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -51,6 +57,18 @@ export function AccountDashboardPage() {
       <p className="mt-3 max-w-xl text-sm text-white/75">
         Orders placed while you are signed in use this account. Payment and LBC updates from the studio appear on the same order.
       </p>
+      {showWholesalerPrompt && (
+        <div className={`mt-6 ${rbpPanel} border-rbp-accent/40 p-4 text-sm text-white/85`}>
+          <p className="font-medium text-rbp-accent">Wholesaler application not finished</p>
+          <p className="mt-2 text-white/75">
+            Your account is still a customer until the wholesaler application is submitted and saved. Open the form while
+            signed in to send it to the studio.
+          </p>
+          <Link to="/wholesaler/register" className="mt-3 inline-block text-rbp-accent-gold">
+            Complete wholesaler application →
+          </Link>
+        </div>
+      )}
       {error && <p className="mt-4 text-sm text-[#ffb089]">{friendlyError(error)}</p>}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className={`p-4 ${rbpPanel}`}>

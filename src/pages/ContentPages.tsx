@@ -1,48 +1,165 @@
 import { useEffect, useState } from 'react'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { affiliationFromRow, defaultAffiliation } from '../lib/affiliation.ts'
+import { isVideoGalleryItem, type GalleryItem } from '../lib/gallery.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
 
+function AssociationMediaTile({
+  item,
+  onOpen,
+}: {
+  item: GalleryItem
+  onOpen: () => void
+}) {
+  const video = isVideoGalleryItem(item)
+  const src = publicMediaUrl(item.storage_path)
+
+  return (
+    <button
+      type="button"
+      className="group relative aspect-square w-full overflow-hidden bg-[#0a0a0a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rbp-accent"
+      onClick={onOpen}
+      aria-label={item.caption?.trim() || (video ? 'Play video' : 'View photo')}
+    >
+      {video ? (
+        <video src={src} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+      ) : (
+        <img src={src} alt={item.caption?.trim() || ''} className="h-full w-full object-cover transition group-hover:scale-[1.02]" loading="lazy" />
+      )}
+      {video ? (
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/25">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/65 text-white">
+            <svg viewBox="0 0 24 24" className="ml-0.5 h-6 w-6 fill-current" aria-hidden>
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
 export function AssociationPage() {
   const [content, setContent] = useState(defaultAffiliation)
+  const [items, setItems] = useState<GalleryItem[]>([])
+  const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
   useEffect(() => {
     if (!supabase) return
-    void supabase
-      .from('content_sections')
-      .select('subtitle, title, body, extra')
-      .eq('page', 'site')
-      .eq('section_key', 'affiliation')
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setContent(affiliationFromRow(data))
-      })
+    void Promise.all([
+      supabase
+        .from('content_sections')
+        .select('subtitle, title, body, extra')
+        .eq('page', 'site')
+        .eq('section_key', 'affiliation')
+        .maybeSingle(),
+      supabase
+        .from('gallery_items')
+        .select('id, storage_path, caption, category, published, sort_order, media_kind')
+        .eq('published', true)
+        .order('sort_order', { ascending: true }),
+    ]).then(([section, gallery]) => {
+      if (section.data) setContent(affiliationFromRow(section.data))
+      if (gallery.data) {
+        setItems(
+          (gallery.data as GalleryItem[]).map((row) => ({
+            ...row,
+            media_kind: row.media_kind === 'video' ? 'video' : 'image',
+          })),
+        )
+      }
+    })
   }, [])
 
-  const mark = content.logos.find((logo) => logo.alt.trim().toLowerCase() === content.title.trim().toLowerCase()) ?? content.logos[0]
+  useEffect(() => {
+    if (!lightbox) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setLightbox(null)
+    }
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [lightbox])
+
+  const mark =
+    content.logos.find((logo) => logo.alt.trim().toLowerCase() === content.title.trim().toLowerCase()) ?? content.logos[0]
 
   return (
-    <div className="bg-black px-5 py-16 sm:px-8 lg:py-20">
-      <div className="mx-auto max-w-4xl text-center">
-        {content.eyebrow && (
-          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">{content.eyebrow}</p>
-        )}
-        <GothicHeading as="h1" className="mt-3 text-[2.6rem] leading-[0.9] sm:text-[3.6rem]">
-          {content.title}
-        </GothicHeading>
-        <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
-        {content.tagline && (
-          <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
-        )}
-        {mark && (
-          <img
-            src={publicMediaUrl(mark.path)}
-            alt={mark.alt || content.title}
-            className="mx-auto mt-10 h-40 w-40 object-contain"
-          />
-        )}
+    <div className="bg-black pb-16">
+      <div className="px-5 py-16 text-center sm:px-8 lg:py-20">
+        <div className="mx-auto max-w-4xl">
+          {content.eyebrow && (
+            <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">{content.eyebrow}</p>
+          )}
+          <GothicHeading as="h1" className="mt-3 text-[2.6rem] leading-[0.9] sm:text-[3.6rem]">
+            {content.title}
+          </GothicHeading>
+          <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
+          {content.tagline && (
+            <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
+          )}
+          {mark && (
+            <img
+              src={publicMediaUrl(mark.path)}
+              alt={mark.alt || content.title}
+              className="mx-auto mt-10 h-40 w-40 object-contain"
+            />
+          )}
+        </div>
       </div>
+
+      {items.length > 0 ? (
+        <section className="mx-auto w-full max-w-6xl px-1 sm:px-2" aria-label="Association gallery">
+          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((item) => (
+              <AssociationMediaTile key={item.id} item={item} onOpen={() => setLightbox(item)} />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <p className="px-5 text-center text-sm text-white/50">Gallery coming soon.</p>
+      )}
+
+      {lightbox ? (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            className="absolute right-4 top-4 rounded-full border border-white/20 px-3 py-1 text-sm text-white hover:border-rbp-accent"
+            onClick={() => setLightbox(null)}
+          >
+            Close
+          </button>
+          <div className="max-h-[85vh] max-w-5xl" onClick={(event) => event.stopPropagation()}>
+            {isVideoGalleryItem(lightbox) ? (
+              <video
+                src={publicMediaUrl(lightbox.storage_path)}
+                className="max-h-[85vh] w-full rounded-lg"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <img
+                src={publicMediaUrl(lightbox.storage_path)}
+                alt={lightbox.caption ?? ''}
+                className="max-h-[85vh] w-full rounded-lg object-contain"
+              />
+            )}
+            {lightbox.caption?.trim() ? (
+              <p className="mt-3 text-center text-sm text-white/80">{lightbox.caption}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
