@@ -16,7 +16,7 @@ import { CollectionsAdmin, ProductEditor, ProductsAdmin } from '../pages/admin/C
 import { EventsAdmin } from '../pages/admin/EventsAdmin.tsx'
 import { HomepageEditor } from '../pages/admin/HomepageEditor.tsx'
 import { InquiriesAdmin } from '../pages/admin/InquiriesAdmin.tsx'
-import { AboutAdmin, ContactAdmin, GalleryAdmin, SettingsAdmin } from '../pages/admin/StorePagesAdmin.tsx'
+import { AboutAdmin, ContactAdmin, SettingsAdmin } from '../pages/admin/StorePagesAdmin.tsx'
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage.tsx'
 import { LoginPage } from '../pages/auth/LoginPage.tsx'
 import { RegisterPage } from '../pages/auth/RegisterPage.tsx'
@@ -78,7 +78,7 @@ export default function App() {
             <Route path="collections" element={<CollectionsAdmin />} />
             <Route path="homepage" element={<HomepageEditor />} />
             <Route path="events" element={<EventsAdmin />} />
-            <Route path="gallery" element={<GalleryAdmin />} />
+            <Route path="gallery" element={<Navigate to="/admin/settings#affiliation" replace />} />
             <Route path="about" element={<AboutAdmin />} />
             <Route path="contact" element={<ContactAdmin />} />
             <Route path="inquiries" element={<InquiriesAdmin />} />

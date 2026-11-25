@@ -1,30 +1,48 @@
 import { useEffect, useState } from 'react'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
+import { affiliationFromRow, defaultAffiliation } from '../lib/affiliation.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
 
 export function AssociationPage() {
-  const [items, setItems] = useState<{ id: string; storage_path: string; caption: string | null }[]>([])
+  const [content, setContent] = useState(defaultAffiliation)
 
   useEffect(() => {
     if (!supabase) return
-    void supabase.from('gallery_items').select('id, storage_path, caption').eq('published', true).order('sort_order').then(({ data }) => {
-      setItems((data ?? []) as { id: string; storage_path: string; caption: string | null }[])
-    })
+    void supabase
+      .from('content_sections')
+      .select('subtitle, title, body, extra')
+      .eq('page', 'site')
+      .eq('section_key', 'affiliation')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setContent(affiliationFromRow(data))
+      })
   }, [])
 
+  const mark = content.logos.find((logo) => logo.alt.trim().toLowerCase() === content.title.trim().toLowerCase()) ?? content.logos[0]
+
   return (
-    <div className="bg-black px-5 py-14 sm:px-8">
-      <GothicHeading as="h1" className="text-center text-[3rem]">Association</GothicHeading>
-      <div className="mx-auto mt-10 grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3">
-        {items.map((item) => (
-          <figure key={item.id}>
-            <img src={publicMediaUrl(item.storage_path)} alt={item.caption ?? ''} className="aspect-square w-full rounded-rbp border border-rbp-border object-cover" />
-            {item.caption && <figcaption className="font-secondary mt-2 text-center text-xs text-white/70">{item.caption}</figcaption>}
-          </figure>
-        ))}
+    <div className="bg-black px-5 py-16 sm:px-8 lg:py-20">
+      <div className="mx-auto max-w-4xl text-center">
+        {content.eyebrow && (
+          <p className="font-secondary text-[12px] font-semibold uppercase tracking-[0.32em] text-rbp-cream">{content.eyebrow}</p>
+        )}
+        <GothicHeading as="h1" className="mt-3 text-[2.6rem] leading-[0.9] sm:text-[3.6rem]">
+          {content.title}
+        </GothicHeading>
+        <div className="mx-auto mt-6 h-[3px] w-48 bg-gradient-to-r from-transparent via-rbp-accent to-transparent" />
+        {content.tagline && (
+          <p className="font-secondary mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-white/85">{content.tagline}</p>
+        )}
+        {mark && (
+          <img
+            src={publicMediaUrl(mark.path)}
+            alt={mark.alt || content.title}
+            className="mx-auto mt-10 h-40 w-40 object-contain"
+          />
+        )}
       </div>
-      {items.length === 0 && <p className="mt-8 text-center text-sm text-white/70">Association photos added in the admin appear here.</p>}
     </div>
   )
 }

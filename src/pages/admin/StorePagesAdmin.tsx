@@ -412,7 +412,7 @@ export function SettingsAdmin() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">Affiliation strip</h2>
-            <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">The orange label, the organization name, the line under it, and the badges that scroll across the bottom of the site.</p>
+            <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">The Association page and the strip at the bottom of the site. The name, the line under it, and the organization badges.</p>
           </div>
         </div>
         <div className="grid gap-4 lg:grid-cols-3">
