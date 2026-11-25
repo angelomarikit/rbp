@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
@@ -17,7 +18,20 @@ export function ResellerPendingPage() {
       <GothicHeading as="h1" className="text-[3rem] leading-[0.9]">
         Reseller application
       </GothicHeading>
-      <p className="mt-4 max-w-xl text-sm text-rbp-cream">{statusCopy[status] ?? statusCopy.pending}</p>
+      {!reseller && (
+        <div className={`mt-6 ${rbpPanel} p-4 text-sm text-white/85`}>
+          <p className="text-rbp-accent">Your application was not saved yet.</p>
+          <p className="mt-2 text-white/75">
+            Complete the form with your business address so the studio can review it.
+          </p>
+          <Link to="/reseller/register" className="mt-3 inline-block text-rbp-accent">
+            Finish application →
+          </Link>
+        </div>
+      )}
+      {reseller && (
+        <p className="mt-4 max-w-xl text-sm text-rbp-cream">{statusCopy[status] ?? statusCopy.pending}</p>
+      )}
       {reseller?.admin_note && status !== 'pending' && (
         <p className="mt-2 text-sm text-[#ffb089]">Note from studio: {reseller.admin_note}</p>
       )}

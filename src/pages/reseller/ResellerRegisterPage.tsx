@@ -69,6 +69,10 @@ export function ResellerRegisterPage() {
   }
 
   const completeApplication = async () => {
+    if (!user) {
+      setError('Sign in to submit your reseller application.')
+      return false
+    }
     const result = await submitResellerApplication({ province, city, barangay, postalCode, address, phone })
     if (result.error) {
       setError(result.error)
@@ -93,6 +97,13 @@ export function ResellerRegisterPage() {
     setSubmitting(true)
 
     if (user && profile && profile.role !== 'reseller') {
+      const ok = await completeApplication()
+      setSubmitting(false)
+      if (ok) navigate('/reseller/pending', { replace: true })
+      return
+    }
+
+    if (user && profile?.role === 'reseller' && !reseller) {
       const ok = await completeApplication()
       setSubmitting(false)
       if (ok) navigate('/reseller/pending', { replace: true })
