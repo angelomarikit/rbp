@@ -1,5 +1,7 @@
 export const DEFAULT_SITE_TITLE = 'Romell Body Piercing'
 export const DEFAULT_SITE_DESCRIPTION = 'Expert piercing services, premium body jewelry, and a trusted name in the Philippine piercing community.'
+/** Default share preview image (Open Graph / Twitter). */
+export const DEFAULT_OG_IMAGE = '/assets/rbp/branding/romell-og.jpg'
 
 export type DocumentSeo = {
   title: string

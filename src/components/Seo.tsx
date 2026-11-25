@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import { applyDocumentSeo, clipText, DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, siteOrigin } from '../lib/seo.ts'
+import {
+  applyDocumentSeo,
+  clipText,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_SITE_DESCRIPTION,
+  DEFAULT_SITE_TITLE,
+  siteOrigin,
+} from '../lib/seo.ts'
 import { supabase } from '../lib/supabase.ts'
 
 type PageSeo = { title?: string; description?: string; image?: string; noindex?: boolean }
@@ -77,7 +84,7 @@ export function SeoProvider({ children }: { children: ReactNode }) {
       title,
       description,
       path: `${pathname}${category && pathname === '/collections' ? `?category=${encodeURIComponent(category)}` : ''}`,
-      image: page?.image,
+      image: page?.image?.trim() || DEFAULT_OG_IMAGE,
       noindex: privatePage || page?.noindex,
       jsonLd: privatePage || page?.noindex ? null : {
         '@context': 'https://schema.org',
