@@ -54,6 +54,7 @@ export function MemberStrip() {
   }, [])
 
   const footerTitleParts = affiliationFooterTitleParts(content.title)
+  const marqueeLogos = content.logos.filter((logo) => !isRomellRbpLogo(logo))
 
   return (
     <section className="w-full border-t border-rbp-border/70 bg-black py-10" aria-label={content.eyebrow || 'Professional affiliation'}>
@@ -88,11 +89,11 @@ export function MemberStrip() {
           </p>
         )}
       </div>
-      {content.logos.length > 0 && (
+      {marqueeLogos.length > 0 && (
         <div className="relative isolate w-full overflow-hidden [touch-action:pan-y]">
-          <MemberStripMarquee trackKey={content.logos.map((l) => l.path).join('|')}>
-            <LogoSet logos={content.logos} copy="a" />
-            <LogoSet logos={content.logos} copy="b" />
+          <MemberStripMarquee trackKey={marqueeLogos.map((l) => l.path).join('|')}>
+            <LogoSet logos={marqueeLogos} copy="a" />
+            <LogoSet logos={marqueeLogos} copy="b" />
           </MemberStripMarquee>
         </div>
       )}
