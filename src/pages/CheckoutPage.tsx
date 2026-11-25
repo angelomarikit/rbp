@@ -256,7 +256,7 @@ export function CheckoutPage() {
           <Link
             to={
               profile?.role === 'reseller'
-                ? `/reseller/orders/${orderId}`
+                ? `/wholesaler/orders/${orderId}`
                 : `/account/orders/${orderId}`
             }
             className="mt-8 block text-rbp-accent"
@@ -375,7 +375,7 @@ export function CheckoutPage() {
               <p className="text-center text-[16px] font-bold">Order Summary</p>
               <div className="mt-3 space-y-2 border-b border-white/10 pb-3">
                 <label className="block text-[11px] uppercase tracking-[0.12em] text-white/60">
-                  Reseller / discount code
+                  Wholesaler / discount code
                   <div className="mt-1 flex gap-2">
                     <input
                       className={`${rbpField} h-9 flex-1 text-[13px]`}

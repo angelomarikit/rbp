@@ -59,7 +59,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function destinationForRole(role: AccountRole, resellerStatus?: string | null) {
   if (role === 'admin') return '/admin/dashboard'
   if (role === 'reseller') {
-    return resellerStatus === 'approved' ? '/reseller/dashboard' : '/reseller/pending'
+    return resellerStatus === 'approved' ? '/wholesaler/dashboard' : '/wholesaler/pending'
   }
   return '/account/dashboard'
 }

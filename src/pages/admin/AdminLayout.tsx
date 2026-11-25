@@ -8,8 +8,8 @@ const groups = [
     items: [
       { to: '/admin/orders', label: 'Orders' },
       { to: '/admin/inquiries', label: 'Inquiries' },
-      { to: '/admin/resellers', label: 'Resellers' },
-      { to: '/admin/reseller-ranking', label: 'Reseller ranking' },
+      { to: '/admin/wholesalers', label: 'Wholesalers' },
+      { to: '/admin/wholesaler-ranking', label: 'Wholesaler ranking' },
     ],
   },
   {

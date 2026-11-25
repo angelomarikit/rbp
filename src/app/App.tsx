@@ -47,6 +47,7 @@ import { ResellerRegisterPage } from '../pages/reseller/ResellerRegisterPage.tsx
 import { ResellerSettingsPage } from '../pages/reseller/ResellerSettingsPage.tsx'
 import { ResellersAdmin } from '../pages/admin/ResellersAdmin.tsx'
 import { ResellerRankingAdmin } from '../pages/admin/ResellerRankingAdmin.tsx'
+import { LegacyWholesalerRedirect } from './LegacyWholesalerRedirect.tsx'
 
 export default function App() {
   return (
@@ -65,7 +66,8 @@ export default function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
-        <Route path="reseller/register" element={<ResellerRegisterPage />} />
+        <Route path="wholesaler/register" element={<ResellerRegisterPage />} />
+        <Route path="reseller/*" element={<LegacyWholesalerRedirect />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -82,7 +84,7 @@ export default function App() {
             </Route>
           </Route>
           <Route element={<RequireReseller />}>
-            <Route path="reseller" element={<ResellerLayout />}>
+            <Route path="wholesaler" element={<ResellerLayout />}>
               <Route index element={<ResellerHomeRedirect />} />
               <Route path="pending" element={<ResellerPendingPage />} />
               <Route element={<RequireApprovedReseller />}>
@@ -113,8 +115,10 @@ export default function App() {
             <Route path="about" element={<AboutAdmin />} />
             <Route path="contact" element={<ContactAdmin />} />
             <Route path="inquiries" element={<InquiriesAdmin />} />
-            <Route path="resellers" element={<ResellersAdmin />} />
-            <Route path="reseller-ranking" element={<ResellerRankingAdmin />} />
+            <Route path="wholesalers" element={<ResellersAdmin />} />
+            <Route path="wholesaler-ranking" element={<ResellerRankingAdmin />} />
+            <Route path="resellers" element={<Navigate to="/admin/wholesalers" replace />} />
+            <Route path="reseller-ranking" element={<Navigate to="/admin/wholesaler-ranking" replace />} />
             <Route path="settings" element={<SettingsAdmin />} />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Route>

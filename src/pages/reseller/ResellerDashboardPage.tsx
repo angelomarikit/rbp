@@ -75,7 +75,7 @@ export function ResellerDashboardPage() {
           <p className="mt-2 text-2xl text-white">{rank ? `#${rank}` : '—'}</p>
         </div>
       </div>
-      <Link to="/reseller/orders" className="mt-6 inline-block text-sm text-rbp-accent">
+      <Link to="/wholesaler/orders" className="mt-6 inline-block text-sm text-rbp-accent">
         View orders →
       </Link>
     </div>

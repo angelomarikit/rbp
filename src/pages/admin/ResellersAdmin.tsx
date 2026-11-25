@@ -56,7 +56,7 @@ export function ResellersAdmin() {
       setError(
         friendlyError(
           rpcError,
-          'Could not load resellers. Run Supabase migrations through 024_reseller_registration_fix.sql on your project.',
+          'Could not load wholesalers. Run Supabase migrations through 024_reseller_registration_fix.sql on your project.',
         ),
       )
       setRows([])
@@ -113,9 +113,9 @@ export function ResellersAdmin() {
       return
     }
     if (status === 'approved') {
-      setOk(`Approved ${row.email || 'reseller'} with code ${code} at ${percent}% off subtotal.`)
+      setOk(`Approved ${row.email || 'wholesaler'} with code ${code} at ${percent}% off subtotal.`)
     } else {
-      setOk(`Reseller marked ${status}.`)
+      setOk(`Wholesaler marked ${status}.`)
     }
     await load()
   }
@@ -124,13 +124,39 @@ export function ResellersAdmin() {
     await saveReseller(row, 'approved')
   }
 
+  const removeReseller = async (row: ResellerAdminRow) => {
+    if (!supabase) return
+    const label = row.full_name || row.email || 'this wholesaler'
+    const confirmed = window.confirm(
+      `Remove ${label}? Their checkout code will stop working. Past orders stay on file; the account can become a regular customer again.`,
+    )
+    if (!confirmed) return
+    setError(null)
+    setOk(null)
+    const { error: rpcError } = await supabase.rpc('admin_delete_reseller', {
+      p_reseller_id: row.id,
+      p_revert_profile_to_customer: true,
+    })
+    if (rpcError) {
+      setError(friendlyError(rpcError, 'Could not remove this wholesaler.'))
+      return
+    }
+    setOk(`Removed ${label}.`)
+    setDrafts((prev) => {
+      const next = { ...prev }
+      delete next[row.id]
+      return next
+    })
+    await load()
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold text-white">Resellers</h1>
+        <h1 className="text-2xl font-semibold text-white">Wholesalers</h1>
         <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">
-          Review applications, assign a unique checkout code and discount percent, then approve or reject. Ranking uses
-          verified orders only.
+          Review applications, assign a unique checkout code and discount percent, then approve or reject. You can remove a
+          wholesaler to disable their code (orders already placed are kept). Ranking uses verified orders only.
         </p>
         {!supabaseConfigured && (
           <p className="mt-2 text-sm text-[#ffb089]">Supabase is not connected — this page cannot load applications.</p>
@@ -156,15 +182,15 @@ export function ResellersAdmin() {
       {!loading && visible.length === 0 && (
         <div className="rounded-xl border border-dashed border-[#444] px-4 py-8 text-sm text-[#9a9a9a]">
           {filter === 'pending'
-            ? 'No pending applications. If someone applied but you expected a row here, run migration 024 on Supabase and ask them to submit again at /reseller/register while signed in.'
-            : 'No resellers in this list.'}
+            ? 'No pending applications. If someone applied but you expected a row here, run migration 024 on Supabase and ask them to submit again at /wholesaler/register while signed in.'
+            : 'No wholesalers in this list.'}
         </div>
       )}
       {visible.map((row) => (
         <Card key={row.id}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="font-medium text-white">{row.full_name || row.email || 'Reseller'}</p>
+              <p className="font-medium text-white">{row.full_name || row.email || 'Wholesaler'}</p>
               <p className="text-xs text-[#9a9a9a]">
                 {row.email} · {row.phone || '—'}
               </p>
@@ -253,6 +279,13 @@ export function ResellersAdmin() {
                 </button>
               </>
             )}
+            <button
+              type="button"
+              className="rounded-lg border border-[#663333] px-3 py-2 text-sm text-[#ffb0b0] hover:border-[#aa4444]"
+              onClick={() => void removeReseller(row)}
+            >
+              Remove wholesaler
+            </button>
           </div>
         </Card>
       ))}

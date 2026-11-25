@@ -43,7 +43,7 @@ export function ResellerRankingPage() {
           <thead>
             <tr className="border-b border-rbp-border text-[11px] uppercase tracking-[0.14em] text-rbp-cream">
               <th className="py-2 pr-4">Rank</th>
-              <th className="py-2 pr-4">Reseller</th>
+              <th className="py-2 pr-4">Wholesaler</th>
               <th className="py-2 pr-4">Code</th>
               <th className="py-2 pr-4">Orders</th>
               <th className="py-2">Verified total</th>
@@ -67,7 +67,7 @@ export function ResellerRankingPage() {
             })}
           </tbody>
         </table>
-        {rows.length === 0 && !error && <p className="mt-4 text-sm text-rbp-cream">No approved resellers yet.</p>}
+        {rows.length === 0 && !error && <p className="mt-4 text-sm text-rbp-cream">No approved wholesalers yet.</p>}
       </div>
     </div>
   )

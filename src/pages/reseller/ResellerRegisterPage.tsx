@@ -70,7 +70,7 @@ export function ResellerRegisterPage() {
 
   const completeApplication = async () => {
     if (!user) {
-      setError('Sign in to submit your reseller application.')
+      setError('Sign in to submit your wholesaler application.')
       return false
     }
     const result = await submitResellerApplication({ province, city, barangay, postalCode, address, phone })
@@ -99,14 +99,14 @@ export function ResellerRegisterPage() {
     if (user && profile && profile.role !== 'reseller') {
       const ok = await completeApplication()
       setSubmitting(false)
-      if (ok) navigate('/reseller/pending', { replace: true })
+      if (ok) navigate('/wholesaler/pending', { replace: true })
       return
     }
 
     if (user && profile?.role === 'reseller' && !reseller) {
       const ok = await completeApplication()
       setSubmitting(false)
-      if (ok) navigate('/reseller/pending', { replace: true })
+      if (ok) navigate('/wholesaler/pending', { replace: true })
       return
     }
 
@@ -162,7 +162,7 @@ export function ResellerRegisterPage() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm">
             <AuthLink to="/login">Sign in</AuthLink>
-            <AuthLink to="/reseller/register">Reseller information</AuthLink>
+            <AuthLink to="/wholesaler/register">Wholesaler information</AuthLink>
           </div>
         </div>
       </div>
@@ -177,7 +177,7 @@ export function ResellerRegisterPage() {
         <div className="mx-auto max-w-6xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-rbp-cream">Romell Body Piercing</p>
           <GothicHeading as="h1" className="mt-2 text-[2.8rem] leading-none text-rbp-accent lg:text-[3.4rem]">
-            Become a reseller
+            Become a wholesaler
           </GothicHeading>
           <p className="mt-3 max-w-2xl text-sm text-white/75">
             Partner with the studio, share a checkout code with your clients, and track attributed sales in your own
@@ -192,7 +192,7 @@ export function ResellerRegisterPage() {
         <aside className={`h-fit lg:sticky lg:top-24 ${rbpPanel} p-6`}>
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white">Application</h2>
           <p className="mt-2 text-xs leading-relaxed text-white/70">
-            Already a reseller?{' '}
+            Already a wholesaler?{' '}
             <AuthLink to="/login">Sign in</AuthLink> to open your portal. Shopping only?{' '}
             <Link to="/register" className="text-rbp-accent">
               Customer account
@@ -228,7 +228,7 @@ export function ResellerRegisterPage() {
         )}
         {existingAccount && (
           <p className="text-sm text-white/80">
-            Signed in as <span className="text-rbp-accent">{profile?.email}</span>. Submit your reseller address below.
+            Signed in as <span className="text-rbp-accent">{profile?.email}</span>. Submit your wholesaler address below.
           </p>
         )}
         <p className="text-xs uppercase tracking-[0.16em] text-rbp-cream">Business address</p>

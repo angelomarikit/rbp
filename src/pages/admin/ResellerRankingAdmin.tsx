@@ -19,9 +19,9 @@ export function ResellerRankingAdmin() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold text-white">Reseller ranking</h1>
+        <h1 className="text-2xl font-semibold text-white">Wholesaler ranking</h1>
         <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">
-          Totals and order counts include only orders with payment status verified, attributed to each reseller code at checkout.
+          Totals and order counts include only orders with payment status verified, attributed to each wholesaler code at checkout.
         </p>
       </div>
       <Notice error={error ? friendlyError(error) : null} ok={null} />
@@ -30,7 +30,7 @@ export function ResellerRankingAdmin() {
           <thead className="bg-[#161616] text-[11px] uppercase tracking-[0.14em] text-[#9a9a9a]">
             <tr>
               <th className="px-4 py-3">Rank</th>
-              <th className="px-4 py-3">Reseller</th>
+              <th className="px-4 py-3">Wholesaler</th>
               <th className="px-4 py-3">Code</th>
               <th className="px-4 py-3">Verified orders</th>
               <th className="px-4 py-3">Verified total</th>

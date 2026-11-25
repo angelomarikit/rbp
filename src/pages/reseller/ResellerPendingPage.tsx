@@ -6,7 +6,7 @@ import { useAuth } from '../../features/auth/AuthProvider.tsx'
 const statusCopy: Record<string, string> = {
   pending: 'Your application is with the studio for review.',
   rejected: 'This application was not approved. Contact the studio if you have questions.',
-  suspended: 'Your reseller account is suspended. Contact the studio for help.',
+  suspended: 'Your wholesaler account is suspended. Contact the studio for help.',
 }
 
 export function ResellerPendingPage() {
@@ -16,7 +16,7 @@ export function ResellerPendingPage() {
   return (
     <div>
       <GothicHeading as="h1" className="text-[3rem] leading-[0.9]">
-        Reseller application
+        Wholesaler application
       </GothicHeading>
       {!reseller && (
         <div className={`mt-6 ${rbpPanel} p-4 text-sm text-white/85`}>
@@ -24,7 +24,7 @@ export function ResellerPendingPage() {
           <p className="mt-2 text-white/75">
             Complete the form with your business address so the studio can review it.
           </p>
-          <Link to="/reseller/register" className="mt-3 inline-block text-rbp-accent">
+          <Link to="/wholesaler/register" className="mt-3 inline-block text-rbp-accent">
             Finish application →
           </Link>
         </div>

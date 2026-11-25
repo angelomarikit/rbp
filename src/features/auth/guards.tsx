@@ -65,7 +65,7 @@ export function RequireApprovedReseller() {
   if (loading) {
     return <LoadingScreen label="Loading" full />
   }
-  if (reseller?.status !== 'approved') return <Navigate to="/reseller/pending" replace />
+  if (reseller?.status !== 'approved') return <Navigate to="/wholesaler/pending" replace />
   return <Outlet />
 }
 

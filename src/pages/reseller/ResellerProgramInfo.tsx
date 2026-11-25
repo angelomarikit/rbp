@@ -15,12 +15,12 @@ const steps = [
   },
   {
     title: 'Track & grow',
-    body: 'Use your reseller portal to see attributed sales, your own purchases, verified totals, and your place on the studio leaderboard.',
+    body: 'Use your wholesaler portal to see attributed sales, your own purchases, verified totals, and your place on the studio leaderboard.',
   },
 ]
 
 const highlights = [
-  'A separate reseller portal—not the same as a regular customer account',
+  'A separate wholesaler portal—not the same as a regular customer account',
   'Sales count toward rankings after the studio verifies payment on each order',
   'Your code is for store jewelry checkout; terms and discount rate are set at approval',
   'Pending applications can sign in to check status; full portal access unlocks after approval',
@@ -33,7 +33,7 @@ export function ResellerProgramInfo() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-rbp-cream">Partner program</p>
         <h2 className="font-display text-[2.2rem] leading-[0.95] text-rbp-accent">Sell Romell jewelry with your own code</h2>
         <p className="text-sm leading-relaxed text-white/80">
-          The reseller program is for partners who want to offer Romell Body Piercing jewelry to their clients or audience.
+          The wholesaler program is for partners who want to offer Romell Body Piercing jewelry to their clients or audience.
           You receive a branded discount code; every verified order that uses it is tracked in your dashboard.
         </p>
       </div>

@@ -2,10 +2,10 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthProvider.tsx'
 
 const links = [
-  { to: '/reseller/dashboard', label: 'Dashboard' },
-  { to: '/reseller/orders', label: 'Orders' },
-  { to: '/reseller/ranking', label: 'Ranking' },
-  { to: '/reseller/settings', label: 'Settings' },
+  { to: '/wholesaler/dashboard', label: 'Dashboard' },
+  { to: '/wholesaler/orders', label: 'Orders' },
+  { to: '/wholesaler/ranking', label: 'Ranking' },
+  { to: '/wholesaler/settings', label: 'Settings' },
 ]
 
 export function ResellerLayout() {
@@ -15,7 +15,7 @@ export function ResellerLayout() {
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-12 lg:grid-cols-[220px_minmax(0,1fr)] lg:px-8">
       <aside className="border border-rbp-border bg-[#080808] p-4">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-rbp-cream">Reseller portal</p>
+        <p className="text-[11px] uppercase tracking-[0.22em] text-rbp-cream">Wholesaler portal</p>
         <p className="mt-2 text-sm text-white">{profile?.full_name || profile?.email}</p>
         {approved && reseller?.discount_code && (
           <p className="mt-2 text-[12px] text-rbp-accent">
@@ -40,7 +40,7 @@ export function ResellerLayout() {
             ))
           ) : (
             <NavLink
-              to="/reseller/pending"
+              to="/wholesaler/pending"
               className={({ isActive }) =>
                 `px-3 py-2 text-[13px] uppercase tracking-[0.14em] ${
                   isActive ? 'bg-rbp-accent text-black' : 'text-white hover:text-rbp-accent'

@@ -61,7 +61,7 @@ export function ResellerOrderPage() {
 
   return (
     <div>
-      <Link to="/reseller/orders" className="text-sm text-rbp-accent">
+      <Link to="/wholesaler/orders" className="text-sm text-rbp-accent">
         All orders
       </Link>
       <GothicHeading as="h1" className="mt-3 text-[2.6rem] leading-[0.9]">

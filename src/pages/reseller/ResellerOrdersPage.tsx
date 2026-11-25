@@ -70,7 +70,7 @@ export function ResellerOrdersPage() {
       )}
       <div className="mt-6 space-y-3">
         {orders.map((order) => (
-          <Link key={order.id} to={`/reseller/orders/${order.id}`} className={`block p-4 ${rbpPanel}`}>
+          <Link key={order.id} to={`/wholesaler/orders/${order.id}`} className={`block p-4 ${rbpPanel}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-medium text-white">{order.order_number || order.id.slice(0, 8)}</p>
               <p className="text-xs text-rbp-cream">{formatWhen(order.created_at)}</p>

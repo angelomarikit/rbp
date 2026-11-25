@@ -19,7 +19,8 @@ function destinationAfterLogin(
 ) {
   if (role === 'admin') return '/admin/dashboard'
   if (role === 'reseller' || resellerAttached) {
-    if (requested?.startsWith('/reseller')) return requested
+    if (requested?.startsWith('/wholesaler')) return requested
+    if (requested?.startsWith('/reseller')) return requested.replace(/^\/reseller/, '/wholesaler')
     return destinationForRole('reseller', resellerStatus)
   }
   if (requested?.startsWith('/account')) return requested
