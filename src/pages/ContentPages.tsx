@@ -46,13 +46,23 @@ function AssociationMediaTile({
   )
 }
 
-function AssociationHeroLogo({ src, alt, className = '' }: { src: string; alt: string; className?: string }) {
+function AssociationHeroLogo({
+  src,
+  alt,
+  className = '',
+  glow = false,
+}: {
+  src: string
+  alt: string
+  className?: string
+  glow?: boolean
+}) {
   if (!src) return null
   return (
     <img
       src={src}
       alt={alt}
-      className={`object-contain drop-shadow-[0_0_24px_rgba(255,121,0,0.15)] ${className}`}
+      className={`object-contain ${glow ? 'drop-shadow-[0_0_24px_rgba(255,121,0,0.15)]' : ''} ${className}`}
       loading="eager"
     />
   )
@@ -123,11 +133,12 @@ export function AssociationPage() {
             </p>
           )}
 
-          <div className="mt-6 grid w-full grid-cols-1 place-items-center gap-6 sm:mt-8 lg:grid-cols-[minmax(10rem,12.5rem)_minmax(0,26rem)_minmax(10rem,12.5rem)] lg:items-center lg:gap-x-1 xl:grid-cols-[minmax(12rem,14rem)_minmax(0,30rem)_minmax(12rem,14rem)] xl:gap-x-3">
+          <div className="mt-6 grid w-full grid-cols-1 place-items-center gap-6 sm:mt-8 lg:grid-cols-[minmax(11rem,13rem)_minmax(0,24rem)_minmax(15rem,22rem)] lg:items-center lg:gap-x-1 xl:grid-cols-[minmax(12rem,14rem)_minmax(0,28rem)_minmax(17rem,26rem)] xl:gap-x-2">
             <AssociationHeroLogo
               src={rbpHeroSrc}
               alt={rbpBadge.alt || 'Romell Body Piercing'}
-              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 xl:h-52 xl:w-52"
+              glow
+              className="order-2 h-32 w-32 sm:h-40 sm:w-40 lg:order-1 lg:h-44 lg:w-44 xl:h-48 xl:w-48"
             />
 
             <div className="order-1 text-center lg:order-2 lg:px-1">
@@ -143,7 +154,7 @@ export function AssociationPage() {
             <AssociationHeroLogo
               src={associationHeroSrc}
               alt={associationLogo.alt || content.title}
-              className="association-bpap-logo order-3 h-32 w-32 sm:h-40 sm:w-40 lg:h-44 lg:w-44 xl:h-52 xl:w-52"
+              className="association-bpap-logo order-3 h-40 w-52 max-w-none sm:h-48 sm:w-60 lg:h-56 lg:w-[17.5rem] lg:max-w-[19rem] xl:h-60 xl:w-[20rem] xl:max-w-[22rem]"
             />
           </div>
         </div>

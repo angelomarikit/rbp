@@ -14,7 +14,14 @@
   letter-spacing: 0.02em;
 }
 
-/* Transparent PNG; slight lift so the mark reads on black. */
+/* Transparent PNG — no glow outline in CSS. */
 .association-bpap-logo {
-  filter: drop-shadow(0 0 18px rgba(255, 121, 0, 0.12));
+  transform: scale(1.05);
+  transform-origin: center;
+}
+
+@media (min-width: 1024px) {
+  .association-bpap-logo {
+    transform: scale(1.12);
+  }
 }
