@@ -27,21 +27,27 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-rbp border border-rbp-border/80 bg-[#0a0a0a] transition duration-300 hover:-translate-y-1 hover:border-rbp-accent hover:shadow-[0_12px_32px_rgba(255,121,0,0.16)]">
-      <Link to={`/products/${product.slug}`} className="relative flex aspect-[5/4] items-center justify-center overflow-hidden bg-[#111]">
+      <button
+        type="button"
+        disabled={buying}
+        onClick={() => void buyNow()}
+        aria-label={`Buy ${product.name} now`}
+        className="relative flex aspect-[5/4] w-full cursor-pointer items-center justify-center overflow-hidden bg-[#111] disabled:cursor-wait disabled:opacity-90"
+      >
         {publicMediaUrl(product.imagePath) ? (
           <img
             src={publicMediaUrl(product.imagePath)}
-            alt={product.name}
+            alt=""
             width={764}
             height={612}
             decoding="async"
-            className="h-full w-full object-contain"
+            className="pointer-events-none h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
           />
         ) : null}
-        <span className="absolute left-3 top-3 rounded-full border border-rbp-accent/70 bg-black/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rbp-accent">
+        <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-rbp-accent/70 bg-black/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-rbp-accent">
           {product.category}
         </span>
-      </Link>
+      </button>
       <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
         <Link
           to={`/products/${product.slug}`}
