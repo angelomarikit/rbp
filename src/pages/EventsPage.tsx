@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OrangeLink, OutlineButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
-import { IconCalendar, IconCalendarLight, IconChevron, IconPin } from '../components/ui/Icons.tsx'
+import { IconCalendar, IconCalendarLight, IconPin } from '../components/ui/Icons.tsx'
 import { FEATURED_EVENTS, UPCOMING_EVENTS, type EventCard } from '../data/events.ts'
 import { asset } from '../lib/assets.ts'
 import { publicMediaUrl } from '../lib/media.ts'
@@ -33,14 +33,11 @@ const testimonials = [
 ]
 
 export function EventsPage() {
-  const [slide, setSlide] = useState(0)
   const [heroImage, setHeroImage] = useState(asset('events/events-hero.jpg'))
   const [featured, setFeatured] = useState(FEATURED_EVENTS)
   const [upcoming, setUpcoming] = useState(UPCOMING_EVENTS)
   const [shots, setShots] = useState(showcaseImages.map((src) => asset(src)))
   const [quotes, setQuotes] = useState(testimonials.map((item) => ({ ...item, image: '' })))
-  const visible = 5
-  const maxSlide = Math.max(0, shots.length - visible)
 
   useEffect(() => {
     if (!supabase) return
@@ -172,33 +169,20 @@ export function EventsPage() {
         </div>
       </section>
 
-      <section id="showcase" className="border-t border-rbp-border/60 px-6 py-16 sm:px-8 lg:px-12 lg:py-24">
-        <GothicHeading className="text-center text-[2.8rem] sm:text-[3.4rem]">Client Showcase</GothicHeading>
-        <p className="font-secondary mb-10 mt-4 text-center text-[12px] uppercase tracking-[0.28em] text-white/55">
-          Real Clients · Real Piercings · Real Results
-        </p>
-        <div className="relative flex items-center gap-4">
-          <button
-            type="button"
-            aria-label="Previous"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-rbp-border text-rbp-accent"
-            onClick={() => setSlide((s) => Math.max(0, s - 1))}
-          >
-            <IconChevron direction="left" />
-          </button>
-          <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {shots.slice(slide, slide + visible).map((src) => (
-              <img key={src} src={src} alt="" className="h-[220px] w-full rounded-rbp border border-rbp-border object-cover sm:h-[280px]" />
-            ))}
-          </div>
-          <button
-            type="button"
-            aria-label="Next"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-rbp-border text-rbp-accent"
-            onClick={() => setSlide((s) => Math.min(maxSlide, s + 1))}
-          >
-            <IconChevron direction="right" />
-          </button>
+      <section
+        id="showcase"
+        className="border-y border-rbp-border/70 px-5 py-16 text-center sm:px-8 lg:px-10 lg:py-20"
+      >
+        <GothicHeading className="mb-8 text-[2.2rem] text-rbp-accent">Client Showcase</GothicHeading>
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-5">
+          {shots.map((src) => (
+            <img
+              key={src}
+              src={src}
+              alt="Client piercing result"
+              className="aspect-[3/4] w-full rounded-[10px] border border-rbp-border/60 object-cover"
+            />
+          ))}
         </div>
       </section>
 
