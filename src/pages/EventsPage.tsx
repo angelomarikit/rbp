@@ -5,17 +5,9 @@ import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { IconCalendar, IconCalendarLight, IconPin } from '../components/ui/Icons.tsx'
 import { FEATURED_EVENTS, UPCOMING_EVENTS, type EventCard } from '../data/events.ts'
 import { asset } from '../lib/assets.ts'
+import { clientResultFallbackUrls, clientResultImageUrls, displayClientResultSrc } from '../lib/clientShowcase.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { supabase } from '../lib/supabase.ts'
-
-const showcaseImages = [
-  'showcase/event-client-result-1.jpg',
-  'showcase/event-client-result-2.jpg',
-  'showcase/event-client-result-3.jpg',
-  'showcase/event-client-result-4.jpg',
-  'showcase/event-client-result-5.jpg',
-  'showcase/event-client-result-6.jpg',
-]
 
 const testimonials = [
   {
@@ -36,7 +28,7 @@ export function EventsPage() {
   const [heroImage, setHeroImage] = useState(asset('events/events-hero.jpg'))
   const [featured, setFeatured] = useState(FEATURED_EVENTS)
   const [upcoming, setUpcoming] = useState(UPCOMING_EVENTS)
-  const [shots, setShots] = useState(showcaseImages.map((src) => asset(src)))
+  const [shots, setShots] = useState(clientResultFallbackUrls)
   const [quotes, setQuotes] = useState(testimonials.map((item) => ({ ...item, image: '' })))
 
   useEffect(() => {
@@ -44,7 +36,7 @@ export function EventsPage() {
     void Promise.all([
       supabase.from('content_sections').select('media_path').eq('page', 'events').eq('section_key', 'hero').maybeSingle(),
       supabase.from('events').select('slug, title, summary, image_path, event_date, location, kind').eq('published', true).order('sort_order'),
-      supabase.from('showcase_items').select('storage_path, placement').eq('published', true).in('placement', ['events', 'both']).order('sort_order'),
+      supabase.from('showcase_items').select('storage_path, placement').eq('published', true).in('placement', ['home', 'both']).order('sort_order'),
       supabase.from('testimonials').select('customer_name, quote, image_path').eq('published', true).order('sort_order'),
     ]).then(([hero, events, showcase, testimony]) => {
       if (hero.data?.media_path) setHeroImage(publicMediaUrl(hero.data.media_path))
@@ -65,8 +57,7 @@ export function EventsPage() {
         if (featuredRows.length) setFeatured(featuredRows)
         if (upcomingRows.length) setUpcoming(upcomingRows)
       }
-      const eventShots = (showcase.data ?? []).filter((row) => row.placement === 'events' || String(row.storage_path).includes('event-client-result') || String(row.storage_path).startsWith('uploads/'))
-      if (eventShots.length) setShots(eventShots.map((row) => publicMediaUrl(row.storage_path as string)))
+      setShots(clientResultImageUrls(showcase.data as { storage_path: string; placement: string }[] | null))
       if (testimony.data?.length) {
         setQuotes(testimony.data.map((row) => ({
           name: row.customer_name as string,
@@ -178,7 +169,7 @@ export function EventsPage() {
           {shots.map((src) => (
             <img
               key={src}
-              src={src}
+              src={displayClientResultSrc(src)}
               alt="Client piercing result"
               className="aspect-[3/4] w-full rounded-[10px] border border-rbp-border/60 object-cover"
             />

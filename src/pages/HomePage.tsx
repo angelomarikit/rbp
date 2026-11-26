@@ -9,6 +9,7 @@ import { FEATURED_EVENTS } from '../data/events.ts'
 import { asset } from '../lib/assets.ts'
 import { heroUsesVideo, resolveHeroMedia } from '../lib/heroMedia.ts'
 import { publicMediaUrl } from '../lib/media.ts'
+import { clientResultImageUrls, clientResultFallbackUrls, displayClientResultSrc } from '../lib/clientShowcase.ts'
 import { supabase } from '../lib/supabase.ts'
 
 const collections = [
@@ -20,19 +21,11 @@ const collections = [
   { title: 'Ear Jewelry', image: 'products/product-09.jpg', category: 'Ear Jewelry' },
 ]
 
-const clientResults = [
-  'showcase/client-nostril-septum.jpg',
-  'showcase/client-ear-multiple-piercings.jpg',
-  'showcase/client-eyebrow.jpg',
-  'showcase/client-lip.jpg',
-  'showcase/client-ear-tunnel.jpg',
-]
-
 const defaultHeroTitle = 'Professional Body Piercing & Jewelry'
 
 export function HomePage() {
   const [collectionCards, setCollectionCards] = useState(collections)
-  const [results, setResults] = useState(clientResults)
+  const [results, setResults] = useState(clientResultFallbackUrls)
   const [featured, setFeatured] = useState(FEATURED_EVENTS.map((event) => ({
     slug: event.slug,
     title: event.title,
@@ -98,8 +91,7 @@ export function HomePage() {
           return [{ title: name, image: publicMediaUrl(row.image_path as string), category: name }]
         }))
       }
-      const shots = (shotRows.data ?? []).filter((row) => row.placement === 'home' || !String(row.storage_path).includes('event-client-result'))
-      if (shots.length) setResults(shots.slice(0, 5).map((row) => publicMediaUrl(row.storage_path as string)))
+      setResults(clientResultImageUrls(shotRows.data as { storage_path: string; placement: string }[] | null))
       if (eventRows.data?.length) {
         setFeatured(eventRows.data.map((row) => ({
           slug: row.slug as string,
@@ -186,7 +178,7 @@ export function HomePage() {
           {results.map((src) => (
             <img
               key={src}
-              src={src.startsWith('/') || src.startsWith('http') ? src : asset(src)}
+              src={displayClientResultSrc(src)}
               alt="Client piercing result"
               className="aspect-[3/4] w-full rounded-[10px] border border-rbp-border/60 object-cover"
             />
