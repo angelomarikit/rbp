@@ -26,6 +26,20 @@ export function InquiriesAdmin() {
 
   const openCount = rows.filter((row) => row.status === 'open').length
 
+  const removeInquiry = async (row: Inquiry) => {
+    if (!supabase) return
+    const label = row.source === 'appointment' ? 'this appointment request' : 'this inquiry'
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return
+    setOk(null)
+    const { error: deleteError } = await supabase.from('inquiries').delete().eq('id', row.id)
+    if (deleteError) setError(deleteError.message)
+    else {
+      setError(null)
+      setOk('Inquiry deleted.')
+      await load()
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div>
@@ -54,7 +68,12 @@ export function InquiriesAdmin() {
                 <p className="text-[11px] uppercase tracking-[0.14em] text-[#ffb067]">{row.source === 'appointment' ? 'Piercing appointment' : 'Chat'}</p>
                 <p className="mt-1 whitespace-pre-line text-sm font-medium text-white">{row.question}</p>
               </div>
-              <p className="text-xs text-[#8d8d8d]">{new Date(row.created_at).toLocaleDateString()}</p>
+              <div className="flex flex-col items-end gap-2">
+                <p className="text-xs text-[#8d8d8d]">{new Date(row.created_at).toLocaleDateString()}</p>
+                <button type="button" className="text-xs font-semibold text-[#ffb089] hover:text-[#ffc9a8]" onClick={() => void removeInquiry(row)}>
+                  Delete
+                </button>
+              </div>
             </div>
             <p className="mt-1 text-xs text-[#9a9a9a]">{row.email} · {row.phone}</p>
             <div className="mt-3 flex flex-wrap gap-2">
