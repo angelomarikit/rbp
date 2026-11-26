@@ -124,7 +124,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
       : described.sizeLabel
     const variantKey = [
       sizeGroup ? `${sizeGroup.key}:${ordered.join('+')}` : '',
-      ...Object.entries(nextSelected).filter(([key]) => key !== sizeGroup?.key).map(([key, value]) => `${key}:${value}`),
+      ...Object.entries(merged).filter(([key]) => key !== sizeGroup?.key).map(([key, value]) => `${key}:${value}`),
     ].filter(Boolean).join('|')
     onChange(line.lineId, {
       options: { ...described.options, ...(sizeGroup ? { [sizeGroup.key]: ordered[0] ?? '' } : {}) },
@@ -149,26 +149,33 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
 
   return (
     <div className="mt-2 space-y-2">
-      {designs.length > 0 && (
-        <OptionRow label="Design">
-          {designs.map((design) => {
-            const active = activeDesign === design.name
-            return (
-              <button
-                key={design.name}
-                type="button"
-                aria-pressed={active}
-                onClick={() => apply({ ...selected, design: design.name }, sizes)}
-                className={`flex items-center gap-1.5 ${optionPill(active)}`}
-              >
-                {design.image ? (
-                  <img src={publicMediaUrl(design.image)} alt="" className="h-6 w-6 rounded-full object-cover" />
-                ) : null}
-                {design.name}
-              </button>
-            )
-          })}
-        </OptionRow>
+      {designs.length > 1 && (
+        <div className="w-full space-y-1.5">
+          <span className="block text-[10px] font-semibold uppercase tracking-wide text-white/50">Design</span>
+          <div className="flex w-full flex-row flex-wrap items-center gap-2">
+            {designs.map((design) => {
+              const active = activeDesign === design.name
+              const thumb = publicMediaUrl(design.image)
+              return (
+                <button
+                  key={`${design.name}-${design.image}`}
+                  type="button"
+                  aria-pressed={active}
+                  aria-label={design.name}
+                  title={design.name}
+                  onClick={() => apply({ ...selected, design: design.name }, sizes)}
+                  className={`h-12 w-12 shrink-0 overflow-hidden rounded-rbp border-2 bg-[#111] transition sm:h-14 sm:w-14 ${
+                    active
+                      ? 'border-rbp-accent shadow-[0_0_12px_rgba(255,121,0,0.35)]'
+                      : 'border-white/15 hover:border-rbp-accent/70'
+                  }`}
+                >
+                  {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : null}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       )}
       {sizeGroup && (
         <OptionRow label={sizeGroup.name}>
@@ -376,16 +383,16 @@ export function CheckoutPage() {
                 key={line.cartId ?? line.lineId}
                 className="grid grid-cols-[minmax(0,2fr)_70px_110px_70px_24px] items-start gap-2 border-b border-white/10 py-3 text-[13px]"
               >
-                <div className="flex min-w-0 gap-4">
-                  <img
-                    src={cartLineImage(line)}
-                    alt=""
-                    className="h-48 w-52 shrink-0 rounded border border-white/10 bg-[#111] object-contain sm:h-56 sm:w-60 md:h-64 md:w-72"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-white">{line.name}</p>
-                    <CartChoices line={line} onChange={updateLine} />
+                <div className="min-w-0 space-y-2">
+                  <div className="flex gap-3 sm:gap-4">
+                    <img
+                      src={cartLineImage(line)}
+                      alt=""
+                      className="h-36 w-40 shrink-0 rounded border border-white/10 bg-[#111] object-contain sm:h-48 sm:w-52 md:h-56 md:w-60"
+                    />
+                    <p className="min-w-0 flex-1 pt-1 font-semibold leading-snug text-white">{line.name}</p>
                   </div>
+                  <CartChoices line={line} onChange={updateLine} />
                 </div>
                 <span>{formatPhpLabel(line.priceCents)}</span>
                 <QuantityStepper size="sm" value={line.quantity} onChange={(q) => updateQuantity(line.lineId, q)} />

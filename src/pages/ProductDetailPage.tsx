@@ -14,7 +14,7 @@ import { useCart } from '../features/cart/CartProvider.tsx'
 import { rowToProduct, useProducts } from '../hooks/useProducts.ts'
 import { formatPhp } from '../lib/format.ts'
 import { publicMediaUrl } from '../lib/media.ts'
-import { defaultChoiceFor, productDesigns, type StoreDesign } from '../lib/productChoices.ts'
+import { defaultChoiceFor, designsForProduct, type StoreDesign } from '../lib/productChoices.ts'
 import { supabase } from '../lib/supabase.ts'
 
 const GALLERY = [
@@ -176,7 +176,12 @@ export function ProductDetailPage() {
         return { label: (version.label as string) ?? '', priceCents: version.price_cents as number | null, options: clean }
       })
       const nextGroups = choiceGroups(stored, names).filter((group) => group.key !== 'design' && group.key !== 'version')
-      const nextDesigns = productDesigns((data as { specs?: unknown }).specs, stored)
+      const versionRows = stored.map((version) => ({
+        label: version.label,
+        price_cents: version.priceCents,
+        options: version.options,
+      }))
+      const nextDesigns = await designsForProduct(data.id as string, (data as { specs?: unknown }).specs, versionRows)
       setProduct(next)
       setVariants(stored)
       const initial = firstSelection(stored, nextGroups)

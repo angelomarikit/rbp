@@ -383,7 +383,11 @@ export function ProductEditor() {
             <TextArea label="Description" hint="A short note about the piece. Plain sentences are enough." value={description} onChange={(event) => setDescription(event.target.value)} />
           </Card>
           <Card id="photos" className="scroll-mt-4 space-y-4">
-            <SectionHeading step="3" title="Photos" hint="The first photo is the one on the shop. Best size is 1200×1500, a tall 4:5 picture." />
+            <SectionHeading
+              step="3"
+              title="Photos"
+              hint="The first photo is the one on the shop. Best size is 1200×1500, a tall 4:5 picture. Every extra photo appears as a design choice on checkout (customer picks which image)."
+            />
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {images.map((path, index) => (
                 <figure key={path} className="overflow-hidden rounded-xl border border-[#333] bg-[#0c0c0c]">

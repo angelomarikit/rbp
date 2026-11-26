@@ -7,6 +7,8 @@ export type ProductChoice = {
   color?: string
   priceCents?: number
   options: Record<string, string>
+  /** Selected design thumbnail for cart / order snapshot. */
+  imagePath?: string
 }
 
 export type ChoiceGroup = { key: string; name: string; values: string[] }
@@ -108,6 +110,37 @@ export function productDesigns(specs: unknown, rows: VersionRow[] = []): StoreDe
   return saved.length ? saved : designsFromVersions(rows)
 }
 
+/** One checkout design per product gallery photo (admin → Catalog → Photos). */
+export function galleryDesignsFromImages(paths: string[]): StoreDesign[] {
+  const seen = new Set<string>()
+  const designs: StoreDesign[] = []
+  for (const raw of paths) {
+    const image = raw.trim()
+    if (!image || seen.has(image)) continue
+    seen.add(image)
+    designs.push({ name: `Design ${designs.length + 1}`, image })
+  }
+  return designs
+}
+
+async function productGalleryImagePaths(productId: string): Promise<string[]> {
+  if (!supabase || !productId) return []
+  const { data } = await supabase
+    .from('product_images')
+    .select('storage_path, sort_order')
+    .eq('product_id', productId)
+    .order('sort_order')
+  return (data ?? [])
+    .map((row) => String((row as { storage_path: string }).storage_path ?? '').trim())
+    .filter(Boolean)
+}
+
+export async function designsForProduct(productId: string, specs: unknown, rows: VersionRow[]): Promise<StoreDesign[]> {
+  const galleryPaths = await productGalleryImagePaths(productId)
+  if (galleryPaths.length > 0) return galleryDesignsFromImages(galleryPaths)
+  return productDesigns(specs, rows)
+}
+
 export function imageForDesign(designs: StoreDesign[], design: string) {
   return designs.find((item) => item.name === design.trim())?.image || ''
 }
@@ -150,7 +183,8 @@ export async function optionGroupsFor(productId: string) {
     specs = data?.specs
     if (!groupsFromVersions(rows).length && data) rows = rowsFromProduct(data)
   }
-  return { groups: groupsFromVersions(rows), rows, designs: productDesigns(specs, rows) }
+  const designs = await designsForProduct(productId, specs, rows)
+  return { groups: groupsFromVersions(rows), rows, designs }
 }
 
 export async function defaultChoiceFor(productId: string) {
@@ -160,6 +194,8 @@ export async function defaultChoiceFor(productId: string) {
   const design = designs[0]?.name?.trim()
   if (design) {
     choice.options = { ...choice.options, design }
+    const imagePath = imageForDesign(designs, design)
+    if (imagePath) choice.imagePath = imagePath
   }
   return choice
 }
