@@ -8,6 +8,7 @@ import { submitWholesalerApplication } from '../../features/wholesaler/submitApp
 import { GothicHeading } from '../../components/ui/GothicHeading.tsx'
 import { rbpPanel } from '../../components/ui/panels.ts'
 import { AuthError, AuthLink, authField } from '../auth/AuthShell.tsx'
+import { WHOLESALER_STANDARD_DISCOUNT_PERCENT } from '../../lib/wholesalerDiscount.ts'
 import { ResellerProgramInfo } from './ResellerProgramInfo.tsx'
 
 export function ResellerRegisterPage() {
@@ -169,8 +170,8 @@ export function ResellerRegisterPage() {
             Become a wholesaler
           </GothicHeading>
           <p className="mt-3 max-w-2xl text-sm text-white/75">
-            Partner with the studio, share a checkout code with your clients, and track attributed sales in your own
-            portal.
+            Partner with the studio, share a checkout code with your clients ({WHOLESALER_STANDARD_DISCOUNT_PERCENT}% off
+            jewelry subtotal at checkout), and track attributed sales in your own portal.
           </p>
         </div>
       </section>

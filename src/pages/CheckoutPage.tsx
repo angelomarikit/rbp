@@ -17,6 +17,7 @@ import { describeSelection, imageForDesign, optionGroupsFor, type ChoiceGroup, t
 import { friendlyError } from '../lib/friendlyError.ts'
 import { publicMediaUrl } from '../lib/media.ts'
 import { emptyPaymentQrs, paymentMethodLabel, paymentQrsFromExtra, type PaymentQrs } from '../lib/paymentQr.ts'
+import { WHOLESALER_STANDARD_DISCOUNT_PERCENT } from '../lib/wholesalerDiscount.ts'
 
 function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
   const selected: Record<string, string> = { ...(line.options ?? {}) }
@@ -376,11 +377,17 @@ export function CheckoutPage() {
               <div className="mt-3 space-y-2 border-b border-white/10 pb-3">
                 <label className="block text-[11px] uppercase tracking-[0.12em] text-white/60">
                   Wholesaler / discount code
-                  <div className="mt-1 flex gap-2">
+                  <p className="mt-1.5 normal-case text-[13px] font-semibold tracking-normal text-rbp-accent">
+                    Wholesalers get {WHOLESALER_STANDARD_DISCOUNT_PERCENT}% discount on jewelry subtotal (before shipping).
+                  </p>
+                  <p className="mt-1 normal-case tracking-normal text-[12px] leading-snug text-white/55">
+                    Enter your approved wholesaler code below, then tap Apply.
+                  </p>
+                  <div className="mt-2 flex gap-2">
                     <input
                       className={`${rbpField} h-9 flex-1 text-[13px]`}
                       value={discountInput}
-                      placeholder="e.g. RBP15"
+                      placeholder="Wholesaler code"
                       onChange={(e) => setDiscountInput(e.target.value)}
                       onBlur={() => void applyDiscountCode()}
                     />

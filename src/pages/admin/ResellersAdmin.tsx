@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { friendlyError } from '../../lib/friendlyError.ts'
 import { supabase, supabaseConfigured } from '../../lib/supabase.ts'
+import { WHOLESALER_STANDARD_DISCOUNT_PERCENT } from '../../lib/wholesalerDiscount.ts'
 import { Card, Notice, PrimaryButton } from './ui.tsx'
 
 type ResellerAdminRow = {
@@ -30,7 +31,7 @@ function suggestCode(name: string | null | undefined) {
 function emptyDraft(row: ResellerAdminRow): { code: string; percent: string; note: string } {
   return {
     code: row.discount_code ?? suggestCode(row.full_name),
-    percent: row.discount_percent ? String(row.discount_percent) : '15',
+    percent: row.discount_percent ? String(row.discount_percent) : String(WHOLESALER_STANDARD_DISCOUNT_PERCENT),
     note: row.admin_note ?? '',
   }
 }
@@ -265,7 +266,7 @@ export function ResellersAdmin() {
                 <input
                   className="mt-1 w-full rounded-lg border border-[#333] bg-[#111] px-3 py-2 text-sm text-white"
                   inputMode="numeric"
-                  value={drafts[row.id]?.percent ?? '15'}
+                  value={drafts[row.id]?.percent ?? String(WHOLESALER_STANDARD_DISCOUNT_PERCENT)}
                   onChange={(e) =>
                     setDrafts((prev) => ({
                       ...prev,

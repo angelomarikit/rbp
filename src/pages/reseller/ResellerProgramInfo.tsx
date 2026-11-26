@@ -1,3 +1,4 @@
+import { WHOLESALER_STANDARD_DISCOUNT_PERCENT } from '../../lib/wholesalerDiscount.ts'
 import { rbpPanel } from '../../components/ui/panels.ts'
 
 const steps = [
@@ -7,11 +8,11 @@ const steps = [
   },
   {
     title: 'Get approved',
-    body: 'Once approved, Romell assigns you a unique checkout code and a percentage discount customers can use on jewelry orders (off subtotal, before shipping).',
+    body: `Once approved, Romell assigns you a unique checkout code. Customers enter it at checkout for ${WHOLESALER_STANDARD_DISCOUNT_PERCENT}% off the jewelry subtotal (before shipping).`,
   },
   {
     title: 'Share your code',
-    body: 'Customers enter your code on the store checkout page. The discount is applied automatically and the order is attributed to you.',
+    body: `Customers enter your code on the store checkout page. They save ${WHOLESALER_STANDARD_DISCOUNT_PERCENT}% on subtotal and the order is attributed to you.`,
   },
   {
     title: 'Track & grow',
@@ -22,7 +23,7 @@ const steps = [
 const highlights = [
   'A separate wholesaler portal—not the same as a regular customer account',
   'Sales count toward rankings after the studio verifies payment on each order',
-  'Your code is for store jewelry checkout; terms and discount rate are set at approval',
+  `Approved partners receive ${WHOLESALER_STANDARD_DISCOUNT_PERCENT}% off jewelry subtotal at checkout (standard rate; studio confirms on approval)`,
   'Pending applications can sign in to check status; full portal access unlocks after approval',
 ]
 
@@ -35,6 +36,12 @@ export function ResellerProgramInfo() {
         <p className="text-sm leading-relaxed text-white/80">
           The wholesaler program is for partners who want to offer Romell Body Piercing jewelry to their clients or audience.
           You receive a branded discount code; every verified order that uses it is tracked in your dashboard.
+        </p>
+        <p className={`${rbpPanel} px-4 py-3 text-sm leading-relaxed text-white/85`}>
+          <span className="font-semibold text-rbp-accent">{WHOLESALER_STANDARD_DISCOUNT_PERCENT}% wholesaler discount</span>
+          {' — '}
+          approved partners share a checkout code so clients save {WHOLESALER_STANDARD_DISCOUNT_PERCENT}% on jewelry subtotal
+          (shipping is separate).
         </p>
       </div>
 
