@@ -1,18 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OrangeButton } from '../components/ui/Buttons.tsx'
 import { GothicHeading } from '../components/ui/GothicHeading.tsx'
 import { LoadingScreen } from '../components/ui/LoadingScreen.tsx'
 import { friendlyError } from '../lib/friendlyError.ts'
 import { asset } from '../lib/assets.ts'
+import {
+  BOOK_PAGE_DEFAULT_PRICE_LIST,
+  BOOK_PAGE_DEFAULT_STUDIO,
+  bookPageImagePath,
+} from '../lib/bookPageMedia.ts'
+import { publicMediaUrl } from '../lib/media.ts'
 import { rbpField, rbpPanel } from '../components/ui/panels.ts'
 import { supabase, supabaseConfigured } from '../lib/supabase.ts'
 
 const inputClass = `${rbpField} h-11 [color-scheme:dark]`
 
-const PRICE_LIST_POSTER = asset('references/piercing-price-list-poster.jpg')
 const BOOK_SIDEBAR_LOGO = asset('branding/rbp-association-hero-logo.png')
-const STUDIO_PHOTO = asset('banners/book-page-studio-interior.jpg')
 
 export function BookPage() {
   const [form, setForm] = useState({
@@ -26,6 +30,35 @@ export function BookPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [priceListPath, setPriceListPath] = useState(BOOK_PAGE_DEFAULT_PRICE_LIST)
+  const [studioPhotoPath, setStudioPhotoPath] = useState(BOOK_PAGE_DEFAULT_STUDIO)
+
+  useEffect(() => {
+    if (!supabaseConfigured || !supabase) return
+    let active = true
+    void supabase
+      .from('content_sections')
+      .select('section_key, media_path')
+      .eq('page', 'book')
+      .in('section_key', ['price_list', 'studio_photo'])
+      .then(({ data }) => {
+        if (!active || !data) return
+        for (const row of data as { section_key: string; media_path: string | null }[]) {
+          if (row.section_key === 'price_list') {
+            setPriceListPath(bookPageImagePath(row.media_path, BOOK_PAGE_DEFAULT_PRICE_LIST))
+          }
+          if (row.section_key === 'studio_photo') {
+            setStudioPhotoPath(bookPageImagePath(row.media_path, BOOK_PAGE_DEFAULT_STUDIO))
+          }
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const priceListSrc = publicMediaUrl(priceListPath) || asset(BOOK_PAGE_DEFAULT_PRICE_LIST)
+  const studioPhotoSrc = publicMediaUrl(studioPhotoPath) || asset(BOOK_PAGE_DEFAULT_STUDIO)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,7 +125,7 @@ export function BookPage() {
       <div className="mx-auto grid w-full max-w-[1920px] grid-cols-1 gap-10 lg:grid-cols-[auto_minmax(0,48rem)_1fr] lg:items-stretch lg:gap-x-6 xl:gap-x-12 2xl:gap-x-16">
         <aside className="order-2 flex w-full max-w-[520px] shrink-0 justify-center lg:order-1 lg:mx-0 lg:w-auto lg:max-w-none lg:justify-end lg:justify-self-start lg:self-stretch">
           <img
-            src={PRICE_LIST_POSTER}
+            src={priceListSrc}
             alt="Body piercing price list — safe, sterile, professional"
             className="h-auto w-full object-contain lg:h-[min(1280px,calc(100dvh-5.25rem))] lg:w-auto lg:max-w-[min(74vw,920px)] lg:object-right xl:h-[min(1320px,calc(100dvh-5rem))] xl:max-w-[min(76vw,960px)]"
             width={640}
@@ -196,7 +229,7 @@ export function BookPage() {
             decoding="async"
           />
           <img
-            src={STUDIO_PHOTO}
+            src={studioPhotoSrc}
             alt="Romell Body Piercing studio interior"
             className="w-full min-h-[200px] flex-1 rounded-rbp border border-rbp-border object-cover shadow-[0_0_28px_rgba(255,122,0,0.1)] lg:min-h-0"
             width={400}

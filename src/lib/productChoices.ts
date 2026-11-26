@@ -150,10 +150,16 @@ export async function optionGroupsFor(productId: string) {
     specs = data?.specs
     if (!groupsFromVersions(rows).length && data) rows = rowsFromProduct(data)
   }
-  return { groups: groupsFromVersions(rows), rows, designs: productDesigns(specs, versions) }
+  return { groups: groupsFromVersions(rows), rows, designs: productDesigns(specs, rows) }
 }
 
 export async function defaultChoiceFor(productId: string) {
-  const { rows } = await optionGroupsFor(productId)
-  return choiceFromVersions(rows)
+  const { rows, designs } = await optionGroupsFor(productId)
+  const choice = choiceFromVersions(rows)
+  if (!choice) return null
+  const design = designs[0]?.name?.trim()
+  if (design) {
+    choice.options = { ...choice.options, design }
+  }
+  return choice
 }

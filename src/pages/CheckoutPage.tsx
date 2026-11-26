@@ -11,7 +11,8 @@ import { useAuth } from '../features/auth/AuthProvider.tsx'
 import { supabase } from '../lib/supabase.ts'
 import { useCheckout } from '../hooks/useCheckout.ts'
 import { asset } from '../lib/assets.ts'
-import type { CartLine } from '../data/types.ts'
+import { GEM_VARIANTS } from '../data/products.ts'
+import type { CartLine, GemVariant } from '../data/types.ts'
 import { formatPhpLabel } from '../lib/format.ts'
 import { describeSelection, imageForDesign, optionGroupsFor, type ChoiceGroup, type StoreDesign } from '../lib/productChoices.ts'
 import { friendlyError } from '../lib/friendlyError.ts'
@@ -34,6 +35,28 @@ function chosenOptions(line: CartLine, groups: ChoiceGroup[]) {
 
 function sizeGroupOf(groups: ChoiceGroup[]) {
   return groups.find((group) => group.key === 'length') ?? groups.find((group) => group.key === 'size')
+}
+
+function colorChoice(label: string): GemVariant {
+  const known = GEM_VARIANTS.find((item) => item.label.toLowerCase() === label.toLowerCase() || item.key === label.toLowerCase())
+  if (known) return known
+  const key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'color'
+  return { key, label, color: '#f2f2f2' }
+}
+
+function optionPill(active: boolean) {
+  return `shrink-0 rounded-full border px-2.5 py-1 text-[12px] font-semibold transition ${
+    active ? 'border-rbp-accent text-rbp-accent' : 'border-white/20 text-white/80 hover:border-rbp-accent'
+  }`
+}
+
+function OptionRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span className="w-[4.5rem] shrink-0 text-[10px] font-semibold uppercase tracking-wide text-white/50">{label}</span>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">{children}</div>
+    </div>
+  )
 }
 
 function checkedSizes(line: CartLine, group: ChoiceGroup) {
@@ -72,9 +95,10 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
   }, [line.productId])
 
   useEffect(() => {
-    const picture = imageForDesign(designs, line.options?.design ?? '')
+    const designName = line.options?.design ?? designs[0]?.name ?? ''
+    const picture = imageForDesign(designs, designName)
     if (picture && picture !== line.imagePath) onChange(line.lineId, { imagePath: picture })
-  }, [designs, line, onChange])
+  }, [designs, line.lineId, line.imagePath, line.options?.design, onChange])
 
   if (!groups.length && !designs.length) {
     return (
@@ -90,7 +114,9 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
   const sizeGroup = sizeGroupOf(groups)
   const sizes = sizeGroup ? checkedSizes(line, sizeGroup) : []
   const apply = (nextSelected: Record<string, string>, nextSizes: string[], quantity?: number) => {
-    const described = describeSelection(nextSelected, rows)
+    const designName = nextSelected.design ?? line.options?.design ?? designs[0]?.name
+    const merged = designName ? { ...nextSelected, design: designName } : nextSelected
+    const described = describeSelection(merged, rows)
     const ordered = sizeGroup ? sizeGroup.values.filter((value) => nextSizes.includes(value)) : []
     const sizeText = ordered.join(', ')
     const sizeLabel = sizeGroup
@@ -110,7 +136,7 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
       color: described.color,
       priceCents: described.priceCents ?? line.priceCents,
       variantLabel: sizeLabel,
-      imagePath: imageForDesign(designs, nextSelected.design ?? '') || productImage || line.imagePath,
+      imagePath: imageForDesign(designs, merged.design ?? '') || productImage || line.imagePath,
     })
   }
   const chooseSizes = (next: string[]) => {
@@ -118,74 +144,97 @@ function CartChoices({ line, onChange }: { line: CartLine; onChange: (lineId: st
     const list = next.length ? next : [sizeGroup.values[0]]
     apply({ ...selected, [sizeGroup.key]: list[0] }, list, list.length)
   }
+
+  const activeDesign = selected.design || line.options?.design || designs[0]?.name || ''
+
   return (
-    <div className="mt-1 space-y-1.5">
+    <div className="mt-2 space-y-2">
+      {designs.length > 0 && (
+        <OptionRow label="Design">
+          {designs.map((design) => {
+            const active = activeDesign === design.name
+            return (
+              <button
+                key={design.name}
+                type="button"
+                aria-pressed={active}
+                onClick={() => apply({ ...selected, design: design.name }, sizes)}
+                className={`flex items-center gap-1.5 ${optionPill(active)}`}
+              >
+                {design.image ? (
+                  <img src={publicMediaUrl(design.image)} alt="" className="h-6 w-6 rounded-full object-cover" />
+                ) : null}
+                {design.name}
+              </button>
+            )
+          })}
+        </OptionRow>
+      )}
       {sizeGroup && (
-        <fieldset className="text-[11px] text-white/55">
-          <legend>{sizeGroup.name}</legend>
-          <label className="mt-1 flex items-center gap-1.5 text-[12px] text-white">
+        <OptionRow label={sizeGroup.name}>
+          <label className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-white/80">
             <input
               type="checkbox"
               className="accent-[#FF7900]"
               checked={sizes.length === sizeGroup.values.length}
-              onChange={() => chooseSizes(sizes.length === sizeGroup.values.length ? [sizes[0] ?? sizeGroup.values[0]] : [...sizeGroup.values])}
+              onChange={() =>
+                chooseSizes(
+                  sizes.length === sizeGroup.values.length ? [sizes[0] ?? sizeGroup.values[0]] : [...sizeGroup.values],
+                )
+              }
             />
-            All sizes
+            All
           </label>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-            {sizeGroup.values.map((value) => (
-              <label key={value} className="flex items-center gap-1.5 text-[12px] text-white">
-                <input
-                  type="checkbox"
-                  className="accent-[#FF7900]"
-                  checked={sizes.includes(value)}
-                  onChange={() => chooseSizes(sizes.includes(value) ? sizes.filter((size) => size !== value) : [...sizeGroup.values])}
-                />
-                {value}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+          {sizeGroup.values.map((value) => (
+            <label key={value} className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-white/90">
+              <input
+                type="checkbox"
+                className="accent-[#FF7900]"
+                checked={sizes.includes(value)}
+                onChange={() =>
+                  chooseSizes(sizes.includes(value) ? sizes.filter((size) => size !== value) : [...sizeGroup.values])
+                }
+              />
+              {value}
+            </label>
+          ))}
+        </OptionRow>
       )}
-      {designs.length > 0 && (
-        <fieldset className="text-[11px] text-white/55">
-          <legend>Design</legend>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-            {designs.map((design) => (
-              <label key={design.name} className="flex items-center gap-1.5 text-[12px] text-white">
-                <input
-                  type="radio"
-                  name={`${line.cartId ?? line.lineId}-design`}
-                  className="accent-[#FF7900]"
-                  checked={(selected.design || designs[0]?.name) === design.name}
-                  onChange={() => apply({ ...selected, design: design.name }, sizes)}
-                />
-                {design.image ? <img src={publicMediaUrl(design.image)} alt="" className="h-8 w-8 rounded object-cover" /> : null}
-                {design.name}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      )}
-      {groups.filter((group) => group.key !== sizeGroup?.key && group.key !== 'version').map((group) => (
-        <fieldset key={group.key} className="text-[11px] text-white/55">
-          <legend>{group.name}</legend>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-            {group.values.map((value) => (
-              <label key={value} className="flex items-center gap-1.5 text-[12px] text-white">
-                <input
-                  type="radio"
-                  name={`${line.cartId ?? line.lineId}-${group.key}`}
-                  className="accent-[#FF7900]"
-                  checked={(selected[group.key] ?? group.values[0]) === value}
-                  onChange={() => apply({ ...selected, [group.key]: value }, sizes)}
-                />
-                {value}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      ))}
+      {groups
+        .filter((group) => group.key !== sizeGroup?.key && group.key !== 'version' && group.key !== 'design')
+        .map((group) => (
+          <OptionRow key={group.key} label={group.name}>
+            {group.values.map((value) => {
+              const active = (selected[group.key] ?? group.values[0]) === value
+              if (group.key === 'color') {
+                const swatch = colorChoice(value)
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => apply({ ...selected, [group.key]: value }, sizes)}
+                    className={`shrink-0 text-[12px] font-semibold ${active ? 'underline decoration-2 underline-offset-4' : 'opacity-80 hover:opacity-100'}`}
+                    style={{ color: swatch.key === 'black' ? '#f2f2f2' : swatch.color }}
+                  >
+                    {value}
+                  </button>
+                )
+              }
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => apply({ ...selected, [group.key]: value }, sizes)}
+                  className={optionPill(active)}
+                >
+                  {value}
+                </button>
+              )
+            })}
+          </OptionRow>
+        ))}
     </div>
   )
 }
@@ -304,7 +353,7 @@ export function CheckoutPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-[1.6fr_70px_110px_70px_24px] border-b border-white/10 px-1 pb-2 text-[12px] font-semibold text-white/80">
+          <div className="grid grid-cols-[minmax(0,2fr)_70px_110px_70px_24px] border-b border-white/10 px-1 pb-2 text-[12px] font-semibold text-white/80">
             <span>Product</span>
             <span>Price</span>
             <span>Quantity</span>
@@ -325,7 +374,7 @@ export function CheckoutPage() {
             lines.map((line) => (
               <div
                 key={line.cartId ?? line.lineId}
-                className="grid grid-cols-[1.6fr_70px_110px_70px_24px] items-start gap-2 border-b border-white/10 py-3 text-[13px]"
+                className="grid grid-cols-[minmax(0,2fr)_70px_110px_70px_24px] items-start gap-2 border-b border-white/10 py-3 text-[13px]"
               >
                 <div className="flex min-w-0 gap-4">
                   <img

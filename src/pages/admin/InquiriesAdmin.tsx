@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
+import {
+  BOOK_PAGE_DEFAULT_PRICE_LIST,
+  BOOK_PAGE_DEFAULT_STUDIO,
+  BOOK_PAGE_PRICE_LIST_SPEC,
+  BOOK_PAGE_STUDIO_SPEC,
+} from '../../lib/bookPageMedia.ts'
+import { publicMediaUrl } from '../../lib/media.ts'
 import { supabase } from '../../lib/supabase.ts'
-import { Card, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
+import { Card, MediaField, Notice, PrimaryButton, TextArea, TextField } from './ui.tsx'
+
+function imageSpecLine(spec: { width: number; height: number; aspect: string; formats: string; notes: string }) {
+  return `Recommended ${spec.width}×${spec.height} px (${spec.aspect}). ${spec.formats}. ${spec.notes}`
+}
 
 type Inquiry = { id: string; question: string; email: string; phone: string; status: string; response: string | null; source: string; created_at: string }
 type Faq = { id: string; question: string; answer: string; keywords: string[] | null; published: boolean }
@@ -11,6 +22,9 @@ export function InquiriesAdmin() {
   const [draft, setDraft] = useState({ question: '', answer: '', keywords: '' })
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+  const [priceListImage, setPriceListImage] = useState('')
+  const [studioImage, setStudioImage] = useState('')
+  const [savingBookImages, setSavingBookImages] = useState(false)
 
   const load = async () => {
     const [inquiryResult, faqResult] = await Promise.all([
@@ -22,7 +36,48 @@ export function InquiriesAdmin() {
     setFaqs((faqResult.data ?? []) as Faq[])
   }
 
-  useEffect(() => { void load() }, [])
+  const loadBookImages = async () => {
+    if (!supabase) return
+    const { data, error: queryError } = await supabase
+      .from('content_sections')
+      .select('section_key, media_path')
+      .eq('page', 'book')
+      .in('section_key', ['price_list', 'studio_photo'])
+    if (queryError) setError(queryError.message)
+    else {
+      for (const row of (data ?? []) as { section_key: string; media_path: string | null }[]) {
+        if (row.section_key === 'price_list') setPriceListImage(row.media_path ?? '')
+        if (row.section_key === 'studio_photo') setStudioImage(row.media_path ?? '')
+      }
+    }
+  }
+
+  const saveBookSection = async (sectionKey: 'price_list' | 'studio_photo', mediaPath: string) => {
+    if (!supabase) return
+    setSavingBookImages(true)
+    setOk(null)
+    const { error: saveError } = await supabase.from('content_sections').upsert(
+      {
+        page: 'book',
+        section_key: sectionKey,
+        media_path: mediaPath.trim() || null,
+        visible: true,
+        sort_order: sectionKey === 'price_list' ? 1 : 2,
+      },
+      { onConflict: 'page,section_key' },
+    )
+    setSavingBookImages(false)
+    if (saveError) setError(saveError.message)
+    else {
+      setError(null)
+      setOk(sectionKey === 'price_list' ? 'Price list image saved for /book.' : 'Studio photo saved for /book.')
+    }
+  }
+
+  useEffect(() => {
+    void load()
+    void loadBookImages()
+  }, [])
 
   const openCount = rows.filter((row) => row.status === 'open').length
 
@@ -44,13 +99,65 @@ export function InquiriesAdmin() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div>
         <h1 className="text-2xl font-semibold text-white">Inquiries</h1>
-        <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">Piercing appointment requests and questions the chat could not answer land here. Answers you publish below are what the chat tries first.</p>
+        <p className="mt-1 max-w-2xl text-sm text-[#9a9a9a]">
+          Piercing appointment requests, the public <span className="text-[#cfcfcf]">/book</span> page images, and chat answers you publish here.
+        </p>
       </div>
       <nav className="flex flex-wrap gap-2">
-        <a href="#inbox" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">1. Questions{openCount ? ` · ${openCount} waiting` : ''}</a>
-        <a href="#faqs" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">2. Saved answers</a>
+        <a href="#book-images" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">
+          1. Book page images
+        </a>
+        <a href="#inbox" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">
+          2. Questions{openCount ? ` · ${openCount} waiting` : ''}
+        </a>
+        <a href="#faqs" className="rounded-full border border-[#333] bg-[#161616] px-3 py-1.5 text-sm hover:border-[#FF7900]">3. Saved answers</a>
       </nav>
       <Notice error={error} ok={ok} />
+      <section id="book-images" className="scroll-mt-4 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold">Piercing appointment page images</h2>
+          <p className="mt-1 text-sm text-[#9a9a9a]">
+            These appear on the live booking page (<span className="text-[#cfcfcf]">/book</span>). Upload replaces the file; remove to fall back to the bundled default.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="space-y-3">
+            <p className="text-sm font-semibold text-white">{BOOK_PAGE_PRICE_LIST_SPEC.title}</p>
+            <p className="text-xs leading-relaxed text-[#9a9a9a]">{imageSpecLine(BOOK_PAGE_PRICE_LIST_SPEC)}</p>
+            <MediaField
+              label="Upload price list"
+              hint={`${BOOK_PAGE_PRICE_LIST_SPEC.width}×${BOOK_PAGE_PRICE_LIST_SPEC.height} px recommended.`}
+              folder="book"
+              accept="image/jpeg,image/png,image/webp"
+              value={priceListImage}
+              previewSrc={publicMediaUrl(priceListImage) || publicMediaUrl(BOOK_PAGE_DEFAULT_PRICE_LIST)}
+              previewClassName="mt-3 max-h-[280px] w-full rounded-lg object-contain bg-[#111]"
+              onChange={(path) => {
+                setPriceListImage(path)
+                void saveBookSection('price_list', path)
+              }}
+            />
+            {savingBookImages ? <p className="text-xs text-[#9a9a9a]">Saving…</p> : null}
+          </Card>
+          <Card className="space-y-3">
+            <p className="text-sm font-semibold text-white">{BOOK_PAGE_STUDIO_SPEC.title}</p>
+            <p className="text-xs leading-relaxed text-[#9a9a9a]">{imageSpecLine(BOOK_PAGE_STUDIO_SPEC)}</p>
+            <MediaField
+              label="Upload studio photo"
+              hint={`${BOOK_PAGE_STUDIO_SPEC.width}×${BOOK_PAGE_STUDIO_SPEC.height} px recommended.`}
+              folder="book"
+              accept="image/jpeg,image/png,image/webp"
+              value={studioImage}
+              previewSrc={publicMediaUrl(studioImage) || publicMediaUrl(BOOK_PAGE_DEFAULT_STUDIO)}
+              previewClassName="mt-3 max-h-[280px] w-full rounded-lg object-cover bg-[#111]"
+              onChange={(path) => {
+                setStudioImage(path)
+                void saveBookSection('studio_photo', path)
+              }}
+            />
+          </Card>
+        </div>
+      </section>
       <section id="inbox" className="scroll-mt-4 space-y-3">
         <div>
           <h2 className="text-base font-semibold">Inbox</h2>
